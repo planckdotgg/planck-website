@@ -491,6 +491,9 @@ kbd {
 		background-color var(--dur-fast) var(--ease-out),
 		border-color var(--dur-fast) var(--ease-out);
 }
+.copy-btn[hidden] {
+	display: none;
+}
 .copy-btn:hover {
 	border-color: #5a606c;
 }

@@ -1,6 +1,7 @@
 // Any button with [data-copy] copies text: either its own attribute value, or the text of the
 // element whose id is in [data-copy-target].
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
+	button.hidden = false;
 	const label = button.querySelector<HTMLElement>('[data-copy-label]');
 	const original = label?.textContent ?? '';
 	const name = button.getAttribute('aria-label');
