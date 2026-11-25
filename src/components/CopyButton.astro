@@ -4,7 +4,7 @@ interface Props {
 	target: string;
 	label?: string;
 	ember?: boolean;
-	/** What is copied, for screen readers, e.g. "the macOS build command". */
+	/** Appended to the visible label for screen readers, e.g. "POSIX build". */
 	what: string;
 }
 const { target, label = 'Copy command', ember = false, what } = Astro.props;
@@ -15,7 +15,7 @@ const { target, label = 'Copy command', ember = false, what } = Astro.props;
 	class:list={['copy-btn', { 'copy-btn--ember': ember }]}
 	data-copy
 	data-copy-target={target}
-	aria-label={`Copy ${what}`}
+	aria-label={`${label}: ${what}`}
 >
 	<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" fill="none">
 		<rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"

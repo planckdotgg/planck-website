@@ -33,6 +33,9 @@ export function autoHideHud(
 	});
 	area.addEventListener('pointerdown', show);
 	area.addEventListener('focusin', show);
+	area.addEventListener('focusout', (e) => {
+		if (!pinned && !area.contains(e.relatedTarget as Node | null)) show();
+	});
 	pill.addEventListener('click', () => setPinned(!pinned));
 	document.addEventListener('keydown', (e) => {
 		if (e.ctrlKey && e.altKey && e.code === 'KeyH') {

@@ -145,14 +145,36 @@ const bench = [
 					<h2 class="display h3">Build from source today.</h2>
 					<p class="meta">Tested on main · Go 1.27.4+ · CGO_ENABLED=0</p>
 				</div>
-				<div class="src__grid">
-					<div class="term src__card">
-						<div class="term__bar">
+				<div class="term src__card" data-src-tabs>
+					<div class="term__bar src__tabs" hidden>
+						<div class="seg" role="tablist" aria-label="Shell">
+							<button
+								type="button"
+								class="seg__btn"
+								role="tab"
+								id="src-tab-posix"
+								aria-selected="true"
+								aria-controls="src-posix"
+								tabindex="0"><span class="dot dot--ember"></span>POSIX (macOS / Linux)</button
+							>
+							<button
+								type="button"
+								class="seg__btn"
+								role="tab"
+								id="src-tab-ps"
+								aria-selected="false"
+								aria-controls="src-ps"
+								tabindex="-1"><span class="dot dot--ember"></span>PowerShell (Windows)</button
+							>
+						</div>
+					</div>
+					<div class="src__panel" role="tabpanel" id="src-posix" aria-labelledby="src-tab-posix">
+						<div class="src__panel-bar">
 							<p class="src__shell mono">
-								<span class="dot dot--ember"></span><b>macOS / POSIX (zsh / bash)</b>
-								<span class="c-muted">Go 1.27.4+</span>
+								<span class="dot dot--ember"></span><b>POSIX (macOS / Linux)</b>
+								<span class="c-muted">zsh / bash · Go 1.27.4+</span>
 							</p>
-							<CopyButton target="dl-posix" ember what="the macOS / POSIX build command" />
+							<CopyButton target="dl-posix" ember what="POSIX build" />
 						</div>
 						<pre><code id="dl-posix">{BUILD_POSIX[0]}
 {BUILD_POSIX[1]}
@@ -162,13 +184,13 @@ const bench = [
 							<span class="c-direct">Tested · main</span>
 						</div>
 					</div>
-					<div class="term src__card">
-						<div class="term__bar">
+					<div class="src__panel" role="tabpanel" id="src-ps" aria-labelledby="src-tab-ps">
+						<div class="src__panel-bar">
 							<p class="src__shell mono">
-								<span class="dot dot--ember"></span><b>Windows (PowerShell)</b>
-								<span class="c-muted">Go 1.27.4+</span>
+								<span class="dot dot--ember"></span><b>PowerShell (Windows)</b>
+								<span class="c-muted">PowerShell 5.1+ · Go 1.27.4+</span>
 							</p>
-							<CopyButton target="dl-ps" ember what="the Windows PowerShell build command" />
+							<CopyButton target="dl-ps" ember what="PowerShell build" />
 						</div>
 						<pre><code id="dl-ps">{BUILD_POWERSHELL[0]}
 {BUILD_POWERSHELL[1]}
@@ -356,6 +378,18 @@ const bench = [
 
 <script>
 	import { checkMachine } from '../scripts/machine';
+	import { tablist } from '../scripts/tabs';
+
+	// Without JavaScript both shells stay stacked and the tab bar stays hidden.
+	const src = document.querySelector<HTMLElement>('[data-src-tabs]');
+	const srcBar = src?.querySelector<HTMLElement>('.src__tabs');
+	if (src && srcBar) {
+		const list = srcBar.querySelector('[role="tablist"]');
+		tablist(list);
+		srcBar.hidden = false;
+		src.dataset.tabsReady = '';
+		list?.querySelector<HTMLElement>('[aria-selected="true"]')?.click();
+	}
 
 	// Quick start: on wide screens every step is open and the one under the pointer or focus
 	// lights its part of the launcher; on phones the steps are an accordion.
@@ -557,13 +591,29 @@ const bench = [
 		gap: 16px;
 		margin-bottom: 16px;
 	}
-	.src__grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 20px;
-	}
 	.src__card {
 		border-top: 2px solid var(--ember-500);
+	}
+	.src__panel + .src__panel {
+		border-top: 1px solid var(--carbon-700);
+	}
+	[data-tabs-ready] .src__panel + .src__panel {
+		border-top: 0;
+	}
+	.src__tabs[hidden],
+	.src__panel[hidden] {
+		display: none;
+	}
+	.src__panel-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 10px 14px 0 20px;
+	}
+	[data-tabs-ready] .src__shell b,
+	[data-tabs-ready] .src__shell .dot {
+		display: none;
 	}
 	.src__card pre {
 		font-size: 11px;
@@ -777,8 +827,7 @@ const bench = [
 			grid-template-columns: minmax(0, 1fr);
 		}
 		.plat,
-		.drv,
-		.src__grid {
+		.drv {
 			grid-template-columns: minmax(0, 1fr);
 		}
 		.bench {
@@ -837,7 +886,28 @@ const bench = [
 			flex-direction: column;
 			gap: 4px;
 		}
-		.src__shell .c-muted {
+		.src__shell .c-muted,
+		[data-tabs-ready] .src__shell {
+			display: none;
+		}
+		[data-tabs-ready] .src__panel-bar {
+			justify-content: flex-end;
+		}
+		.src__tabs {
+			padding: 8px;
+		}
+		.src__tabs .seg {
+			width: 100%;
+		}
+		.src__tabs .seg__btn {
+			flex: 1;
+			justify-content: center;
+			min-height: 44px;
+			padding: 0 6px;
+			font-size: 10px;
+			white-space: nowrap;
+		}
+		.src__tabs .dot {
 			display: none;
 		}
 		.src__shell {

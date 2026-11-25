@@ -702,7 +702,12 @@ const gpus = [
 		box-shadow: 0 0 0 1px rgba(255, 122, 31, 0.2);
 	}
 	.app__host--off {
-		opacity: 0.7;
+		border-style: dashed;
+		border-color: var(--carbon-600);
+		background: var(--carbon-950);
+	}
+	.app__host--off .app__name {
+		color: var(--bone-300);
 	}
 	.app__row {
 		display: flex;

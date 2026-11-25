@@ -3,6 +3,12 @@
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
 	const label = button.querySelector<HTMLElement>('[data-copy-label]');
 	const original = label?.textContent ?? '';
+	const name = button.getAttribute('aria-label');
+	const suffix = name?.startsWith(original) ? name.slice(original.length) : null;
+	const show = (text: string) => {
+		if (label) label.textContent = text;
+		if (suffix !== null) button.setAttribute('aria-label', text + suffix);
+	};
 	let timer: number | undefined;
 	button.addEventListener('click', async () => {
 		const targetId = button.dataset.copyTarget;
@@ -12,14 +18,14 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')
 		try {
 			await navigator.clipboard.writeText(text.trim());
 			button.dataset.copied = '';
-			if (label) label.textContent = 'Copied';
+			show('Copied');
 		} catch {
-			if (label) label.textContent = 'Select & copy';
+			show('Select & copy');
 		}
 		clearTimeout(timer);
 		timer = window.setTimeout(() => {
 			delete button.dataset.copied;
-			if (label) label.textContent = original;
+			show(original);
 		}, 1600);
 	});
 }

@@ -43,13 +43,22 @@ const layers = [
 						<span class="cc__tag mono">{l.tag}</span>
 						<span class="cc__note mono">{l.note}</span>
 					</div>
-					<pre class="cc__code"><code><span class="k">func</span> <span class="f">EncodeSlice</span>(frame *<span class="t">Surface</span>, mode <span class="t">Chroma</span>) {'{'}
+					<div class="cc__code">
+						<pre class="cc__col"><code><span class="k">func</span> <span class="f">EncodeSlice</span>(frame *<span class="t">Surface</span>, mode <span class="t">Chroma</span>) {'{'}
     <span class="k">if</span> mode == <span class="n">YUV444_10BIT</span> &amp;&amp; cap.NVENC {'{'}
         cfg.TargetChroma = <span class="n">0xFF7A1F</span> <span class="c">// full Cb/Cr</span>
         cfg.EdgeGuard = <span class="s">"1px-crimson-syntax"</span>
         <span class="k">return</span> <span class="t">SubmitZeroCopy</span>(frame, <span class="n">1.41</span>)
     {'}'}
 {'}'}</code></pre>
+						<pre class="cc__col cc__col--right" aria-hidden="true"><code><span class="k">func</span> <span class="f">EncodeSlice</span>(frame *<span class="t">Surface</span>, mode <span class="t">Chroma</span>) {'{'}
+    <span class="k">if</span> mode == <span class="n">YUV444_10BIT</span> &amp;&amp; cap.NVENC {'{'}
+        cfg.TargetChroma = <span class="n">0xFF7A1F</span> <span class="c">// full Cb/Cr</span>
+        cfg.EdgeGuard = <span class="s">"1px-crimson-syntax"</span>
+        <span class="k">return</span> <span class="t">SubmitZeroCopy</span>(frame, <span class="n">1.41</span>)
+    {'}'}
+{'}'}</code></pre>
+					</div>
 					<div class="cc__loupe">
 						<div class="cc__loupe-bar mono">
 							<span>4× zoom · Illustrative simulation · Why 4:4:4 matters</span>
@@ -285,18 +294,24 @@ const layers = [
 		font-size: 10px;
 		color: #e4e7ee;
 	}
+	/* Both halves show the same source, so at any split each side of the divider has code. */
 	.cc__code {
 		position: absolute;
 		top: 92px;
-		left: 24px;
+		left: 0;
 		right: 0;
-		margin: 0;
-		padding-left: 18px;
-		border-left: 1px solid var(--carbon-600);
+		display: grid;
+		grid-template-columns: 1fr 1fr;
 		font-size: 13px;
 		line-height: 27px;
 		color: var(--bone-50);
+	}
+	.cc__col {
+		margin: 0 0 0 24px;
+		padding-left: 18px;
+		border-left: 1px solid var(--carbon-600);
 		white-space: pre;
+		overflow: hidden;
 	}
 	.cc__code .k {
 		color: #ff8a6b;
@@ -479,10 +494,16 @@ const layers = [
 		}
 		.cc__code {
 			top: 88px;
-			left: 12px;
-			padding-left: 10px;
+			grid-template-columns: 1fr;
 			font-size: 9px;
 			line-height: 20px;
+		}
+		.cc__col {
+			margin-left: 12px;
+			padding-left: 10px;
+		}
+		.cc__col--right {
+			display: none;
 		}
 		.cc__loupe {
 			width: calc(100% - 24px);

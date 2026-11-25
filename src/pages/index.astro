@@ -310,7 +310,7 @@ const free = [
 			<div class="term oss__term-narrow">
 				<div class="term__bar">
 					<span class="meta c-bone">Build from source</span>
-					<CopyButton target="m-build" ember what="the build command" />
+					<CopyButton target="m-build" ember what="POSIX build" />
 				</div>
 				<pre><code id="m-build">{BUILD_POSIX_SHORT.join('\n')}</code></pre>
 				<p class="meta oss__m-note">Go 1.27.4+ · macOS / POSIX (Windows PowerShell on /download)</p>
@@ -747,14 +747,14 @@ const free = [
 	}
 	@media (max-width: 600px) {
 		.hero {
-			padding-top: 20px;
+			padding: 12px 0;
 		}
 		.hero__chip-meta {
 			display: none;
 		}
 		.hero__title {
-			font-size: 34px;
-			line-height: 38px;
+			font-size: 30px;
+			line-height: 34px;
 		}
 		.hero__sub-wide {
 			display: none;
@@ -763,16 +763,20 @@ const free = [
 			display: inline;
 		}
 		.hero__row {
-			gap: 20px;
+			gap: 16px;
+			margin-top: 10px;
 		}
 		.hero__actions,
 		.hero__buttons {
 			width: 100%;
 			align-items: stretch;
 		}
+		.hero__actions {
+			gap: 8px;
+		}
 		.hero__buttons .btn {
 			flex: 1;
-			min-height: 52px;
+			min-height: 48px;
 		}
 		.hero__numbers {
 			display: none;
@@ -781,13 +785,17 @@ const free = [
 			text-align: center;
 		}
 		.hero__frame {
-			margin-top: 20px;
+			margin-top: 14px;
 		}
 		.hero__numbers-mobile {
 			display: flex;
 			justify-content: center;
+			align-items: center;
 			min-height: 44px;
-			margin-top: 16px;
+			margin-top: 2px;
+		}
+		#numbers {
+			padding-top: 28px;
 		}
 
 		.lab__side {
