@@ -1,0 +1,84 @@
+---
+import { BUILD_POSIX, BUILD_POWERSHELL } from '../lib/site';
+import CopyButton from './CopyButton.astro';
+---
+
+<div class="term bt" data-build-terminal>
+	<div class="term__bar">
+		<div class="seg" role="tablist" aria-label="Shell">
+			<button
+				class="seg__btn"
+				role="tab"
+				id="bt-tab-posix"
+				aria-selected="true"
+				aria-controls="bt-posix"
+				tabindex="0"><span class="dot dot--ember"></span>macOS / POSIX</button
+			>
+			<button
+				class="seg__btn"
+				role="tab"
+				id="bt-tab-ps"
+				aria-selected="false"
+				aria-controls="bt-ps"
+				tabindex="-1"><span class="dot dot--ember"></span>Windows PowerShell</button
+			>
+		</div>
+		<CopyButton target="bt-code-posix" what="the build command" />
+	</div>
+	<div class="bt__panels">
+		<div role="tabpanel" id="bt-posix" aria-labelledby="bt-tab-posix">
+			<pre><code id="bt-code-posix">{BUILD_POSIX[0]}
+{BUILD_POSIX[1]}
+<span class="em">{BUILD_POSIX[2]}</span></code></pre>
+			<p class="bt__note mono"># zsh / bash · switch tab for Windows PowerShell · requires Go 1.27.4+</p>
+		</div>
+		<div role="tabpanel" id="bt-ps" aria-labelledby="bt-tab-ps" hidden>
+			<pre><code id="bt-code-ps">{BUILD_POWERSHELL[0]}
+{BUILD_POWERSHELL[1]}
+<span class="em">{BUILD_POWERSHELL[2]}</span></code></pre>
+			<p class="bt__note mono"># PowerShell 5.1+ · outputs bin\planck-host.exe and bin\planck-client.exe</p>
+		</div>
+	</div>
+	<div class="bt__foot mono">
+		<span class="c-bone">Go 1.27.4+</span>
+		<span>CGO_ENABLED=0</span>
+		<span>MyGo GPU UI</span>
+		<span>Zero Rust</span>
+		<span class="c-direct bt__lic">APACHE-2.0</span>
+	</div>
+</div>
+
+<script>
+	import { tablist } from '../scripts/tabs';
+	for (const root of document.querySelectorAll<HTMLElement>('[data-build-terminal]')) {
+		const copy = root.querySelector<HTMLButtonElement>('[data-copy]');
+		tablist(root.querySelector('[role="tablist"]'), (tab) => {
+			const panel = tab.getAttribute('aria-controls');
+			if (copy) copy.dataset.copyTarget = panel === 'bt-ps' ? 'bt-code-ps' : 'bt-code-posix';
+		});
+	}
+</script>
+
+<style>
+	.bt pre {
+		padding-bottom: 6px;
+	}
+	.bt__note {
+		padding: 0 20px 20px;
+		font-size: 11px;
+		color: var(--muted);
+	}
+	.bt__foot {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px 16px;
+		padding: 12px 20px;
+		border-top: 1px solid var(--carbon-700);
+		background: var(--carbon-850);
+		font-size: 11px;
+		color: var(--muted);
+	}
+	.bt__lic {
+		margin-left: auto;
+	}
+</style>

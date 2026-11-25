@@ -1,0 +1,8 @@
+{
+	"$schema": "../node_modules/wrangler/config-schema.json",
+	"name": "planck-www-redirect",
+	"compatibility_date": "2026-11-01",
+	"main": "index.ts",
+	"routes": [{ "pattern": "www.planck.gg", "custom_domain": true }],
+	"workers_dev": false
+}

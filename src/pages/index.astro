@@ -1,0 +1,891 @@
+---
+import { Picture } from 'astro:assets';
+import canyon from '../assets/hero-gaming-hdr10@2x.png';
+import BuildTerminal from '../components/BuildTerminal.astro';
+import CopyButton from '../components/CopyButton.astro';
+import StreamFrame from '../components/StreamFrame.astro';
+import Base from '../layouts/Base.astro';
+import { BUILD_POSIX_SHORT, REPO } from '../lib/site';
+
+const routes = [
+	{
+		name: 'LAN Direct',
+		meta: '1452 B UDP',
+		body: 'Preferred automatically whenever host and client share a local subnet.',
+		aside: 'LAN-first auto',
+		tone: 'direct',
+	},
+	{
+		name: 'Tailscale Direct',
+		meta: '1152 B · WhoIs',
+		body: "Zero-PIN peer trust tuned for Tailscale's 1280-byte MTU without fragmentation.",
+		aside: 'Direct WireGuard',
+		tone: 'direct',
+	},
+	{
+		name: 'DERP Relay / Offline',
+		meta: '',
+		body: 'Surfaced plainly on the host card and HUD, never hidden behind a spinner.',
+		aside: 'Direct vs. DERP aware',
+		tone: 'relay',
+	},
+];
+
+const free = [
+	{
+		title: '4:4:4 Chroma',
+		body: 'HEVC 4:4:4 host encode (NVIDIA & Intel) · PyroWave LAN 4:4:4, never gated behind a subscription.',
+		tag: 'NVENC / oneVPL · PyroWave LAN',
+	},
+	{
+		title: '10-Bit HDR10',
+		body: 'BT.2020 PQ host encode presented natively on macOS displays.',
+		tag: 'macOS Metal EDR client',
+	},
+	{
+		title: 'Live display switching & Windows virtual displays',
+		body: 'Switch physical monitors mid-session plus headless Windows SudoVDA support.',
+		tag: 'Windows & macOS',
+	},
+	{
+		title: 'Personal & Commercial Use',
+		body: 'Use the same open-source host, client, Tailscale WhoIs, and virtual audio at home or work.',
+		tag: 'Apache-2.0 core',
+	},
+];
+---
+
+<Base
+	title="Planck: open-source desktop and game streaming in pure Go"
+	description="As close to plugged in as a packet gets. Open-source desktop and game streaming for Windows and macOS: HEVC 4:4:4 host encode, PyroWave LAN 4:4:4, HDR10, and native Tailscale."
+>
+	<section class="hero">
+		<div class="wrap">
+			<div class="chip-row">
+				<span class="chip">Pre-release · Apache-2.0 · Pure Go</span>
+				<span class="chip-text hero__chip-meta">Windows & macOS · No account required</span>
+			</div>
+			<div class="hero__row">
+				<div class="hero__copy">
+					<h1 class="display h1 hero__title">As close to plugged in as a packet gets.</h1>
+					<p class="lead hero__sub">
+					<span class="hero__sub-wide"
+						>Open-source desktop and game streaming in pure Go. Free HEVC 4:4:4 host encode (NVIDIA
+						& Intel), PyroWave LAN 4:4:4, HDR10, and native Tailscale.</span
+					>
+					<span class="hero__sub-narrow"
+						>Open-source streaming in pure Go. HEVC 4:4:4 host encode (NVIDIA & Intel), PyroWave LAN
+						4:4:4, HDR10, and native Tailscale.</span
+					>
+					</p>
+				</div>
+				<div class="hero__actions">
+					<div class="hero__buttons">
+						<a class="btn btn--primary btn--lg" href="/download">Build from source</a>
+						<a class="btn btn--ghost btn--lg hero__numbers" href="#numbers">Read the numbers</a>
+					</div>
+					<p class="meta hero__meta">Windows & macOS · no installers yet</p>
+				</div>
+			</div>
+			<div class="hero__frame">
+				<StreamFrame />
+			</div>
+			<a class="link hero__numbers-mobile" href="#numbers"
+				>Read the numbers <span class="arrow" aria-hidden="true">→</span></a
+			>
+		</div>
+	</section>
+
+	<section class="section" id="numbers">
+		<div class="wrap" data-reveal>
+			<div class="section-head">
+				<div>
+					<p class="eyebrow">Verified benchmarks</p>
+					<h2 class="display h2">Lab measurements.</h2>
+				</div>
+				<p class="section-head__aside">
+					Every figure cites its exact test harness, workload, and date. Headless host → decode runs
+					exclude display present.
+				</p>
+			</div>
+			<div class="lab">
+				<article class="card lab__lead">
+					<div class="lab__lead-head">
+						<p class="eyebrow c-ember-soft">Lead measurement · Host encode</p>
+						<span class="chip chip--plain chip--square lab__date">2026-11-23</span>
+					</div>
+					<p class="display lab__figure">1.41<span class="unit">ms</span></p>
+					<h3 class="lab__title">NVENC HEVC encode p50</h3>
+					<p class="body2">
+						1.71 ms host → decode p50 (headless) on Windows RTX 4080 at 1080p120 synthetic load.
+					</p>
+					<p class="meta lab__cite">RTX 4080 · 1080p120 synth · TestLiveSynthHardware · 2026-11-23</p>
+				</article>
+				<div class="lab__side">
+					<article class="card lab__small">
+						<p class="lab__small-fig">
+							<span class="display c-direct">0</span>
+							<span class="mono c-direct lab__small-unit">allocs/datagram</span>
+						</p>
+						<h3 class="lab__small-title">0 allocs/datagram in raw AEAD UDP loopback</h3>
+						<p class="meta">BenchmarkRawMediaPath · M5 Pro & Windows · 20bc2df</p>
+					</article>
+					<article class="card lab__small">
+						<p class="lab__small-fig">
+							<span class="display">0.87</span><span class="unit lab__small-ms">ms</span>
+						</p>
+						<h3 class="lab__small-title">VideoToolbox decode p50</h3>
+						<p class="meta">docs/spikes/phase0-spike2.md · Apple M5 Pro · 1080p120 · 2026-11-23</p>
+					</article>
+				</div>
+				<div class="lab__more">
+					<a class="link" href="/gaming#bench"
+						>See all lab measurements <span class="arrow" aria-hidden="true">→</span></a
+					>
+					<p class="meta">0.87 ms VideoToolbox decode · 0 allocs/datagram in raw AEAD UDP loopback</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<div class="reorder">
+		<section class="section" id="network">
+			<div class="wrap net" data-reveal>
+				<div class="net__copy">
+					<p class="eyebrow eyebrow--direct">Native Tailscale & LAN</p>
+					<h2 class="display h2">LAN at home. Tailscale away. Zero port forwarding.</h2>
+					<p class="lead net__lead">
+						Planck checks your local subnet first and reads Tailscale's LocalAPI directly. Own devices
+						authenticate via WhoIs without a PIN, and every link states its exact wire.
+					</p>
+				</div>
+				<ul class="card net__routes">
+					{
+						routes.map((r) => (
+							<li class={`net__route net__route--${r.tone}`}>
+								<div>
+									<p class="net__name mono">
+										<span class={`dot dot--${r.tone}`} />
+										<b class={`c-${r.tone}`}>{r.name}</b>
+										{r.meta && <span class="c-muted">{r.meta}</span>}
+									</p>
+									<p class="body2 net__body">{r.body}</p>
+								</div>
+								<p class="net__aside mono">{r.aside}</p>
+							</li>
+						))
+					}
+				</ul>
+			</div>
+		</section>
+
+		<section class="section paths-section">
+			<div class="wrap paths" data-reveal>
+				<a class="card path path--gaming" href="/gaming">
+					<div class="path__media">
+						<Picture
+							src={canyon}
+							alt=""
+							widths={[640, 1248]}
+							sizes="(max-width: 900px) 100vw, 612px"
+							formats={['avif', 'webp']}
+							fallbackFormat="jpg"
+			quality={78}
+							class="path__img"
+						/>
+						<span class="hud path__badge"
+							><span class="dot dot--ember"></span>HDR10 · Sub-frame slices</span
+						>
+						<span class="path__enc mono">NVENC · AMF · oneVPL</span>
+					</div>
+					<div class="path__body">
+						<p class="eyebrow">Gaming</p>
+						<h2 class="display h3">Your desktop GPU in any room.</h2>
+						<p class="body2">
+							Stream from your desk to a laptop or couch with controller passthrough, low-jitter pacing,
+							and an auto-hiding HUD.
+						</p>
+						<span class="link path__link">Explore Gaming <span class="arrow" aria-hidden="true">→</span></span>
+					</div>
+				</a>
+				<a class="card path path--work" href="/work">
+					<div class="path__media path__code" aria-hidden="true">
+						<div class="path__code-bar mono">
+							<span class="path__lights"><i></i><i></i><i></i></span>
+							<span class="path__file">chroma444.go</span>
+							<span class="path__code-tags">
+								<span class="chip chip--square">Display 2 · 4K</span>
+								<span class="c-direct">PyroWave 4:4:4</span>
+							</span>
+						</div>
+						<div class="path__split mono">
+							<div>
+								<p class="path__label c-muted">4:2:0 · Subsampled</p>
+								<p><span class="k">func</span> EncodeSlice(s *<span class="t">Surface</span>) {'{'}</p>
+								<p>cfg.Chroma = <span class="n">0xFF7A1F</span></p>
+								<p><span class="k">return</span> <span class="t">SubmitZeroCopy</span>(s)</p>
+								<p>{'}'}</p>
+							</div>
+							<div>
+								<p class="path__label c-direct">4:4:4 · Full chroma</p>
+								<p><span class="k">func</span> EncodeSlice(s *<span class="t">Surface</span>) {'{'}</p>
+								<p>cfg.Chroma = <span class="n">0xFF7A1F</span></p>
+								<p><span class="k">return</span> <span class="t">SubmitZeroCopy</span>(s)</p>
+								<p>{'}'}</p>
+							</div>
+						</div>
+					</div>
+					<div class="path__body">
+						<p class="eyebrow eyebrow--direct">Work & Creative</p>
+						<h2 class="display h3">Your workstation, from any desk.</h2>
+						<p class="body2">
+							Switch active displays mid-session and stream your workstation over LAN or Tailscale.<span
+								class="path__extra"
+							>{' '}Free HEVC 4:4:4 host encode and PyroWave LAN 4:4:4.</span
+							>
+						</p>
+						<span class="link link--quiet path__link c-bone"
+							>Explore Work <span class="arrow" aria-hidden="true">→</span></span
+						>
+					</div>
+				</a>
+			</div>
+		</section>
+	</div>
+
+	<section class="section free">
+		<div class="wrap free__grid" data-reveal>
+			<div class="free__head">
+				<p class="free__price">
+					<span class="display c-ember">$0</span>
+					<span class="mono c-ember-soft free__per">/ month, forever</span>
+				</p>
+				<h2 class="display h2">What stays free.</h2>
+				<p class="lead free__lead">
+					Every solo visual and workflow feature ships free under Apache-2.0, for personal and
+					commercial use, with zero paywalled color or display tiers.
+				</p>
+			</div>
+			<ul class="free__list">
+				{
+					free.map((f) => (
+						<li class="free__row">
+							<span class="dot dot--direct free__dot" />
+							<div>
+								<h3 class="free__title">{f.title}</h3>
+								<p class="body2">{f.body}</p>
+							</div>
+							<p class="free__tag mono">{f.tag}</p>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+	</section>
+
+	<section class="section oss">
+		<div class="wrap oss__grid" data-reveal>
+			<div>
+				<p class="eyebrow eyebrow--muted">Open source · Pure Go</p>
+				<h2 class="display h2">
+					Native host and client. <span class="oss__h-wide">Nothing hidden.</span><span
+						class="oss__h-narrow">Zero bloat.</span
+					>
+				</h2>
+				<p class="lead oss__lead">
+					Ships as two pure-Go executables, planck-host and planck-client, with MyGo GPU presentation.
+					Zero Electron, zero Rust, zero mandatory account.
+				</p>
+				<div class="oss__actions">
+					<a class="btn btn--primary btn--lg" href="/download">Build from source</a>
+					<a class="btn btn--ghost btn--lg oss__roadmap" href="/roadmap">View Roadmap</a>
+					<a class="btn btn--text" href={REPO} rel="noopener"
+						>GitHub <span aria-hidden="true">↗</span></a
+					>
+				</div>
+			</div>
+			<div class="oss__term-wide">
+				<BuildTerminal />
+			</div>
+			<div class="term oss__term-narrow">
+				<div class="term__bar">
+					<span class="meta c-bone">Build from source</span>
+					<CopyButton target="m-build" ember what="the build command" />
+				</div>
+				<pre><code id="m-build">{BUILD_POSIX_SHORT.join('\n')}</code></pre>
+				<p class="meta oss__m-note">Go 1.27.4+ · macOS / POSIX (Windows PowerShell on /download)</p>
+			</div>
+		</div>
+	</section>
+</Base>
+
+<style>
+	.hero {
+		padding: 26px 0 28px;
+		background:
+			radial-gradient(farthest-corner at 50% 68%, rgba(255, 122, 31, 0.14), rgba(255, 122, 31, 0.03) 50%, transparent 78%),
+			var(--carbon-900);
+	}
+	.hero__copy {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		max-width: 760px;
+	}
+	.hero__row {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 48px;
+		margin-top: 14px;
+	}
+	.hero__sub-narrow {
+		display: none;
+	}
+	.hero__actions {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 10px;
+		flex: none;
+		padding-bottom: 4px;
+	}
+	.hero__buttons {
+		display: flex;
+		gap: 10px;
+	}
+	.hero__frame {
+		margin-top: 20px;
+		box-shadow: 0 24px 64px rgba(0, 0, 0, 0.62);
+		border-radius: var(--radius-md);
+	}
+	.hero__numbers-mobile {
+		display: none;
+	}
+
+	.lab {
+		display: grid;
+		grid-template-columns: 738fr 490fr;
+		gap: 20px;
+	}
+	.lab__lead {
+		padding: 36px;
+		border-top: 2px solid var(--ember-500);
+	}
+	.lab__lead-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	.lab__date {
+		font-size: 10px;
+		letter-spacing: 0.04em;
+	}
+	.lab__figure {
+		margin-top: 14px;
+		font-size: 76px;
+		line-height: 76px;
+		color: var(--ember-500);
+		letter-spacing: -0.04em;
+	}
+	.lab__figure .unit {
+		font-size: 20px;
+		color: var(--ember-300);
+	}
+	.lab__title {
+		margin: 14px 0 6px;
+		font-size: 18px;
+		font-weight: 600;
+	}
+	.lab__cite {
+		margin-top: 28px;
+		padding-top: 16px;
+		border-top: 1px solid var(--carbon-700);
+	}
+	.lab__side {
+		display: grid;
+		gap: 20px;
+	}
+	.lab__small {
+		padding: 24px 28px;
+	}
+	.lab__small-fig {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+		font-size: 40px;
+		line-height: 42px;
+		letter-spacing: -0.03em;
+	}
+	.lab__small-unit {
+		font-size: 14px;
+		letter-spacing: 0;
+	}
+	.lab__small-ms {
+		font-size: 14px;
+	}
+	.lab__small-title {
+		margin: 10px 0 4px;
+		font-size: 15px;
+		font-weight: 600;
+	}
+	.lab__more {
+		display: none;
+	}
+
+	.net {
+		display: grid;
+		grid-template-columns: 450px 1fr;
+		gap: 76px;
+		align-items: center;
+	}
+	.net__lead {
+		margin-top: 22px;
+		font-size: 16px;
+		line-height: 24px;
+	}
+	.net__routes {
+		overflow: hidden;
+	}
+	.net__route {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 24px;
+		padding: 20px 24px 20px 26px;
+		border-left: 3px solid var(--direct);
+	}
+	.net__route + .net__route {
+		border-top: 1px solid var(--carbon-700);
+	}
+	.net__route--relay {
+		border-left-color: var(--relay);
+	}
+	.net__name {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 12px;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+	.net__name .c-muted {
+		text-transform: none;
+		letter-spacing: 0;
+		font-size: 11px;
+	}
+	.net__body {
+		margin-top: 4px;
+	}
+	.net__aside {
+		flex: none;
+		font-size: 12px;
+		color: var(--bone-50);
+	}
+	.net__route--relay .net__aside {
+		color: var(--muted);
+	}
+
+	.paths {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 24px;
+	}
+	.path {
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		transition: border-color var(--dur-base) var(--ease-out);
+	}
+	.path--gaming {
+		border-top: 2px solid var(--ember-500);
+	}
+	.path--work {
+		border-top: 2px solid var(--direct);
+	}
+	.path:hover {
+		border-color: var(--carbon-600);
+	}
+	.path--gaming:hover {
+		border-top-color: var(--ember-500);
+	}
+	.path--work:hover {
+		border-top-color: var(--direct);
+	}
+	.path__media {
+		position: relative;
+		height: 192px;
+		overflow: hidden;
+		border-bottom: 1px solid var(--carbon-700);
+	}
+	.path__media :global(.path__img) {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: 30% 45%;
+		transition: transform 600ms var(--ease-out);
+	}
+	.path:hover .path__media :global(.path__img) {
+		transform: scale(1.03);
+	}
+	.path__badge {
+		position: absolute;
+		top: 14px;
+		left: 16px;
+		padding: 4px 12px;
+		font-size: 10px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		border-color: rgba(255, 122, 31, 0.5);
+		gap: 8px;
+	}
+	.path__enc {
+		position: absolute;
+		right: 24px;
+		bottom: 12px;
+		font-size: 10px;
+		color: var(--bone-50);
+		text-shadow: 0 1px 4px #000;
+	}
+	.path__code {
+		background: var(--carbon-950);
+		font-size: 10.5px;
+		line-height: 21px;
+	}
+	.path__code-bar {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 7px 14px;
+		border-bottom: 1px solid var(--carbon-700);
+		background: var(--carbon-850);
+	}
+	.path__lights {
+		display: inline-flex;
+		gap: 5px;
+	}
+	.path__lights i {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: var(--fault);
+	}
+	.path__lights i:nth-child(2) {
+		background: var(--relay);
+	}
+	.path__lights i:nth-child(3) {
+		background: var(--direct);
+	}
+	.path__file {
+		padding: 1px 8px;
+		border: 1px solid var(--carbon-600);
+		border-radius: 4px;
+	}
+	.path__code-tags {
+		margin-left: auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 10px;
+	}
+	.path__code-tags .chip {
+		font-size: 9px;
+		padding: 0 6px;
+	}
+	.path__split {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		height: calc(100% - 32px);
+	}
+	.path__split > div {
+		padding: 28px 16px;
+		white-space: nowrap;
+		overflow: hidden;
+	}
+	.path__split > div + div {
+		border-left: 1px solid var(--ember-500);
+	}
+	.path__label {
+		font-size: 9.5px;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+	.path__split .k {
+		color: #ff8a6b;
+	}
+	.path__split .t {
+		color: var(--direct);
+	}
+	.path__split .n {
+		color: var(--ember-500);
+	}
+	.path__split > div:first-child p:not(.path__label) {
+		text-shadow:
+			0.6px 0 0 rgba(255, 122, 31, 0.35),
+			-0.6px 0 0 rgba(76, 214, 155, 0.25);
+	}
+	.path__body {
+		padding: 28px 32px 32px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		flex: 1;
+	}
+	.path__link {
+		margin-top: 6px;
+	}
+
+	.free {
+		background:
+			radial-gradient(60% 80% at 0% 60%, rgba(255, 122, 31, 0.1), transparent 70%),
+			var(--carbon-900);
+	}
+	.free__grid {
+		display: grid;
+		grid-template-columns: 440px 1fr;
+		gap: 62px;
+		align-items: center;
+	}
+	.free__price {
+		display: flex;
+		align-items: baseline;
+		gap: 14px;
+		font-size: 72px;
+		line-height: 76px;
+	}
+	.free__per {
+		font-size: 12px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+	.free__lead {
+		margin-top: 16px;
+		font-size: 16px;
+		line-height: 24px;
+	}
+	.free__list {
+		border-top: 1px solid var(--carbon-700);
+	}
+	.free__row {
+		display: grid;
+		grid-template-columns: 10px 1fr auto;
+		gap: 14px 12px;
+		align-items: center;
+		padding: 22px 0;
+		border-bottom: 1px solid var(--carbon-700);
+	}
+	.free__dot {
+		align-self: start;
+		margin-top: 9px;
+	}
+	.free__title {
+		font-size: 16px;
+		font-weight: 600;
+		line-height: 24px;
+	}
+	.free__tag {
+		font-size: 11px;
+		color: var(--muted);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		text-align: right;
+	}
+
+	.oss__grid {
+		display: grid;
+		grid-template-columns: 560px 1fr;
+		gap: 90px;
+		align-items: center;
+	}
+	.oss__h-narrow {
+		display: none;
+	}
+	.oss__lead {
+		margin-top: 22px;
+		font-size: 16px;
+		line-height: 24px;
+	}
+	.oss__actions {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin-top: 28px;
+	}
+	.oss__term-narrow {
+		display: none;
+	}
+	.oss__m-note {
+		padding: 0 14px 14px;
+	}
+
+	@media (max-width: 1100px) {
+		.net,
+		.free__grid,
+		.oss__grid {
+			grid-template-columns: 1fr;
+			gap: 40px;
+		}
+		.hero__row {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+		.hero__actions {
+			align-items: flex-start;
+		}
+	}
+	@media (max-width: 900px) {
+		.hero__title {
+			font-size: 44px;
+			line-height: 48px;
+		}
+		.lab {
+			grid-template-columns: 1fr;
+		}
+		.paths {
+			grid-template-columns: 1fr;
+		}
+	}
+	@media (max-width: 600px) {
+		.hero {
+			padding-top: 20px;
+		}
+		.hero__chip-meta {
+			display: none;
+		}
+		.hero__title {
+			font-size: 34px;
+			line-height: 38px;
+		}
+		.hero__sub-wide {
+			display: none;
+		}
+		.hero__sub-narrow {
+			display: inline;
+		}
+		.hero__row {
+			gap: 20px;
+		}
+		.hero__actions,
+		.hero__buttons {
+			width: 100%;
+			align-items: stretch;
+		}
+		.hero__buttons .btn {
+			flex: 1;
+			min-height: 52px;
+		}
+		.hero__numbers {
+			display: none;
+		}
+		.hero__meta {
+			text-align: center;
+		}
+		.hero__frame {
+			margin-top: 20px;
+		}
+		.hero__numbers-mobile {
+			display: flex;
+			justify-content: center;
+			min-height: 44px;
+			margin-top: 16px;
+		}
+
+		.lab__side {
+			display: none;
+		}
+		.lab__lead {
+			padding: 22px 20px;
+		}
+		.lab__figure {
+			font-size: 64px;
+			line-height: 68px;
+		}
+		.lab__more {
+			display: block;
+			margin-top: 12px;
+		}
+		.lab__more .link {
+			min-height: 44px;
+		}
+
+		.reorder {
+			display: flex;
+			flex-direction: column;
+		}
+		.paths-section {
+			order: -1;
+		}
+		.net__route {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 6px;
+			padding: 16px 16px 16px 18px;
+		}
+		.path__media {
+			height: 160px;
+		}
+		.path__extra {
+			display: none;
+		}
+		.path__body {
+			padding: 22px 20px 24px;
+		}
+		.path__link {
+			min-height: 44px;
+		}
+		.path__code-tags .chip {
+			display: none;
+		}
+		.path__split > div {
+			padding: 16px 12px;
+			font-size: 9.5px;
+		}
+
+		.free__price {
+			font-size: 56px;
+			line-height: 60px;
+		}
+		.free__row {
+			grid-template-columns: 1fr;
+			gap: 4px;
+		}
+		.free__dot {
+			display: none;
+		}
+		.free__tag {
+			order: -1;
+			text-align: left;
+			color: var(--direct);
+		}
+
+		.oss__h-wide {
+			display: none;
+		}
+		.oss__h-narrow {
+			display: inline;
+		}
+		.oss__actions {
+			flex-direction: column;
+			align-items: stretch;
+		}
+		.oss__actions .btn {
+			min-height: 52px;
+		}
+		.oss__roadmap {
+			display: none;
+		}
+		.oss__term-wide {
+			display: none;
+		}
+		.oss__term-narrow {
+			display: block;
+		}
+		.oss__term-narrow pre {
+			padding: 16px 14px;
+			font-size: 9px;
+			line-height: 20px;
+			white-space: pre-wrap;
+			overflow-wrap: anywhere;
+		}
+	}
+</style>

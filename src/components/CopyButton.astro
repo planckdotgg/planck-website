@@ -1,0 +1,26 @@
+---
+interface Props {
+	/** The id of the element whose text is copied. */
+	target: string;
+	label?: string;
+	ember?: boolean;
+	/** What is copied, for screen readers, e.g. "the macOS build command". */
+	what: string;
+}
+const { target, label = 'Copy command', ember = false, what } = Astro.props;
+---
+
+<button
+	type="button"
+	class:list={['copy-btn', { 'copy-btn--ember': ember }]}
+	data-copy
+	data-copy-target={target}
+	aria-label={`Copy ${what}`}
+>
+	<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" fill="none">
+		<rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"
+		></rect>
+		<path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5" stroke="currentColor" stroke-width="1.5"></path>
+	</svg>
+	<span data-copy-label aria-live="polite">{label}</span>
+</button>

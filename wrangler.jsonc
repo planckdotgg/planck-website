@@ -1,0 +1,36 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "planck-website",
+	"compatibility_date": "2026-11-01",
+	// The Worker runs only for /api/*. Cloudflare serves all other addresses from the Astro build.
+	"main": "worker/index.ts",
+	// The site address. Cloudflare makes the DNS record and the certificate for it.
+	"routes": [{ "pattern": "planck.gg", "custom_domain": true }],
+	"workers_dev": true,
+	// `wrangler dev` (bun run preview) serves the built site and the Worker on this port.
+	"dev": { "port": 8787 },
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS",
+		"not_found_handling": "404-page",
+		"html_handling": "drop-trailing-slash",
+		"run_worker_first": ["/api/*"]
+	},
+	"vars": {
+		// /api/download sends each platform to its file in the newest release of this repository.
+		"GITHUB_REPO": "planckdotgg/planck"
+	},
+	"env": {
+		// A preview Worker on workers.dev with no custom domain: `bun run deploy:preview`.
+		"preview": {
+			"name": "planck-website-preview",
+			"routes": [],
+			"workers_dev": true,
+			"vars": {
+				"GITHUB_REPO": "planckdotgg/planck"
+			}
+		}
+	}
+	// Optional secret, not in this file: `wrangler secret put GITHUB_TOKEN`
+	// (GitHub allows more API requests with it).
+}

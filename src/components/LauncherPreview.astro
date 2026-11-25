@@ -1,0 +1,272 @@
+---
+import Mark from './Mark.astro';
+---
+
+<figure class="lp" data-launcher aria-label="Planck launcher v0.4 preview (demo UI)">
+	<div class="lp__rail" aria-hidden="true">
+		<Mark size={26} />
+		<span class="lp__icon lp__icon--on">
+			<svg viewBox="0 0 24 24" width="18" height="18"
+				><path
+					d="M4 5h16v11H4z M9 20h6 M12 16v4"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.6"></path></svg
+			>
+		</span>
+		<span class="lp__icon">
+			<svg viewBox="0 0 24 24" width="18" height="18"
+				><path
+					d="M4.5 4v15.5h15.5 M7 15l3.5-4 3 2.5 4.5-6"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.6"></path></svg
+			>
+		</span>
+		<span class="lp__spacer"></span>
+		<span class="lp__host" data-spot="host">
+			<span class="lp__toggle"><span></span></span>
+		</span>
+	</div>
+	<div class="lp__main">
+		<div class="lp__head">
+			<p class="lp__title">Launcher v0.4 · Pair & Connect</p>
+			<p class="lp__count mono">2 hosts found</p>
+		</div>
+		<div class="lp__card lp__card--pair" data-spot="pair">
+			<div class="lp__row">
+				<p class="lp__name">DESK-RIG</p>
+				<span class="chip chip--square">Pairing · LAN direct</span>
+				<span class="lp__gpu mono">RTX 4080</span>
+			</div>
+			<p class="lp__hint">Enter the 6-digit PIN shown on DESK-RIG to pin its TLS certificate:</p>
+			<div class="lp__row">
+				<span class="lp__pin mono" aria-hidden="true">
+					<i>4</i><i>8</i><i>2</i><b>–</b><i>9</i><i>1</i><i class="on">7</i>
+				</span>
+				<span class="lp__btn lp__btn--ember">Pair</span>
+			</div>
+		</div>
+		<div class="lp__card" data-spot="connect">
+			<div class="lp__row">
+				<div>
+					<p class="lp__row lp__row--tight">
+						<span class="lp__name">STUDIO-MAC</span>
+						<span class="chip chip--direct chip--square">Tailscale WhoIs · No PIN</span>
+					</p>
+					<p class="lp__sub mono">Apple M5 Pro · Direct WireGuard · 1152 B</p>
+				</div>
+				<span class="lp__btn">Connect</span>
+			</div>
+		</div>
+	</div>
+	<figcaption class="sr-only">
+		Demo UI. DESK-RIG pairs with a 6-digit PIN over LAN; STUDIO-MAC connects through Tailscale WhoIs
+		with no PIN.
+	</figcaption>
+</figure>
+
+<style>
+	.lp {
+		display: grid;
+		grid-template-columns: 64px minmax(0, 1fr);
+		background: var(--carbon-850);
+		border: 1px solid var(--carbon-700);
+		border-radius: var(--radius-md);
+		overflow: hidden;
+		box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+	}
+	.lp__rail {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12px;
+		padding: 18px 0;
+		border-right: 1px solid var(--carbon-700);
+		background: var(--carbon-900);
+		color: var(--muted);
+	}
+	.lp__rail > :first-child {
+		margin-bottom: 8px;
+	}
+	.lp__icon {
+		display: grid;
+		place-items: center;
+		width: 38px;
+		height: 38px;
+		border-radius: var(--radius-sm);
+	}
+	.lp__icon--on {
+		color: var(--ember-500);
+		background: var(--carbon-800);
+		box-shadow: inset 0 0 0 1px var(--carbon-600);
+	}
+	.lp__spacer {
+		flex: 1;
+	}
+	.lp__host {
+		display: grid;
+		place-items: center;
+		padding: 6px;
+		border-radius: var(--radius-sm);
+		transition: box-shadow var(--dur-base) var(--ease-out);
+	}
+	.lp__toggle {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		width: 34px;
+		height: 20px;
+		padding: 3px;
+		border-radius: 999px;
+		background: rgba(76, 214, 155, 0.2);
+		box-shadow: inset 0 0 0 1px rgba(76, 214, 155, 0.5);
+	}
+	.lp__toggle span {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		background: var(--direct);
+	}
+	.lp__main {
+		padding: 22px 20px;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+	.lp__head {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		margin-bottom: 4px;
+	}
+	.lp__title {
+		font-weight: 600;
+		font-size: 14px;
+	}
+	.lp__count {
+		font-size: 9.5px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+	.lp__card {
+		padding: 14px 16px;
+		border: 1px solid var(--carbon-700);
+		border-radius: var(--radius-sm);
+		background: var(--carbon-900);
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		transition:
+			border-color var(--dur-base) var(--ease-out),
+			box-shadow var(--dur-base) var(--ease-out),
+			opacity var(--dur-base) var(--ease-out);
+	}
+	.lp__card--pair {
+		border-color: var(--ember-500);
+	}
+	.lp__row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 10px;
+		justify-content: space-between;
+	}
+	.lp__row--tight {
+		justify-content: flex-start;
+	}
+	.lp__card--pair > .lp__row:first-child {
+		justify-content: flex-start;
+	}
+	.lp__gpu {
+		margin-left: auto;
+		font-size: 9.5px;
+		color: var(--muted);
+	}
+	.lp__name {
+		font-weight: 600;
+		font-size: 14px;
+	}
+	.lp__hint {
+		font-size: 12px;
+		color: var(--bone-300);
+	}
+	.lp__sub {
+		overflow-wrap: anywhere;
+		margin-top: 2px;
+		font-size: 10px;
+		color: var(--muted);
+	}
+	.lp__pin {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		font-size: 13px;
+	}
+	.lp__pin i {
+		display: grid;
+		place-items: center;
+		width: 26px;
+		height: 30px;
+		font-style: normal;
+		border: 1px solid var(--carbon-600);
+		border-radius: 4px;
+		background: var(--carbon-850);
+	}
+	.lp__pin i.on {
+		border-color: var(--ember-500);
+		color: var(--ember-500);
+	}
+	.lp__pin b {
+		font-weight: 400;
+		color: var(--muted);
+	}
+	.lp__btn {
+		display: inline-flex;
+		align-items: center;
+		min-height: 32px;
+		padding: 0 14px;
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--carbon-600);
+		font-size: 13px;
+		font-weight: 600;
+		transition: box-shadow var(--dur-base) var(--ease-out);
+	}
+	.lp__btn--ember {
+		background: var(--ember-500);
+		border-color: var(--ember-500);
+		color: var(--ember-ink);
+	}
+
+	/* The step being read lights up its part of the launcher. */
+	[data-step='1'] .lp__card,
+	[data-step='2'] .lp__card {
+		opacity: 0.55;
+	}
+	[data-step='2'] .lp__host {
+		box-shadow:
+			0 0 0 2px var(--ember-500),
+			0 0 18px rgba(255, 122, 31, 0.35);
+	}
+	[data-step='3'] .lp__card[data-spot='connect'] .lp__btn {
+		box-shadow: 0 0 0 2px var(--ember-500);
+	}
+	[data-step='3'] .lp__card--pair {
+		box-shadow: 0 0 18px rgba(255, 122, 31, 0.25);
+	}
+	@media (max-width: 600px) {
+		.lp {
+			grid-template-columns: 52px minmax(0, 1fr);
+		}
+		.lp__main {
+			padding: 16px 12px;
+		}
+		.lp__gpu {
+			display: none;
+		}
+		.lp__pin i {
+			width: 22px;
+		}
+	}
+</style>

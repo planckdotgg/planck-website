@@ -1,0 +1,78 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+	title="Not found · Planck"
+	description="This address has no page. Head back to Planck's home, download, or roadmap."
+	noindex
+>
+	<section class="nf">
+		<div class="wrap nf__inner">
+			<div class="nf__bands" aria-hidden="true">
+				<span></span><span></span><span class="is-lost"></span><span></span>
+			</div>
+			<p class="eyebrow">404 · Frame not delivered</p>
+			<h1 class="display h1">No frame at this address.</h1>
+			<p class="lead nf__lead">
+				The page you asked for does not exist, or it moved. Every other slice arrived fine.
+			</p>
+			<div class="nf__actions">
+				<a class="btn btn--primary btn--lg" href="/">Back to home</a>
+				<a class="btn btn--ghost btn--lg" href="/download">Download</a>
+				<a class="link link--quiet" href="/roadmap">Roadmap <span class="arrow" aria-hidden="true">→</span></a>
+			</div>
+		</div>
+	</section>
+</Base>
+
+<style>
+	.nf {
+		min-height: calc(100vh - var(--nav-h) - 240px);
+		display: flex;
+		align-items: center;
+		padding: 96px 0;
+		background:
+			radial-gradient(50% 70% at 50% 40%, rgba(255, 122, 31, 0.1), transparent 70%),
+			var(--carbon-900);
+	}
+	.nf__inner {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 12px;
+	}
+	.nf__bands {
+		display: grid;
+		gap: 6px;
+		width: 132px;
+		margin-bottom: 28px;
+	}
+	.nf__bands span {
+		height: 10px;
+		border-radius: 2px;
+		background: var(--bone-50);
+	}
+	.nf__bands .is-lost {
+		background: transparent;
+		border: 1px dashed var(--ember-500);
+		transform: translateX(18px);
+		animation: lost 2.4s var(--ease-inout) infinite alternate;
+	}
+	@keyframes lost {
+		to {
+			transform: translateX(34px);
+			opacity: 0.4;
+		}
+	}
+	.nf__lead {
+		max-width: 560px;
+	}
+	.nf__actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 12px;
+		margin-top: 18px;
+	}
+</style>
