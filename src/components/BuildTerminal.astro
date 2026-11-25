@@ -4,7 +4,7 @@ import CopyButton from './CopyButton.astro';
 ---
 
 <div class="term bt" data-build-terminal>
-	<div class="term__bar">
+	<div class="term__bar bt__bar" hidden>
 		<div class="seg" role="tablist" aria-label="Shell">
 			<button
 				class="seg__btn"
@@ -32,7 +32,7 @@ import CopyButton from './CopyButton.astro';
 <span class="em">{BUILD_POSIX[2]}</span></code></pre>
 			<p class="bt__note mono"># zsh / bash · switch tab for Windows PowerShell · requires Go 1.27.4+</p>
 		</div>
-		<div role="tabpanel" id="bt-ps" aria-labelledby="bt-tab-ps" hidden>
+		<div role="tabpanel" id="bt-ps" aria-labelledby="bt-tab-ps">
 			<pre><code id="bt-code-ps">{BUILD_POWERSHELL[0]}
 {BUILD_POWERSHELL[1]}
 <span class="em">{BUILD_POWERSHELL[2]}</span></code></pre>
@@ -51,15 +51,26 @@ import CopyButton from './CopyButton.astro';
 <script>
 	import { tablist } from '../scripts/tabs';
 	for (const root of document.querySelectorAll<HTMLElement>('[data-build-terminal]')) {
+		const bar = root.querySelector<HTMLElement>('.bt__bar');
+		const list = bar?.querySelector('[role="tablist"]') ?? null;
 		const copy = root.querySelector<HTMLButtonElement>('[data-copy]');
-		tablist(root.querySelector('[role="tablist"]'), (tab) => {
+		tablist(list, (tab) => {
 			const panel = tab.getAttribute('aria-controls');
 			if (copy) copy.dataset.copyTarget = panel === 'bt-ps' ? 'bt-code-ps' : 'bt-code-posix';
 		});
+		if (bar) bar.hidden = false;
+		root.dataset.tabsReady = '';
+		list?.querySelector<HTMLElement>('[aria-selected="true"]')?.click();
 	}
 </script>
 
 <style>
+	.bt__bar[hidden] {
+		display: none;
+	}
+	.bt:not([data-tabs-ready]) .bt__panels > [role='tabpanel'] + [role='tabpanel'] {
+		border-top: 1px solid var(--carbon-700);
+	}
 	.bt pre {
 		padding-bottom: 6px;
 	}

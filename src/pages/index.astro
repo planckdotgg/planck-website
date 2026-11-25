@@ -5,7 +5,7 @@ import BuildTerminal from '../components/BuildTerminal.astro';
 import CopyButton from '../components/CopyButton.astro';
 import StreamFrame from '../components/StreamFrame.astro';
 import Base from '../layouts/Base.astro';
-import { BUILD_POSIX_SHORT, REPO } from '../lib/site';
+import { BUILD_POSIX_SHORT, BUILD_POWERSHELL, REPO } from '../lib/site';
 
 const routes = [
 	{
@@ -313,6 +313,9 @@ const free = [
 					<CopyButton target="m-build" ember what="POSIX build" />
 				</div>
 				<pre><code id="m-build">{BUILD_POSIX_SHORT.join('\n')}</code></pre>
+				<noscript>
+					<pre style="border-top: 1px solid var(--carbon-700);"><code>{BUILD_POWERSHELL.join('\n')}</code></pre>
+				</noscript>
 				<p class="meta oss__m-note">Go 1.27.4+ · macOS / POSIX (Windows PowerShell on /download)</p>
 			</div>
 		</div>
