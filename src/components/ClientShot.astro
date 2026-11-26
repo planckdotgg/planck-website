@@ -1,0 +1,765 @@
+---
+import { WORDMARK_P, WORDMARK_SLICE } from '../lib/wordmark';
+
+/**
+ * The Planck desktop client, rebuilt in markup so it stays sharp at any pixel ratio and the
+ * telemetry can keep moving. The layout follows the real MyGo client: an 88 px icon rail, the
+ * Hosts screen, and the session meters the Statistics screen shows.
+ */
+const hosts = [
+	{
+		name: 'bigboi',
+		os: 'Windows 11',
+		spec: 'RTX 4080 · 1080p 120',
+		state: 'connected',
+		status: 'Connected',
+		path: 'LAN',
+		rtt: '0.2 ms',
+		actions: ['Resume', 'Disconnect'],
+		bars: [92, 64, 78, 46],
+	},
+	{
+		name: 'studio-mac',
+		os: 'macOS 27',
+		spec: 'M5 Pro · 1440p 120',
+		state: 'online',
+		status: 'Online',
+		path: 'LAN',
+		rtt: '0.4 ms',
+		extra: '+TS',
+		actions: ['Connect'],
+		bars: [70, 88, 52, 61],
+	},
+	{
+		name: 'laptop',
+		os: 'macOS 27',
+		spec: 'M5 Pro · 1600p 60',
+		state: 'online',
+		status: 'Online',
+		path: 'TS',
+		rtt: '18.0 ms',
+		actions: ['Connect'],
+		bars: [58, 44, 74, 39],
+	},
+	{
+		name: 'cabin-pc',
+		os: 'Windows 11',
+		spec: 'RX 6700 XT · 1080p 60',
+		state: 'relay',
+		status: 'Not paired',
+		path: 'Relay',
+		actions: ['Pair & Connect'],
+		bars: [34, 52, 28, 44],
+	},
+];
+
+const offline = [
+	{
+		name: 'old-rig',
+		os: 'Windows 10',
+		spec: 'GTX 1080 · 1080p 60',
+		action: 'Reconnect',
+		path: 'LAN',
+	},
+	{
+		name: 'guest-pc',
+		os: 'Windows 11',
+		spec: 'Arc A770 · 1440p 60',
+		action: 'Offline',
+		path: 'TS',
+	},
+];
+
+const stages = [
+	{ label: 'Capture', value: '1.60' },
+	{ label: 'Encode', value: '1.41' },
+	{ label: 'Network', value: '0.50' },
+	{ label: 'Decode', value: '0.87' },
+	{ label: 'Present', value: '4.02' },
+];
+
+// Rendered in markup, not from the script, so Astro's scoped styles reach them.
+const frames = Array.from({ length: 38 }, (_, i) => i);
+---
+
+<figure class="shot" data-shot>
+	<div class="shot__glow" aria-hidden="true"></div>
+	<div class="shot__stack">
+	<div class="shot__frame">
+		<div class="app" aria-hidden="true">
+			<nav class="rail">
+				<span class="rail__mark">
+					<svg viewBox="104 36 302 440" xmlns="http://www.w3.org/2000/svg" focusable="false">
+						<path fill-rule="evenodd" d={WORDMARK_P} fill="#F2EFEA"></path>
+						<path fill-rule="evenodd" d={WORDMARK_SLICE} fill="#FF7A1F"></path>
+					</svg>
+				</span>
+				<span class="rail__btn is-on">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6">
+						<rect x="2" y="3.5" width="18" height="12.5" rx="1.6"></rect>
+						<path d="M7.5 19.5 H14.5"></path>
+					</svg>
+				</span>
+				<span class="rail__btn">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6">
+						<path d="M2.5 15.5 L7.5 9 L11.5 12.5 L19.5 4"></path>
+						<path d="M19.5 4 H15" opacity="0.7"></path>
+					</svg>
+				</span>
+				<span class="rail__btn">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6">
+						<path d="M2.5 6 H19.5 M2.5 11 H19.5 M2.5 16 H19.5"></path>
+						<circle cx="7" cy="6" r="2" fill="#0B0C10"></circle>
+						<circle cx="14" cy="11" r="2" fill="#0B0C10"></circle>
+						<circle cx="9" cy="16" r="2" fill="#0B0C10"></circle>
+					</svg>
+				</span>
+				<span class="rail__btn rail__btn--foot">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6">
+						<path d="M2.5 17.5 A6 6 0 0 1 8.5 17.5" opacity="0.8"></path>
+						<path d="M2.5 12.5 A11 11 0 0 1 13.5 17.5" opacity="0.5"></path>
+						<circle cx="3.2" cy="17.5" r="1.2" fill="currentColor" stroke="none"></circle>
+					</svg>
+				</span>
+			</nav>
+
+			<div class="pane">
+				<header class="pane__head">
+					<div>
+						<p class="pane__title">Hosts</p>
+						<p class="pane__sub">4 online on your network and tailnet</p>
+					</div>
+					<span class="ui-btn ui-btn--quiet">Refresh</span>
+				</header>
+
+				<div class="connect">
+					<span class="connect__prompt mono">&gt;_</span>
+					<span class="connect__hint mono">address · name · peer ID · planck.gg/j/… share link</span>
+					<span class="ui-btn ui-btn--primary">Connect</span>
+				</div>
+
+				<div class="grid">
+					{
+						hosts.map((h) => (
+							<article class:list={['card', `card--${h.state}`]}>
+								<div class="card__preview">
+									<div class="card__bars">
+										{h.bars.map((b) => (
+											<span style={`width:${b}%`} />
+										))}
+									</div>
+									<div class="card__row">
+										<span class="tag">
+											<span class="tag__dot" />
+											{h.status}
+										</span>
+										<span class="card__icons mono">⋯</span>
+									</div>
+									<div class="card__path">
+										<span class="chip-path mono">{h.path}</span>
+										{h.rtt && <span class="chip-rtt mono">{h.rtt}</span>}
+										{h.extra && <span class="chip-extra mono">{h.extra}</span>}
+									</div>
+								</div>
+								<div class="card__body">
+									<p class="card__name">{h.name}</p>
+									<p class="card__meta mono">{h.os}</p>
+									<p class="card__meta mono">{h.spec}</p>
+									<div class="card__actions">
+										{h.actions.map((a, i) => (
+											<span
+												class:list={[
+													'ui-btn',
+													i === 0 && h.state === 'connected' ? 'ui-btn--primary' : 'ui-btn--quiet',
+													'ui-btn--wide',
+												]}
+											>
+												{a}
+											</span>
+										))}
+									</div>
+								</div>
+							</article>
+						))
+					}
+					{
+						offline.map((h) => (
+							<article class="card card--offline">
+								<div class="card__preview">
+									<div class="card__bars">
+										{[44, 30, 52, 26].map((b) => (
+											<span style={`width:${b}%`} />
+										))}
+									</div>
+									<div class="card__row">
+										<span class="tag">
+											<span class="tag__dot" />
+											Offline
+										</span>
+										<span class="card__icons mono">⋯</span>
+									</div>
+									<div class="card__path">
+										<span class="chip-path mono">{h.path}</span>
+									</div>
+								</div>
+								<div class="card__body">
+									<p class="card__name">{h.name}</p>
+									<p class="card__meta mono">{h.os}</p>
+									<p class="card__meta mono">{h.spec}</p>
+									<div class="card__actions">
+										<span class="ui-btn ui-btn--quiet ui-btn--wide">{h.action}</span>
+									</div>
+								</div>
+							</article>
+						))
+					}
+				</div>
+
+				<footer class="pane__foot mono">
+					<span class="pane__tailnet">Tailscale connected as <b>watzon@</b></span>
+				<span>2 remembered hosts offline</span>
+			</footer>
+		</div>
+	</div>
+	</div>
+
+		<div class="meter" data-shot-meter>
+			<div class="meter__head">
+				<p class="meter__label mono">Glass to glass</p>
+				<p class="meter__scope mono">bigboi · 60 s</p>
+			</div>
+			<p class="meter__big">
+				<span data-shot-g2g>8.4</span><span class="meter__unit">ms p50</span>
+			</p>
+			<div class="meter__split" aria-hidden="true">
+				{stages.map((_, i) => <span class={`meter__seg meter__seg--${i}`} />)}
+			</div>
+			<dl class="meter__stages">
+				{
+					stages.map((s) => (
+						<div>
+							<dt class="mono">{s.label}</dt>
+							<dd class="mono">{s.value}</dd>
+						</div>
+					))
+				}
+			</dl>
+			<div class="meter__graph" data-shot-graph aria-hidden="true">
+				{frames.map(() => <span style="height:34%" />)}
+			</div>
+			<p class="meter__foot mono">
+				<span>120 fps · 8.33 ms budget</span><span class="meter__ok">direct</span>
+			</p>
+		</div>
+	</div>
+</figure>
+
+<script>
+	import '../scripts/shot';
+</script>
+
+<style>
+	.shot {
+		position: relative;
+		margin: 0;
+		display: flex;
+		justify-content: center;
+		padding-inline: max(var(--gutter), (100% - 1560px) / 2);
+	}
+	.shot__glow {
+		position: absolute;
+		left: 50%;
+		top: -6%;
+		width: min(1500px, 108%);
+		height: 70%;
+		transform: translateX(-50%);
+		pointer-events: none;
+		background: radial-gradient(
+			ellipse 54% 62% at 50% 40% in oklab,
+			#ff7a1f2e 0%,
+			#e8650c12 42%,
+			#00000000 74%
+		);
+	}
+	/* The window runs wider than the text column, so the fold reads as a screen, not a card. */
+	.shot__stack {
+		position: relative;
+		width: 100%;
+		max-width: 1560px;
+	}
+	.shot__frame {
+		position: relative;
+		width: 100%;
+		aspect-ratio: 1440 / 900;
+		border: 1px solid #262a33;
+		border-radius: 14px;
+		overflow: clip;
+		background: #0e0f12;
+		box-shadow:
+			#ff7a1f1f 0 0 80px,
+			#000000e6 0 44px 90px -24px,
+			#00000080 0 8px 24px;
+	}
+
+	/* The client. Every size is a share of the frame, so the whole app scales as one piece. */
+	.app {
+		--u: 0.0694cqw; /* 1 px of the real 1440-wide client */
+		container-type: size;
+		position: absolute;
+		inset: 0;
+		display: flex;
+		font-size: calc(var(--u) * 14);
+		background: #0e0f12;
+	}
+	.rail {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: calc(var(--u) * 10);
+		width: calc(var(--u) * 88);
+		padding-block: calc(var(--u) * 22);
+		background: #0b0c10;
+		border-right: 1px solid #1b1e25;
+	}
+	.rail__mark {
+		display: flex;
+		margin-bottom: calc(var(--u) * 18);
+	}
+	.rail__mark svg {
+		width: calc(var(--u) * 26);
+		height: auto;
+	}
+	.rail__btn {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: calc(var(--u) * 56);
+		height: calc(var(--u) * 56);
+		border-radius: calc(var(--u) * 10);
+		color: #767c88;
+	}
+	.rail__btn svg {
+		width: calc(var(--u) * 24);
+		height: calc(var(--u) * 24);
+	}
+	.rail__btn.is-on {
+		background: #16181e;
+		color: var(--text);
+	}
+	.rail__btn.is-on::before {
+		content: '';
+		position: absolute;
+		left: calc(var(--u) * -16);
+		top: calc(var(--u) * 14);
+		width: calc(var(--u) * 3);
+		height: calc(var(--u) * 28);
+		border-radius: calc(var(--u) * 2);
+		background: var(--accent);
+	}
+	.rail__btn--foot {
+		margin-top: auto;
+	}
+
+	.pane {
+		flex: 1 1 auto;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: calc(var(--u) * 20);
+		padding: calc(var(--u) * 26) calc(var(--u) * 34) calc(var(--u) * 22);
+	}
+	.pane__head {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+	}
+	.pane__title {
+		font-stretch: 125%;
+		font-weight: 600;
+		font-size: calc(var(--u) * 30);
+		line-height: 1.1;
+		letter-spacing: -0.03em;
+	}
+	.pane__sub {
+		margin-top: calc(var(--u) * 4);
+		font-size: calc(var(--u) * 12.5);
+		color: var(--text-3);
+	}
+	.ui-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		height: calc(var(--u) * 30);
+		padding-inline: calc(var(--u) * 14);
+		border-radius: calc(var(--u) * 6);
+		font-size: calc(var(--u) * 12.5);
+		font-weight: 600;
+		white-space: nowrap;
+	}
+	.ui-btn--quiet {
+		background: #16181e;
+		border: 1px solid #2b2f38;
+		color: var(--text-2);
+	}
+	.ui-btn--primary {
+		background: var(--accent);
+		color: var(--on-accent);
+	}
+	.ui-btn--wide {
+		flex: 1 1 0;
+		height: calc(var(--u) * 32);
+	}
+
+	.connect {
+		display: flex;
+		align-items: center;
+		gap: calc(var(--u) * 12);
+		height: calc(var(--u) * 44);
+		padding-left: calc(var(--u) * 14);
+		padding-right: calc(var(--u) * 4);
+		border: 1px solid #262a33;
+		border-radius: calc(var(--u) * 8);
+		background: #121419;
+	}
+	.connect__prompt {
+		font-size: calc(var(--u) * 12);
+		color: var(--text-3);
+	}
+	.connect__hint {
+		flex: 1 1 auto;
+		text-align: right;
+		font-size: calc(var(--u) * 11.5);
+		color: #5f6571;
+	}
+	.connect .ui-btn--primary {
+		height: calc(var(--u) * 36);
+		padding-inline: calc(var(--u) * 26);
+		border-radius: calc(var(--u) * 6);
+		font-size: calc(var(--u) * 13);
+	}
+
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: calc(var(--u) * 14);
+	}
+	.card {
+		display: flex;
+		flex-direction: column;
+		border: 1px solid #23262e;
+		border-radius: calc(var(--u) * 8);
+		overflow: clip;
+		background: #101218;
+	}
+	.card--connected {
+		border-color: #6a3d1b;
+	}
+	.card__preview {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: calc(var(--u) * 8);
+		padding: calc(var(--u) * 10);
+		background: #0a0b0f;
+		border-bottom: 1px solid #1d2028;
+	}
+	.card--connected .card__preview {
+		background: linear-gradient(in oklab 160deg, #2a1708 0%, #140d0b 100%);
+	}
+	.card__row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		order: -1;
+	}
+	.card__bars {
+		display: flex;
+		flex-direction: column;
+		gap: calc(var(--u) * 5);
+		padding-block: calc(var(--u) * 4);
+	}
+	.card__bars span {
+		height: calc(var(--u) * 4);
+		border-radius: calc(var(--u) * 2);
+		background: #20242d;
+	}
+	.card--connected .card__bars span {
+		background: #ff7a1f;
+		opacity: 0.85;
+	}
+	.card--online .card__bars span {
+		background: #2f5f4d;
+	}
+	.card--relay .card__bars span {
+		background: #4a4225;
+	}
+	.tag {
+		display: inline-flex;
+		align-items: center;
+		gap: calc(var(--u) * 6);
+		font-size: calc(var(--u) * 11);
+		font-weight: 600;
+		color: var(--text-2);
+	}
+	.tag__dot {
+		width: calc(var(--u) * 6);
+		height: calc(var(--u) * 6);
+		border-radius: 50%;
+		background: #5c6270;
+	}
+	.card--connected .tag {
+		color: var(--accent);
+	}
+	.card--connected .tag__dot {
+		background: var(--accent);
+	}
+	.card--online .tag__dot {
+		background: var(--direct);
+	}
+	.card--relay .tag__dot {
+		background: var(--relay);
+	}
+	.card__icons {
+		font-size: calc(var(--u) * 12);
+		color: #5f6571;
+		letter-spacing: 0.2em;
+	}
+	.card__path {
+		display: flex;
+		align-items: center;
+		gap: calc(var(--u) * 6);
+	}
+	.chip-path,
+	.chip-rtt,
+	.chip-extra {
+		display: inline-flex;
+		align-items: center;
+		height: calc(var(--u) * 18);
+		padding-inline: calc(var(--u) * 7);
+		border-radius: calc(var(--u) * 4);
+		font-size: calc(var(--u) * 10.5);
+		background: #181b22;
+		border: 1px solid #272b34;
+		color: var(--text-2);
+	}
+	.chip-rtt {
+		background: transparent;
+		border-color: transparent;
+		color: var(--direct);
+	}
+	.card--connected .chip-rtt {
+		color: var(--focus);
+	}
+	.card--relay .chip-path {
+		border-color: #5a4d20;
+		color: var(--relay);
+	}
+	.chip-extra {
+		background: transparent;
+		border-color: transparent;
+		color: var(--text-3);
+	}
+	.card__body {
+		display: flex;
+		flex-direction: column;
+		gap: calc(var(--u) * 2);
+		padding: calc(var(--u) * 12) calc(var(--u) * 12) calc(var(--u) * 12);
+	}
+	.card__name {
+		font-stretch: 125%;
+		font-weight: 600;
+		font-size: calc(var(--u) * 17);
+		letter-spacing: -0.02em;
+	}
+	.card__meta {
+		font-size: calc(var(--u) * 10.5);
+		line-height: 1.5;
+		color: var(--text-3);
+	}
+	.card__actions {
+		display: flex;
+		gap: calc(var(--u) * 8);
+		margin-top: calc(var(--u) * 12);
+	}
+
+	.pane__foot {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-top: auto;
+		padding-top: calc(var(--u) * 14);
+		border-top: 1px solid #1b1e25;
+		font-size: calc(var(--u) * 11);
+		color: var(--text-3);
+	}
+	.pane__tailnet b {
+		color: var(--direct);
+		font-weight: 500;
+	}
+
+	/* The one live thing on the page: real session meters, ticking, breaking the window edge. */
+	.meter {
+		position: absolute;
+		right: clamp(-30px, -2.2vw, -12px);
+		bottom: clamp(-34px, -2.6vw, -16px);
+		width: min(352px, 30%);
+		padding: 18px 20px 16px;
+		border-radius: 12px;
+		border: 1px solid #3a3f4d;
+		background: #0e0f12f5;
+		backdrop-filter: blur(16px);
+		box-shadow:
+			#000000bf 0 30px 70px -18px,
+			#ff7a1f26 0 0 50px;
+	}
+	.meter__head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 10px;
+	}
+	.meter__label {
+		font-size: 10px;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+		color: var(--text-3);
+	}
+	.meter__scope {
+		font-size: 10px;
+		color: #5f6571;
+	}
+	.meter__big {
+		display: flex;
+		align-items: baseline;
+		gap: 7px;
+		margin-top: 8px;
+		font-stretch: 125%;
+		font-weight: 600;
+		font-size: 42px;
+		line-height: 1;
+		letter-spacing: -0.04em;
+		color: var(--accent);
+		font-variant-numeric: tabular-nums;
+	}
+	.meter__unit {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: 500;
+		letter-spacing: 0;
+		color: var(--text-3);
+	}
+	.meter__split {
+		display: flex;
+		gap: 2px;
+		margin-top: 14px;
+	}
+	.meter__seg {
+		height: 7px;
+		border-radius: 2px;
+	}
+	.meter__seg--0 {
+		flex: 1.6;
+		background: #ff7a1f;
+	}
+	.meter__seg--1 {
+		flex: 1.41;
+		background: #ff9f55;
+	}
+	.meter__seg--2 {
+		flex: 0.5;
+		background: #ffc794;
+	}
+	.meter__seg--3 {
+		flex: 0.87;
+		background: #ffe1c6;
+	}
+	.meter__seg--4 {
+		flex: 4.02;
+		background: #9db8e8;
+	}
+	.meter__stages {
+		display: flex;
+		justify-content: space-between;
+		gap: 6px;
+		margin: 9px 0 0;
+	}
+	.meter__stages div {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+	}
+	.meter__stages dt {
+		font-size: 9.5px;
+		color: #6b7180;
+	}
+	.meter__stages dd {
+		margin: 0;
+		font-size: 11px;
+		font-weight: 600;
+		color: var(--text);
+		font-variant-numeric: tabular-nums;
+	}
+	.meter__graph {
+		display: flex;
+		align-items: flex-end;
+		gap: 1.5px;
+		height: 42px;
+		margin-top: 14px;
+		padding: 5px 6px;
+		border-radius: 6px;
+		background: #08090c;
+		border: 1px solid #1d2028;
+	}
+	.meter__graph span {
+		flex: 1 1 0;
+		border-radius: 1px;
+		background: #3f4756;
+		transition: height 180ms linear;
+	}
+	.meter__graph span.is-spike {
+		background: var(--fault);
+	}
+	.meter__foot {
+		display: flex;
+		justify-content: space-between;
+		gap: 8px;
+		margin-top: 11px;
+		font-size: 10px;
+		color: var(--text-3);
+	}
+	.meter__ok {
+		color: var(--direct);
+	}
+
+	@media (max-width: 1099px) {
+		.meter {
+			right: 50%;
+			bottom: -30px;
+			width: min(330px, 86%);
+			transform: translateX(50%);
+		}
+	}
+	/* On a phone the whole 1440-wide client would shrink to nothing, so the frame crops into it
+	   instead: the rail and the first hosts stay at a readable size. */
+	@media (max-width: 767px) {
+		.shot {
+			padding-inline: 16px;
+		}
+		.shot__frame {
+			aspect-ratio: 358 / 430;
+			border-radius: 10px;
+		}
+		.app {
+			right: auto;
+			width: 660px;
+		}
+		.meter {
+			position: static;
+			width: auto;
+			margin-top: 16px;
+			transform: none;
+			backdrop-filter: none;
+		}
+	}
+</style>

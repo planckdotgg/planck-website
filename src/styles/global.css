@@ -48,8 +48,13 @@
 	--font-ui: "Archivo", system-ui, sans-serif;
 	--font-mono: "Martian Mono", ui-monospace, monospace;
 
-	--pad: clamp(24px, 10vw, 144px);
-	--nav-pad: clamp(24px, 5vw, 72px);
+	/* One centered measure for the whole site: content stops at --shell, and the gutter only
+	   takes over on screens narrower than that. Sections stay full-bleed; their contents do not. */
+	--gutter: clamp(20px, 5vw, 72px);
+	--shell: 1296px;
+	--shell-text: 1152px;
+	--pad: max(var(--gutter), (100% - var(--shell-text)) / 2);
+	--nav-pad: max(var(--gutter), (100% - var(--shell)) / 2);
 	--nav-h: 76px;
 	--ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 	color-scheme: dark;
