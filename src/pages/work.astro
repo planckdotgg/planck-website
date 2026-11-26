@@ -1,727 +1,503 @@
 ---
-import ChromaCurtain from '../components/ChromaCurtain.astro';
+import PageHero from '../components/PageHero.astro';
 import Base from '../layouts/Base.astro';
 
-const tsFeatures = [
-	{
-		title: 'WhoIs Peer Auth',
-		body: 'Devices signed into your own Tailscale identity connect without PIN prompts. LAN pairing uses a 6-digit inline PIN with pinned certs.',
-	},
-	{
-		title: '1152 B MTU-Safe Datagrams',
-		body: "Sizes media packets for Tailscale's 1280-byte MTU automatically, avoiding silent fragmentation, and steps up to 1452 B on local LAN.",
-	},
-	{
-		title: 'Direct vs. DERP Path Awareness',
-		body: 'Displays LAN Direct, Tailscale Direct, or DERP relay right on the host card and HUD so you always know the real path.',
-	},
+const specs = [
+	{ label: 'CHROMA', value: 'Free 4:4:4 (HEVC on NVIDIA/Intel; PyroWave planned)' },
+	{ label: 'DISPLAYS', value: 'Live multi-monitor, headless Windows (SudoVDA)' },
+	{ label: 'DISCOVERY', value: 'Tailscale LocalAPI and WhoIs auth' },
+	{ label: 'TRANSPORT', value: '1280-byte MTU-safe raw AEAD UDP' },
 ];
-
-const encoders = [
+const code = [
 	{
-		name: 'Windows · NVIDIA NVENC',
-		rig: 'RTX 4080',
-		codecs: 'H.264, HEVC 10-bit, AV1',
-		hdr: 'BT.2020 PQ',
-		yuv444: 'Host encode',
-		encode: '1.41',
-		e2e: '1.71',
+		indent: false,
+		parts: [
+			['kw', 'func'],
+			['plain', ' ConfigureSurface(cfg '],
+			['kw', '*Encoder'],
+			['plain', ') {'],
+		],
 	},
 	{
-		name: 'Windows · AMD AMF',
-		rig: 'RX 6700 XT',
-		codecs: 'H.264, HEVC 10-bit',
-		hdr: 'BT.2020 PQ',
-		yuv444: 'No (4:2:0)',
-		encode: '3.04',
-		e2e: '3.37',
+		indent: true,
+		parts: [
+			['field', 'cfg.Chroma   = '],
+			['str', '"YUV444"'],
+		],
 	},
 	{
-		name: 'Windows · Intel oneVPL',
-		rig: 'UHD 770',
-		codecs: 'H.264, HEVC 10-bit',
-		hdr: 'BT.2020 PQ',
-		yuv444: 'Host encode',
-		encode: '2.31',
-		e2e: '2.72',
+		indent: true,
+		parts: [
+			['field', 'cfg.Codec    = '],
+			['kw', '"HEVC_Main444"'],
+		],
 	},
 	{
-		name: 'macOS · VideoToolbox',
-		rig: 'Apple M5 Pro',
-		codecs: 'HEVC Main / Main10 · 4:2:0',
-		hdr: 'Main10 · 4:2:0',
-		yuv444: 'No (4:2:0)',
-		encode: '5.01',
-		e2e: '6.03',
+		indent: true,
+		parts: [
+			['field', 'cfg.Color    = '],
+			['str', '"FullRange"'],
+		],
 	},
+	{
+		indent: true,
+		parts: [
+			['field', 'cfg.BitDepth = '],
+			['num', '10'],
+		],
+	},
+	{ indent: false, parts: [['plain', '}']] },
 ];
+const sides = ['subsampled', 'full'] as const;
 ---
 
 <Base
-	title="Planck for work: workstation streaming, zero subscription"
-	description="NVENC & oneVPL HEVC 4:4:4 host encode, PyroWave LAN 4:4:4, live display switching, native Tailscale, and Apache-2.0 licensing for personal and commercial desks."
+	title="Work · Planck"
+	description="Your workstation, pixel for pixel: free 4:4:4 chroma, live multi-monitor, headless virtual displays, and zero-PIN Tailscale access."
 	active="work"
 	og="work.jpg"
 >
-	<section class="hero">
-		<div class="wrap">
-			<div class="chip-row">
-				<span class="chip chip--direct">Work & Creative · Commercial use free</span>
-				<span class="chip-text"
-					>NVENC & oneVPL HEVC 4:4:4 host · PyroWave LAN 4:4:4 · Apache-2.0</span
-				>
-			</div>
-			<div class="hero__row">
-				<div>
-					<h1 class="display h1 hero__title">
-						Workstation streaming,<br />zero subscription.
-					</h1>
-					<p class="lead hero__sub">
-						NVENC & oneVPL HEVC 4:4:4 host encode, PyroWave LAN 4:4:4, switch the active display
-						mid-session, and Apache-2.0 licensing.
-					</p>
-					<p class="scope mono">
-						<span class="chip chip--square">Client scope</span>
-						<span><b>Stock clients: HEVC 4:2:0</b> · <span class="c-direct">Use PyroWave for wired-LAN 4:4:4</span></span>
-					</p>
-				</div>
-				<div class="hero__buttons">
-					<a class="btn btn--primary btn--lg" href="/download">Download Planck</a>
-					<a class="btn btn--ghost btn--lg" href="#encoders">Encoder matrix</a>
-				</div>
-			</div>
-			<div class="hero__curtain">
-				<ChromaCurtain />
-			</div>
+	<PageHero
+		title="Your workstation, pixel for pixel."
+		lead="Free 4:4:4 chroma, virtual displays, and native Tailscale access to your own machines."
+		cta={{ href: '/download', label: 'Download Planck' }}
+		zenith="radial-gradient(ellipse 60% 66% at 24% 0% in oklab, #C9D9FF1A 0%, #789BFF08 46%, #00000000 76%)"
+		zenithHeight={340}
+		aura="radial-gradient(ellipse 46% 72% at 78% 54% in oklab, #FF7A1F26 0%, #4CD69B10 46%, #00000000 78%)"
+	>
+		<svg viewBox="0 0 472 296" role="img" aria-label="Display 01 at 4:4:4 with one-to-one chroma, in front of a headless SudoVDA virtual display.">
+			<path d="M16 74 H456 M16 148 H456 M16 222 H456 M118 20 V276 M236 20 V276 M354 20 V276" fill="none" stroke="#F2EFEA0B"></path>
+			<rect x="132" y="34" width="312" height="178" rx="8" fill="#12141A" stroke="#2D323E" stroke-width="1.25" stroke-dasharray="5 5"></rect>
+			<rect x="28" y="84" width="312" height="178" rx="8" fill="#14171E" stroke="#454B59" stroke-width="1.25"></rect>
+			<path d="M28 116 H340" fill="none" stroke="#252933"></path>
+			<path d="M184 84 V262 M28 173 H340" fill="none" stroke="#F2EFEA14"></path>
+			<circle cx="184" cy="173" r="46" fill="#0A0B0E" stroke="#FF7A1F" stroke-width="1.5"></circle>
+			<circle cx="184" cy="173" r="32" fill="none" stroke="#F2EFEA1C"></circle>
+			<rect x="166" y="159" width="8" height="28" rx="1.5" fill="#FF5A5A"></rect>
+			<rect x="180" y="159" width="8" height="28" rx="1.5" fill="#4CD69B"></rect>
+			<rect x="194" y="159" width="8" height="28" rx="1.5" fill="#8FB3FF"></rect>
+			<path d="M184 118 V127 M184 219 V228 M129 173 H138 M230 173 H239" fill="none" stroke="#FF7A1F" stroke-width="1.5"></path>
+			<path d="M354 116 H426 M354 134 H410 M354 152 H420" fill="none" stroke="#343944" stroke-width="1.5"></path>
+			<rect x="354" y="172" width="44" height="6" rx="2" fill="#4CD69B88"></rect>
+			<text x="44" y="101" class="svg-mono" font-size="10" letter-spacing="0.4" fill="#8C919B" dominant-baseline="central">DISPLAY 01 · 4:4:4</text>
+			<text x="428" y="55" class="svg-mono" font-size="10" letter-spacing="0.4" fill="#6E7480" text-anchor="end" dominant-baseline="central">SudoVDA · HEADLESS</text>
+			<text x="158" y="241" class="svg-mono" font-size="10" letter-spacing="0.6" fill="#FFB27A" dominant-baseline="central">1:1 CHROMA</text>
+		</svg>
+	</PageHero>
+
+	<section class="band" aria-labelledby="specs-title">
+		<div class="wash band__warm" aria-hidden="true"></div>
+		<div class="wash band__cool" aria-hidden="true"></div>
+		<div class="band__head">
+			<h2 id="specs-title" class="display h-band">Core workstation specs</h2>
 		</div>
+		<dl class="ledger">
+			{
+				specs.map((s) => (
+					<div class="ledger__row">
+						<dt class="mono">{s.label}</dt>
+						<dd>{s.value}</dd>
+					</div>
+				))
+			}
+		</dl>
 	</section>
 
-	<section class="section">
-		<div class="wrap ts" data-reveal>
-			<div>
-				<p class="eyebrow eyebrow--direct">Remote access · Native Tailscale</p>
-				<h2 class="display h2">Works on your tailnet out of the box.</h2>
-				<p class="lead ts__lead">
-					No open firewall ports, no third-party broker. Reads LocalAPI directly and switches back to
-					LAN automatically at your desk.
+	<div class="canvas">
+		<section class="beat beat--split chroma" aria-labelledby="chroma-title">
+			<div class="wash wash--fill chroma__glow" aria-hidden="true"></div>
+			<div class="beat__copy">
+				<h2 id="chroma-title" class="display h-beat">Full 4:4:4 chroma, free.</h2>
+				<p class="beat-lead">
+					HEVC 4:4:4 ships on NVIDIA and Intel today, followed by PyroWave LAN 4:4:4 in Phase 2.
 				</p>
-				<div class="card ts__card" role="group" aria-label="Tailscale path card (demo UI)">
-					<div class="ts__card-head">
-						<p class="mono c-direct ts__peer"><span class="dot dot--direct"></span>STUDIO-WS · Tailscale direct</p>
-						<span class="chip chip--plain chip--square">Demo UI</span>
-					</div>
-					<div class="ts__cells">
-						<div class="ts__cell">
-							<p class="meta">Peer auth</p>
-							<p>WhoIs verified · No PIN</p>
-						</div>
-						<div class="ts__cell">
-							<p class="meta">UDP datagram</p>
-							<p>1152 B · Direct WireGuard</p>
-						</div>
-					</div>
-					<div class="ts__card-foot mono">
-						<span>Local subnet check: auto-prefers LAN Direct</span>
-						<span class="c-direct">0 DERP hops</span>
-					</div>
-				</div>
+				<p class="beat__rule spec-line spec-line--ember">
+					4:4:4 · HEVC (Now) · PyroWave LAN (Phase 2)
+				</p>
 			</div>
-			<ul class="ts__list">
+			<figure class="split-code" aria-labelledby="split-code-cap">
 				{
-					tsFeatures.map((f) => (
-						<li>
-							<h3>{f.title}</h3>
-							<p class="body2">{f.body}</p>
-						</li>
+					sides.map((side) => (
+						<div class:list={['split-code__half', `split-code__half--${side}`]} aria-hidden={side === 'subsampled' ? 'true' : undefined}>
+							<div class="split-code__card mono">
+								<div class="split-code__top">
+									<span>chroma_pipeline.go</span>
+									<span class="split-code__res">1px hairline · RGB</span>
+								</div>
+								<div class="split-code__lines">
+									{code.map((line) => (
+										<p class:list={['split-code__line', { 'is-indent': line.indent }]}>
+											{line.parts.map(([kind, text]) => (
+												<span class={`c-${kind}`}>{text}</span>
+											))}
+										</p>
+									))}
+								</div>
+								<div class="split-code__swatches">
+									<span class="sw-red" />
+									<span class="sw-ember" />
+									<span class="sw-green" />
+								</div>
+							</div>
+						</div>
 					))
 				}
-			</ul>
-		</div>
-	</section>
+				<span class="split-code__tag split-code__tag--left mono" aria-hidden="true">4:2:0</span>
+				<span class="split-code__tag split-code__tag--right mono" aria-hidden="true">4:4:4</span>
+				<span class="split-code__divider" aria-hidden="true"></span>
+				<figcaption id="split-code-cap" class="sr-only">
+					The same Go code at 4:2:0, with color fringes on thin strokes, and at 4:4:4, clean.
+				</figcaption>
+			</figure>
+		</section>
 
-	<section class="section">
-		<div class="wrap" data-reveal>
-			<p class="eyebrow">Daily work</p>
-			<h2 class="display h2">Built for eight hours at a desk.</h2>
-			<div class="daily">
-				<div>
-					<h3 class="daily__title">Shared Clipboard (Text & PNG)</h3>
-					<p class="body2">
-						Copy code, links, or PNG screenshots between machines. Skips clipboard entries marked
-						concealed or transient.
-					</p>
-				</div>
-				<div>
-					<h3 class="daily__title">Displays & Hotkey Chords</h3>
-					<p class="body2">
-						Switch the active display mid-session without reconnecting, and rebind chords away from your
-						editor or window manager.
-					</p>
-				</div>
-				<div class="card ws" role="group" aria-label="Workspace controls (demo UI)">
-					<div class="ws__head">
-						<p class="mono ws__label"><span class="dot dot--direct"></span>Workspace controls</p>
-						<span class="chip chip--plain chip--square">Demo UI</span>
-					</div>
-					<div class="ws__sub mono">
-						<span>Live display switch</span>
-						<span class="c-direct">One display active</span>
-					</div>
-					<div class="ws__displays">
-						<div class="ws__display">
-							<p>Display 1</p>
-							<p class="mono c-muted">1440p · 240 Hz</p>
-						</div>
-						<div class="ws__display ws__display--on">
-							<p>Display 2 <span class="dot dot--ember"></span></p>
-							<p class="mono c-ember-soft">4K · 120 Hz · Active</p>
-						</div>
-					</div>
-					<div class="ws__line">
-						<p><span class="dot dot--direct"></span> Clipboard synced</p>
-						<p class="mono c-muted">Text & PNG · Concealed guard on</p>
-					</div>
-					<div class="ws__line">
-						<div>
-							<p class="meta">Hotkey chord capture</p>
-							<p>Toggle HUD overlay</p>
-						</div>
-						<p class="ws__keys mono">
-							<kbd class="ws__key ws__key--on">Ctrl + Alt + H</kbd>
-							<kbd class="ws__key">Send ⌃⌥Del</kbd>
-						</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<section class="section" id="encoders">
-		<div class="wrap" data-reveal>
-			<div class="section-head">
-				<div>
-					<p class="eyebrow eyebrow--muted">Compatibility · All 4 GPU vendors in pure Go</p>
-					<h2 class="display h2">What each host GPU encodes today.</h2>
-				</div>
-				<p class="meta">Verified host encode runs · 1080p120 synth · Headless host → decode</p>
-			</div>
-			<div class="card enc">
-				<table>
-					<caption class="sr-only">
-						Host encoder capabilities with host encode p50 and headless host to decode p50,
-						TestLiveSynthHardware, 1080p120 synthetic load, 2026-11-23
-					</caption>
-					<thead>
-						<tr>
-							<th scope="col">Host encoder</th>
-							<th scope="col">Codecs & bit depth</th>
-							<th scope="col">HDR10 host</th>
-							<th scope="col">HEVC 4:4:4</th>
-							<th scope="col" class="num enc__hl">Host encode p50</th>
-							<th scope="col" class="num enc__hl">Headless host → decode p50</th>
-						</tr>
-					</thead>
-					<tbody>
-						{
-							encoders.map((e) => (
-								<tr>
-									<th scope="row">
-										<span class="enc__name">{e.name}</span>
-										<span class="enc__rig mono">{e.rig} · TestLiveSynthHardware</span>
-									</th>
-									<td class="mono" data-label="Codecs">{e.codecs}</td>
-									<td class:list={['mono', { 'c-direct': e.hdr === 'BT.2020 PQ', 'c-muted': e.hdr !== 'BT.2020 PQ' }]} data-label="HDR10 host">
-										{e.hdr}
-									</td>
-									<td class:list={['mono', { 'c-direct': e.yuv444 === 'Host encode', 'c-muted': e.yuv444 !== 'Host encode' }]} data-label="HEVC 4:4:4">
-										{e.yuv444}
-									</td>
-									<td class="num" data-label="Host encode p50">
-										<span class="enc__fig">{e.encode}</span>
-										<span class="mono c-muted enc__ms">ms</span>
-									</td>
-									<td class="num" data-label="Headless host → decode p50">
-										<span class="enc__fig enc__fig--2">{e.e2e}</span>
-										<span class="mono c-muted enc__ms">ms</span>
-									</td>
-								</tr>
-							))
-						}
-					</tbody>
-				</table>
-				<p class="enc__foot mono">
-					TestLiveSynthHardware · 1080p120 synthetic load · 2026-11-23 · Headless host → decode
-					excludes display present · same columns as <a href="/gaming#bench">/gaming</a>
+		<section class="beat beat--stack displays" aria-labelledby="displays-title">
+			<div class="wash wash--fill displays__glow" aria-hidden="true"></div>
+			<div class="beat__head">
+				<h2 id="displays-title" class="display h-beat">Physical monitors or headless Windows.</h2>
+				<p class="beat-lead">
+					Switch live between attached monitors or drive headless Windows virtual displays through
+					SudoVDA.
 				</p>
 			</div>
-			<div class="enc__callouts">
-				<div class="card enc__callout enc__callout--direct">
-					<p class="eyebrow eyebrow--direct">Client decode · Separate from host encode</p>
-					<p class="enc__callout-title">
-						macOS VideoToolbox decode p50: <span class="mono c-direct">0.87 ms</span>
-					</p>
-					<p class="meta">Apple M5 Pro · 1080p120 · docs/spikes/phase0-spike2.md · 2026-11-23</p>
-				</div>
-				<div class="card enc__callout">
-					<p class="eyebrow">Client presentation & 4:4:4 decoder scope</p>
-					<p class="enc__callout-title enc__callout-title--plain">
-						Stock macOS/Windows client decoders advertise 4:4:4 for <span class="c-ember-soft"
-							>PyroWave (LAN intra wavelet)</span
-						>, not HEVC.
-					</p>
-					<p class="meta">macOS Metal EDR handles HDR10 output · Windows client HDR10 planned</p>
-				</div>
-			</div>
-		</div>
-	</section>
+			<figure class="diagram" style="--min: 760px" tabindex="0" aria-label="Display switching diagram">
+				<svg viewBox="0 0 1152 274" role="img" aria-label="planck-host captures display 01 (2560 by 1440 at 144 Hz, active), display 02 (3840 by 2160 at 60 Hz), or a SudoVDA headless virtual display, and planck-client switches between them live without reconnecting.">
+					<path d="M180 132 H260" fill="none" stroke="#3A3F49" stroke-width="1.5"></path>
+					<path d="M260 66 V198" fill="none" stroke="#3A3F49" stroke-width="1.5"></path>
+					<path d="M260 66 H312 M260 198 H312" fill="none" stroke="#3A3F49" stroke-width="1.5"></path>
+					<path d="M512 66 H584 M512 198 H584" fill="none" stroke="#3A3F49" stroke-width="1.25" stroke-dasharray="4 4"></path>
+					<path d="M512 66 H852" fill="none" stroke="#FF7A1F" stroke-width="1.75"></path>
+					<path d="M852 66 V132 H948" fill="none" stroke="#FF7A1F" stroke-width="1.75"></path>
+					<path d="M812 198 H896 V148 H948" fill="none" stroke="#4CD69B" stroke-width="1.75" stroke-dasharray="5 5"></path>
+					<rect x="16" y="78" width="164" height="108" rx="8" fill="#13151B" stroke="#3A3F49" stroke-width="1.25"></rect>
+					<rect x="312" y="18" width="200" height="102" rx="8" fill="#161921" stroke="#FF7A1F" stroke-width="1.5"></rect>
+					<path d="M312 46 H512" fill="none" stroke="#282C36"></path>
+					<rect x="312" y="148" width="200" height="102" rx="8" fill="#13151B" stroke="#343944" stroke-width="1.25"></rect>
+					<path d="M312 176 H512" fill="none" stroke="#242833"></path>
+					<rect x="584" y="148" width="228" height="102" rx="8" fill="#101715" stroke="#4CD69B" stroke-width="1.5" stroke-dasharray="6 4"></rect>
+					<path d="M584 176 H812" fill="none" stroke="#1F362D"></path>
+					<rect x="948" y="78" width="188" height="108" rx="8" fill="#13151B" stroke="#454B59" stroke-width="1.25"></rect>
+					<circle cx="948" cy="132" r="4" fill="#FF7A1F"></circle>
+					<circle cx="948" cy="148" r="4" fill="#4CD69B"></circle>
+					<text x="28" y="116" class="svg-mono" font-size="11.5" font-weight="600" fill="#F2EFEA" dominant-baseline="central">planck-host</text>
+					<text x="28" y="139" class="svg-mono" font-size="9.5" fill="#8C919B" dominant-baseline="central">DXGI / SCK capture</text>
+					<text x="328" y="33" class="svg-mono" font-size="10.5" font-weight="600" fill="#FFB27A" dominant-baseline="central">DISPLAY 01 · ACTIVE</text>
+					<text x="328" y="73" class="svg-ui" font-size="16" font-weight="600" fill="#F2EFEA" dominant-baseline="central">2560 × 1440 · 144 Hz</text>
+					<text x="328" y="97" class="svg-mono" font-size="10" fill="#8C919B" dominant-baseline="central">Physical primary</text>
+					<text x="328" y="163" class="svg-mono" font-size="10.5" fill="#8C919B" dominant-baseline="central">DISPLAY 02 · ATTACHED</text>
+					<text x="328" y="203" class="svg-ui" font-size="16" font-weight="500" fill="#D4D6DC" dominant-baseline="central">3840 × 2160 · 60 Hz</text>
+					<text x="328" y="227" class="svg-mono" font-size="10" fill="#6E7480" dominant-baseline="central">Physical secondary</text>
+					<text x="600" y="163" class="svg-mono" font-size="10.5" font-weight="600" fill="#4CD69B" dominant-baseline="central">SudoVDA · HEADLESS</text>
+					<text x="600" y="203" class="svg-ui" font-size="16" font-weight="600" fill="#F2EFEA" dominant-baseline="central">Virtual Display</text>
+					<text x="600" y="227" class="svg-mono" font-size="10" fill="#8C919B" dominant-baseline="central">No monitor attached</text>
+					<text x="962" y="116" class="svg-mono" font-size="11.5" font-weight="600" fill="#F2EFEA" dominant-baseline="central">planck-client</text>
+					<text x="962" y="139" class="svg-mono" font-size="9.5" fill="#8C919B" dominant-baseline="central">Live display switch</text>
+					<text x="600" y="51" class="svg-mono" font-size="10" letter-spacing="0.4" fill="#FFB27A" dominant-baseline="central">ACTIVE STREAM · ZERO RECONNECT</text>
+				</svg>
+			</figure>
+			<p class="beat__foot spec-line">Multi-monitor · Headless Windows · SudoVDA</p>
+		</section>
 
-	<section class="section closing">
-		<div class="wrap closing__inner" data-reveal>
-			<h2 class="display h2">Free for personal and commercial desks.</h2>
-			<p class="lead">
-				NVENC & oneVPL HEVC 4:4:4 host encode, PyroWave LAN 4:4:4, and live display switching under
-				Apache-2.0, free for personal and commercial use.
-			</p>
-			<div class="closing__actions">
-				<a class="btn btn--primary btn--lg" href="/download">Download Planck</a>
-				<a class="link link--quiet" href="/roadmap"
-					>Track Planck Teams, Linux & simultaneous multi-monitor on /roadmap <span
-						class="arrow"
-						aria-hidden="true">→</span
-					></a
-				>
+		<section class="beat zero-pin" aria-labelledby="pin-title">
+			<div class="wash wash--fill zero-pin__green" aria-hidden="true"></div>
+			<div class="wash horizon" aria-hidden="true"></div>
+			<div class="zero-pin__grid">
+				<figure class="beat__art zero-pin__art">
+					<svg viewBox="0 0 596 292" role="img" aria-label="Laptop, a LocalAPI peer, connects to a workstation tailnet host over direct WireGuard; WhoIs verifies the device with no PIN, and packets stay within a 1280-byte MTU with zero fragmentation.">
+						<rect x="16" y="72" width="128" height="128" rx="8" fill="#13151B" stroke="#343944" stroke-width="1.25"></rect>
+						<rect x="452" y="72" width="128" height="128" rx="8" fill="#13151B" stroke="#343944" stroke-width="1.25"></rect>
+						<path d="M144 114 H452" fill="none" stroke="#4CD69B26" stroke-width="12"></path>
+						<path d="M144 114 H452" fill="none" stroke="#4CD69B" stroke-width="2"></path>
+						<rect x="234" y="96" width="128" height="36" rx="18" fill="#0E1513" stroke="#4CD69B" stroke-width="1.4"></rect>
+						<path d="M144 164 H452" fill="none" stroke="#242833"></path>
+						<rect x="162" y="154" width="38" height="20" rx="3" fill="#1A2C26" stroke="#4CD69B66"></rect>
+						<rect x="208" y="154" width="38" height="20" rx="3" fill="#1E382F" stroke="#4CD69B88"></rect>
+						<rect x="254" y="154" width="38" height="20" rx="3" fill="#24483B" stroke="#4CD69BAA"></rect>
+						<rect x="300" y="154" width="38" height="20" rx="3" fill="#2A5848" stroke="#4CD69BCC"></rect>
+						<rect x="346" y="154" width="38" height="20" rx="3" fill="#1E382F" stroke="#4CD69B88"></rect>
+						<rect x="392" y="154" width="38" height="20" rx="3" fill="#1A2C26" stroke="#4CD69B66"></rect>
+						<path d="M162 204 H430" fill="none" stroke="#3A3F49"></path>
+						<path d="M162 198 V210 M430 198 V210" fill="none" stroke="#5A606C"></path>
+						<circle cx="144" cy="114" r="3.5" fill="#4CD69B"></circle>
+						<circle cx="452" cy="114" r="3.5" fill="#4CD69B"></circle>
+						<text x="32" y="117" class="svg-ui" font-size="14" font-weight="600" fill="#F2EFEA" dominant-baseline="central">Laptop</text>
+						<text x="32" y="139" class="svg-mono" font-size="10" fill="#8C919B" dominant-baseline="central">LocalAPI peer</text>
+						<text x="468" y="117" class="svg-ui" font-size="14" font-weight="600" fill="#F2EFEA" dominant-baseline="central">Workstation</text>
+						<text x="468" y="139" class="svg-mono" font-size="10" fill="#8C919B" dominant-baseline="central">Tailnet host</text>
+						<text x="298" y="114" class="svg-mono" font-size="10.5" font-weight="600" letter-spacing="0.3" fill="#4CD69B" text-anchor="middle" dominant-baseline="central">WhoIs verified</text>
+						<text x="296" y="225" class="svg-mono" font-size="10" letter-spacing="0.4" fill="#8C919B" text-anchor="middle" dominant-baseline="central">1280-BYTE MTU · ZERO FRAGMENTATION</text>
+						<text x="296" y="63" class="svg-mono" font-size="10" letter-spacing="0.4" fill="#6E7480" text-anchor="middle" dominant-baseline="central">DIRECT WIREGUARD · NO PIN</text>
+					</svg>
+				</figure>
+				<div class="beat__copy">
+					<h2 id="pin-title" class="display h-beat">Zero-PIN Tailscale access.</h2>
+					<p class="beat-lead">
+						LocalAPI discovers your tailnet hosts automatically, WhoIs verifies your own devices,
+						and packets stay inside the 1280-byte MTU.
+					</p>
+				</div>
 			</div>
-		</div>
-	</section>
+		</section>
+	</div>
 </Base>
 
 <style>
-	.hero {
-		padding: 30px 0 48px;
-		background:
-			radial-gradient(farthest-corner at 50% 75%, rgba(255, 122, 31, 0.1), transparent 70%),
-			var(--carbon-900);
-	}
-	.hero__row {
-		display: flex;
-		align-items: flex-end;
-		justify-content: space-between;
-		gap: 48px;
-		margin-top: 14px;
-	}
-	.hero__sub {
-		margin-top: 10px;
-		max-width: 800px;
-	}
-	.hero__buttons {
-		display: flex;
-		gap: 12px;
-		flex: none;
-		padding-bottom: 4px;
-	}
-	.scope {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px 12px;
-		margin-top: 14px;
-		font-size: 12px;
-		color: var(--bone-50);
-	}
-	.scope b {
-		font-weight: 600;
-	}
-	.hero__curtain {
-		margin-top: 22px;
-	}
-
-	.ts {
-		display: grid;
-		grid-template-columns: 472px 1fr;
-		gap: 64px;
-		align-items: start;
-	}
-	.ts__lead {
-		margin-top: 14px;
-		font-size: 15px;
-		line-height: 23px;
-	}
-	.ts__card {
-		margin-top: 28px;
-		padding: 18px;
-	}
-	.ts__card-head {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-	.ts__peer {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		font-size: 10.5px;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-	}
-	.ts__cells {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 10px;
-		margin-top: 14px;
-	}
-	.ts__cell {
-		padding: 10px 12px;
-		border: 1px solid var(--carbon-600);
-		border-radius: var(--radius-sm);
-		background: var(--carbon-900);
-		font-size: 13px;
-		font-weight: 600;
-	}
-	.ts__cell .meta {
-		font-weight: 400;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		font-size: 9.5px;
-	}
-	.ts__card-foot {
-		display: flex;
-		justify-content: space-between;
-		margin-top: 16px;
-		font-size: 10.5px;
-		color: var(--bone-300);
-	}
-	.ts__card-foot .c-direct {
-		font-weight: 600;
-		text-transform: uppercase;
-	}
-	.ts__list {
-		border-top: 1px solid var(--carbon-700);
-	}
-	.ts__list li {
-		padding: 24px 0;
-		border-bottom: 1px solid var(--carbon-700);
-	}
-	.ts__list h3 {
-		font-size: 16px;
-		font-weight: 600;
-		margin-bottom: 6px;
-	}
-
-	.daily {
-		display: grid;
-		grid-template-columns: 1fr 1fr 472px;
-		gap: 40px;
-		margin-top: 32px;
-		padding-top: 30px;
-		border-top: 1px solid var(--carbon-700);
-		align-items: start;
-	}
-	.daily__title {
-		font-size: 17px;
-		font-weight: 600;
-		margin-bottom: 12px;
-	}
-	.ws {
-		padding: 20px;
+	.ledger {
+		position: relative;
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
+		border-top: 1px solid var(--bone-rule);
 	}
-	.ws__head,
-	.ws__sub,
-	.ws__line {
+	.ledger__row {
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px;
+		align-items: baseline;
+		gap: 48px;
+		padding-block: 28px;
+		border-bottom: 1px solid var(--bone-rule);
 	}
-	.ws__label {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		font-size: 10.5px;
+	.ledger dt {
+		flex-shrink: 0;
+		width: 220px;
+		font-size: 12px;
 		font-weight: 600;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		line-height: 20px;
+		color: var(--bone-label);
 	}
-	.ws__sub {
-		font-size: 9.5px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--muted);
-	}
-	.ws__displays {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 8px;
-	}
-	.ws__display {
-		padding: 10px 12px;
-		border: 1px solid var(--carbon-600);
-		border-radius: var(--radius-sm);
-		font-size: 13px;
-	}
-	.ws__display .mono {
-		font-size: 10px;
-	}
-	.ws__display--on {
-		border-color: var(--ember-500);
-		background: rgba(255, 122, 31, 0.06);
-	}
-	.ws__display--on p:first-child {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-	.ws__line {
-		padding-top: 12px;
-		border-top: 1px solid var(--carbon-700);
-		font-size: 13px;
-		font-weight: 600;
-	}
-	.ws__line .mono {
-		font-size: 10px;
-		font-weight: 400;
-	}
-	.ws__line .meta {
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		font-size: 9.5px;
-		font-weight: 400;
-	}
-	.ws__keys {
-		display: flex;
-		gap: 6px;
-	}
-	.ws__key {
-		padding: 4px 10px;
-		border: 1px solid var(--carbon-600);
-		border-radius: 4px;
-		font-size: 10.5px;
-		color: var(--bone-300);
-	}
-	.ws__key--on {
-		border-color: var(--ember-500);
-		color: var(--ember-300);
-		font-weight: 600;
+	.ledger dd {
+		font-size: clamp(17px, 1.46vw, 21px);
+		font-weight: 500;
+		letter-spacing: -0.015em;
+		line-height: 1.43;
+		color: var(--bone-ink);
 	}
 
-	.enc {
-		overflow-x: auto;
+	.chroma {
+		padding: 144px var(--pad) 128px;
 	}
-	.enc table {
-		width: 100%;
-		border-collapse: collapse;
-		min-width: 900px;
+	.chroma__glow {
+		background: radial-gradient(ellipse 46% 64% at 74% 50% in oklab, #ff7a1f20 0%, #ffb46b0b 44%, #00000000 76%);
 	}
-	.enc thead th {
-		padding: 14px 20px;
-		text-align: left;
-		font-family: var(--font-mono);
-		font-stretch: 87.5%;
-		font-size: 10px;
-		font-weight: 500;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--muted);
-		background: var(--carbon-800);
-		border-bottom: 1px solid var(--carbon-700);
-		vertical-align: bottom;
+	.split-code {
+		position: relative;
+		flex-shrink: 0;
+		width: 596px;
+		max-width: 100%;
+		aspect-ratio: 596 / 372;
+		overflow: clip;
+		border-radius: 10px;
+		border: 1px solid #2f3440;
+		background: #090a0e;
+		box-shadow: #000000b8 0 24px 64px;
+		container-type: inline-size;
 	}
-	.enc thead th.enc__hl {
-		color: var(--bone-50);
+	.split-code__half {
+		position: absolute;
+		inset: 0;
 	}
-	.enc .num {
-		text-align: right;
-		white-space: nowrap;
+	.split-code__half--subsampled {
+		clip-path: inset(0 50% 0 0);
 	}
-	.enc tbody tr + tr {
-		border-top: 1px solid var(--carbon-700);
+	.split-code__half--full {
+		clip-path: inset(0 0 0 50%);
 	}
-	.enc tbody th,
-	.enc tbody td {
-		padding: 18px 20px;
-		text-align: left;
+	.split-code__card {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: 16px;
+		padding-inline: 13.9cqi;
+		font-size: 12px;
+		line-height: 22px;
+	}
+	.split-code__top {
+		display: flex;
+		justify-content: space-between;
+		padding-bottom: 12px;
+		border-bottom: 1px solid #222631;
 		font-size: 11px;
+		line-height: 14px;
+		color: var(--text-3);
 	}
-	.enc tbody td.mono {
-		color: var(--bone-300);
+	.split-code__top span:first-child {
+		letter-spacing: 0.04em;
 	}
-	.enc tbody td.c-direct {
+	.split-code__half--full .split-code__res {
+		color: var(--text);
+	}
+	.split-code__lines {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	.split-code__line {
+		white-space: pre;
+		color: #c2c5ce;
+	}
+	.split-code__line.is-indent {
+		padding-left: 18px;
+	}
+	.c-field {
+		color: #d4d6dc;
+	}
+	.split-code__swatches {
+		display: flex;
+		gap: 18px;
+		padding-top: 14px;
+		border-top: 1px solid #222631;
+	}
+	.split-code__swatches span {
+		width: 84px;
+		height: 2px;
+	}
+	.split-code__half--full .c-kw,
+	.split-code__half--full .c-num {
+		color: var(--accent);
+	}
+	.split-code__half--full .c-str {
 		color: var(--direct);
 	}
-	.enc tbody td.c-muted {
-		color: var(--muted);
+	.split-code__half--full .sw-red {
+		background: var(--fault);
 	}
-	.enc tbody th {
-		font-weight: 400;
+	.split-code__half--full .sw-ember {
+		background: var(--accent);
 	}
-	.enc__name {
-		display: block;
-		font-size: 14px;
-		font-weight: 600;
+	.split-code__half--full .sw-green {
+		background: var(--direct);
 	}
-	.enc__rig {
-		display: block;
-		margin-top: 3px;
-		font-size: 9.5px;
-		color: var(--muted);
+	.split-code__half--subsampled .c-kw {
+		color: #d9783b;
+		text-shadow:
+			#782e0e73 1px 0 0,
+			#782e0e59 -1px 0 0;
 	}
-	.enc tbody td.num {
-		text-align: right;
+	.split-code__half--subsampled .c-num {
+		color: #e38952;
+		text-shadow:
+			#782e0e73 1px 0 0,
+			#782e0e59 -1px 0 0;
 	}
-	.enc__fig {
-		font-family: var(--font-display);
-		font-stretch: 125%;
-		font-weight: 600;
-		font-size: 22px;
-		letter-spacing: -0.02em;
+	.split-code__half--subsampled .c-str {
+		color: #58b88e;
+		text-shadow:
+			#185c4073 1px 0 0,
+			#185c4059 -1px 0 0;
 	}
-	.enc__fig--2 {
-		color: var(--bone-300);
+	.split-code__half--subsampled .sw-red {
+		background: #d95a5a;
+		box-shadow:
+			#78181873 1px 0 0,
+			#78181859 -1px 0 0;
 	}
-	.enc__ms {
-		font-size: 10px;
+	.split-code__half--subsampled .sw-ember {
+		background: #d9783b;
+		box-shadow:
+			#782e0e73 1px 0 0,
+			#782e0e59 -1px 0 0;
 	}
-	.enc tbody td:nth-child(6) {
-		border-left: 1px solid var(--carbon-700);
+	.split-code__half--subsampled .sw-green {
+		background: #58b88e;
+		box-shadow:
+			#185c4073 1px 0 0,
+			#185c4059 -1px 0 0;
 	}
-	.enc__foot {
-		padding: 12px 20px;
-		border-top: 1px solid var(--carbon-700);
-		font-size: 10px;
-		color: var(--muted);
-	}
-	.enc__foot a {
-		color: var(--bone-300);
-		text-decoration: underline;
-		text-underline-offset: 3px;
-	}
-	.enc__callouts {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 16px;
-		margin-top: 16px;
-	}
-	.enc__callout {
-		padding: 18px 22px;
-	}
-	.enc__callout--direct {
-		border-left: 3px solid var(--direct);
-	}
-	.enc__callout-title {
-		font-size: 15px;
-		font-weight: 600;
-		margin-bottom: 6px;
-	}
-	.enc__callout-title .mono {
-		font-size: 16px;
-	}
-	.enc__callout-title--plain {
+	.split-code__tag {
+		position: absolute;
+		top: 20px;
+		font-size: 10.5px;
 		font-weight: 500;
-		font-size: 14px;
+		letter-spacing: 0.06em;
+		line-height: 14px;
+		color: var(--text-3);
 	}
-
-	.closing {
-		background:
-			radial-gradient(50% 90% at 50% 50%, rgba(255, 122, 31, 0.09), transparent 70%),
-			var(--carbon-900);
-		text-align: center;
+	.split-code__tag--left {
+		left: 37.6%;
 	}
-	.closing__inner {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 14px;
+	.split-code__tag--right {
+		left: 53.4%;
+		font-weight: 600;
+		color: var(--focus);
 	}
-	.closing__actions {
-		display: flex;
-		align-items: center;
-		gap: 18px;
-		margin-top: 18px;
+	.split-code__divider {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 50%;
+		width: 1px;
+		margin-left: -0.5px;
+		background: var(--accent);
 	}
-
-	@media (max-width: 1100px) {
-		.hero__row {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 20px;
+	@container (max-width: 480px) {
+		.split-code__card {
+			gap: 10px;
+			padding-inline: 7cqi;
+			font-size: 10px;
+			line-height: 18px;
 		}
-		.ts,
-		.daily {
-			grid-template-columns: 1fr;
-			gap: 32px;
-		}
-		.enc__callouts {
-			grid-template-columns: 1fr;
-		}
-	}
-	@media (max-width: 760px) {
-		.enc {
-			overflow: visible;
-		}
-		.enc table,
-		.enc tbody,
-		.enc tr,
-		.enc th,
-		.enc td {
-			display: block;
-			min-width: 0;
-		}
-		.enc thead {
-			display: none;
-		}
-		.enc tbody tr {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			padding: 14px 16px;
-			gap: 8px 12px;
-		}
-		.enc tbody th {
-			grid-column: 1 / -1;
-			padding: 0;
-		}
-		.enc tbody td,
-		.enc tbody td.num {
-			padding: 0;
-			text-align: left;
-			border: 0;
-		}
-		.enc tbody td::before {
-			content: attr(data-label);
-			display: block;
-			font-family: var(--font-mono);
-			font-size: 9px;
-			letter-spacing: 0.06em;
-			text-transform: uppercase;
-			color: var(--muted);
-		}
-		.enc tbody td:nth-child(6) {
-			border-left: 0;
-		}
-	}
-	@media (max-width: 600px) {
-		.hero__buttons {
-			width: 100%;
-			flex-direction: column;
-		}
-		.ts__cells {
-			grid-template-columns: 1fr;
-		}
-		.ts__card-foot {
-			flex-direction: column;
+		.split-code__lines {
 			gap: 4px;
 		}
-		.ws__displays {
-			grid-template-columns: 1fr;
+		.split-code__top {
+			font-size: 9px;
 		}
-		.ws__line {
-			flex-direction: column;
+		.split-code__swatches span {
+			width: 60px;
+		}
+	}
+
+	.displays {
+		gap: 56px;
+	}
+	.displays__glow {
+		background: radial-gradient(ellipse 60% 54% at 54% 58% in oklab, #4cd69b14 0%, #ff7a1f10 48%, #00000000 76%);
+	}
+
+	.zero-pin {
+		padding: 120px var(--pad) 156px;
+	}
+	.zero-pin__green {
+		background: radial-gradient(ellipse 46% 56% at 28% 42% in oklab, #4cd69b1a 0%, #4cd69b06 44%, #00000000 76%);
+	}
+	.zero-pin__grid {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 72px;
+	}
+	.zero-pin__art {
+		width: 596px;
+	}
+
+	@media (max-width: 1199px) {
+		.zero-pin__grid {
+			flex-direction: column-reverse;
 			align-items: flex-start;
+			gap: 48px;
 		}
-		.closing__actions {
+		.split-code,
+		.zero-pin__art {
+			align-self: center;
+		}
+	}
+	@media (max-width: 767px) {
+		.ledger__row {
 			flex-direction: column;
+			gap: 6px;
+			padding-block: 20px;
+		}
+		.ledger dt {
+			width: auto;
+		}
+		.chroma,
+		.zero-pin {
+			padding-block: 64px;
+		}
+		.displays {
+			gap: 32px;
 		}
 	}
 </style>

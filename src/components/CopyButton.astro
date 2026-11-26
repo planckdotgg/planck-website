@@ -3,25 +3,50 @@ interface Props {
 	/** The id of the element whose text is copied. */
 	target: string;
 	label?: string;
-	ember?: boolean;
 	/** Appended to the visible label for screen readers, e.g. "POSIX build". */
 	what: string;
 }
-const { target, label = 'Copy command', ember = false, what } = Astro.props;
+const { target, label = 'Copy', what } = Astro.props;
 ---
 
 <button
 	type="button"
-	class:list={['copy-btn', { 'copy-btn--ember': ember }]}
+	class="copy-btn mono"
 	data-copy
 	data-copy-target={target}
 	aria-label={`${label}: ${what}`}
 	hidden
 >
-	<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" fill="none">
-		<rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"
-		></rect>
-		<path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5" stroke="currentColor" stroke-width="1.5"></path>
+	<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+		<rect x="5" y="5" width="8.5" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"></rect>
+		<path d="M11 5 V3.5 C11 2.7 10.3 2 9.5 2 H3.5 C2.7 2 2 2.7 2 3.5 V9.5 C2 10.3 2.7 11 3.5 11 H5" fill="none" stroke="currentColor" stroke-width="1.4"></path>
 	</svg>
 	<span data-copy-label aria-live="polite">{label}</span>
 </button>
+
+<style>
+	.copy-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		min-height: 28px;
+		padding: 4px 6px;
+		margin-right: -6px;
+		border-radius: 6px;
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 14px;
+		color: var(--text-3);
+		white-space: nowrap;
+		transition: color 120ms var(--ease-out);
+	}
+	.copy-btn[hidden] {
+		display: none;
+	}
+	.copy-btn:hover {
+		color: var(--text);
+	}
+	.copy-btn[data-copied] {
+		color: var(--direct);
+	}
+</style>

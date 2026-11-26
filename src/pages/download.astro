@@ -1,941 +1,392 @@
 ---
-import CopyButton from '../components/CopyButton.astro';
-import LauncherPreview from '../components/LauncherPreview.astro';
+import BuildTerminal from '../components/BuildTerminal.astro';
+import PageHero from '../components/PageHero.astro';
 import Base from '../layouts/Base.astro';
-import { BUILD_POSIX, BUILD_POWERSHELL, RELEASES, REPO } from '../lib/site';
+import { REPO } from '../lib/site';
 
-const steps = [
+const vendors = [
 	{
-		title: 'Get the binaries',
-		body: 'Build bin/planck-host and bin/planck-client from source today. Prebuilt installers arrive with the first GitHub Release.',
+		platform: 'WINDOWS · D3D11',
+		name: 'NVIDIA NVENC',
+		spec: 'HEVC / AV1 · 4:4:4 · 1.41 ms p50',
+		color: '#FF8912',
 	},
 	{
-		title: 'Launch planck-client and turn on Hosting',
-		body: 'On the machine you want to reach, open planck-client and switch on Hosting at the bottom of the rail. Prefer a terminal or a headless box? Run bin/planck-host instead.',
+		platform: 'WINDOWS · D3D11',
+		name: 'AMD AMF',
+		spec: 'Zero-copy DXGI · 2.78 ms p50',
+		color: '#FFB46B',
 	},
 	{
-		title: 'Pair and connect',
-		body: 'On the other machine, open planck-client and click the host card. Own Tailscale devices trust each other through LocalAPI WhoIs; on LAN, type the 6-digit PIN once. Planck prefers LAN direct and steps to Tailscale automatically.',
-	},
-];
-
-const platforms = [
-	{
-		name: 'Windows',
-		tag: 'x64 · Pure Go',
-		rows: [
-			['Encoders', 'NVENC (H.264, HEVC, AV1) · AMF · Intel oneVPL'],
-			[
-				'Color & HDR10',
-				'HEVC 4:4:4 host encode (NVENC/oneVPL) · PyroWave LAN 4:4:4 · BT.2020 PQ host encode',
-			],
-			['LAN codec', 'Optional PyroWave intra-frame wavelet (wired LAN)'],
-			['Virtual audio', 'PlanckVAD (WDM/WaveRT · manual install) + WASAPI Opus'],
-			['Display & pad', 'Live switching · SudoVDA & ViGEmBus (third-party)'],
-			['Networking', 'LAN direct · Native Tailscale LocalAPI & WhoIs · PIN'],
-		],
+		platform: 'WINDOWS · D3D11',
+		name: 'Intel oneVPL',
+		spec: 'VDEnc LowPower · 4:4:4 · API 2.8',
+		color: '#FFD1A3',
 	},
 	{
-		name: 'macOS',
-		tag: 'arm64 & x64 · Pure Go',
-		rows: [
-			['Encoders', 'Apple VideoToolbox (HEVC Main / Main10 · 4:2:0)'],
-			['Color & HDR10', 'macOS client presentation: Metal EDR (HDR10) · Host encode: 4:2:0 only'],
-			[
-				'Decode',
-				'0.87 ms decode p50 (Apple M5 Pro · 1080p120 · docs/spikes/phase0-spike2.md · 2026-11-23) · zero-copy',
-			],
-			['Virtual audio', 'PlanckAudio.driver (CoreAudio HAL · manual install)'],
-			['Display & pad', 'Live switching · Pure-Go IOHIDManager gamepad client'],
-			['Networking', 'LAN direct · Native Tailscale LocalAPI & WhoIs · PIN'],
-		],
+		platform: 'MACOS · METAL',
+		name: 'Apple VideoToolbox',
+		spec: 'SCK + Metal EDR · 0.87 ms dec',
+		color: '#C9D9FF',
 	},
-];
-
-const bench = [
-	{ state: 'Planned', name: 'Linux Host & Client', body: 'Pure-Go native Linux build.' },
-	{ state: 'Planned', name: 'iOS, iPad & Apple TV', body: 'Native Apple clients.' },
-	{ state: 'Planned', name: 'Android TV', body: 'Living-room client.' },
-	{ state: 'Not available', name: 'Web Browser', body: 'Native GPU present only.' },
 ];
 ---
 
 <Base
-	title="Download Planck: Windows & macOS, or build from source"
-	description="Get Planck's pure-Go planck-host and planck-client for Windows and macOS. Build from source today with Go 1.27.4+; release downloads appear automatically when published."
+	title="Download · Planck"
+	description="Build planck-host and planck-client from source for Windows or macOS. Pure Go, CGO_ENABLED=0, four GPU vendors."
 	active="download"
+	og="download.jpg"
 >
-	<section class="hero">
-		<div class="wrap">
-			<div class="chip-row">
-				<span class="chip">Download · Windows & macOS</span>
-				<span class="chip-text">Go 1.27.4+ · CGO_ENABLED=0 · Apache-2.0</span>
-			</div>
-			<div class="hero__row">
-				<div>
-					<h1 class="display h1 hero__title">Download Planck.</h1>
-					<p class="lead hero__sub">
-						Native pure-Go <code>planck-host</code> and <code>planck-client</code> for Windows and
-						macOS. Zero Rust, zero Electron, zero account required.
-					</p>
-				</div>
-				<a class="btn btn--ghost hero__repo" href={REPO} rel="noopener"
-					>View repository on GitHub <span aria-hidden="true">↗</span></a
-				>
-			</div>
+	<PageHero
+		title="Two native binaries."
+		lead="Compile planck-host and planck-client for Windows or macOS directly from source."
+		cta={{ href: REPO, label: 'View source on GitHub', arrow: true }}
+		zenith="radial-gradient(ellipse 58% 64% at 22% 0% in oklab, #C9D9FF16 0%, #789BFF06 46%, #00000000 76%)"
+		aura="radial-gradient(ellipse 46% 74% at 76% 52% in oklab, #FF7A1F2B 0%, #E8650C12 42%, #00000000 76%)"
+	>
+		<svg viewBox="0 0 472 296" role="img" aria-label="planck-host captures and encodes, sends over AEAD UDP to planck-client, which decodes and presents.">
+			<path d="M12 148 H460" fill="none" stroke="#F2EFEA12" stroke-dasharray="2 6"></path>
+			<path d="M12 72 H460 M12 224 H460" fill="none" stroke="#F2EFEA0A"></path>
+			<path d="M236 18 V278" fill="none" stroke="#F2EFEA10" stroke-dasharray="3 5"></path>
+			<rect x="28" y="48" width="146" height="200" rx="8" fill="#13151B" stroke="#343944" stroke-width="1.25"></rect>
+			<path d="M28 84 H174" fill="none" stroke="#242833"></path>
+			<rect x="46" y="106" width="110" height="10" rx="2" fill="#232732"></rect>
+			<rect x="46" y="126" width="84" height="10" rx="2" fill="#2C313E"></rect>
+			<rect x="46" y="146" width="110" height="12" rx="2" fill="#FF7A1F"></rect>
+			<rect x="46" y="168" width="94" height="10" rx="2" fill="#232732"></rect>
+			<rect x="46" y="188" width="72" height="10" rx="2" fill="#1D2028"></rect>
+			<rect x="298" y="48" width="146" height="200" rx="8" fill="#13151B" stroke="#343944" stroke-width="1.25"></rect>
+			<path d="M298 84 H444" fill="none" stroke="#242833"></path>
+			<rect x="316" y="106" width="110" height="10" rx="2" fill="#232732"></rect>
+			<rect x="316" y="126" width="96" height="10" rx="2" fill="#2C313E"></rect>
+			<rect x="316" y="146" width="110" height="12" rx="2" fill="#4CD69B"></rect>
+			<rect x="316" y="168" width="82" height="10" rx="2" fill="#232732"></rect>
+			<rect x="316" y="188" width="102" height="10" rx="2" fill="#1D2028"></rect>
+			<path d="M174 128 H298" fill="none" stroke="#FFB46B44" stroke-width="1.5" stroke-dasharray="5 5"></path>
+			<path d="M174 152 H298" fill="none" stroke="#FF7A1F" stroke-width="2"></path>
+			<rect x="212" y="145" width="48" height="14" rx="3" fill="#FF7A1F"></rect>
+			<path d="M174 176 H298" fill="none" stroke="#4CD69B55" stroke-width="1.25" stroke-dasharray="3 5"></path>
+			<circle cx="174" cy="152" r="3.5" fill="#F2EFEA"></circle>
+			<circle cx="298" cy="152" r="3.5" fill="#4CD69B"></circle>
+			<path d="M20 40 L28 40 L28 48 M452 40 L444 40 L444 48 M20 256 L28 256 L28 248 M452 256 L444 256 L444 248" fill="none" stroke="#5A606C"></path>
+			<text x="46" y="67" class="svg-mono" font-size="11" font-weight="500" fill="#B6B8BE" dominant-baseline="central">planck-host</text>
+			<text x="316" y="67" class="svg-mono" font-size="11" font-weight="500" fill="#B6B8BE" dominant-baseline="central">planck-client</text>
+			<text x="40" y="227" class="svg-mono" font-size="9" letter-spacing="0.18" fill="#6E7480" dominant-baseline="central">CAPTURE · ENCODE</text>
+			<text x="310" y="227" class="svg-mono" font-size="9" letter-spacing="0.18" fill="#6E7480" dominant-baseline="central">DECODE · PRESENT</text>
+			<text x="206" y="107" class="svg-mono" font-size="10" letter-spacing="0.5" fill="#FFB27A" dominant-baseline="central">AEAD UDP</text>
+		</svg>
+	</PageHero>
 
-			<div class="get">
-				<article class="card get__os" data-os="windows">
-					<div class="get__os-head">
-						<h2 class="display get__os-name">Windows</h2>
-						<span class="chip chip--plain chip--square">x64 · Pure Go</span>
-					</div>
-					<p class="body2">Host and client. NVENC, AMF, or oneVPL encode.</p>
-					<a class="btn btn--primary get__btn" href="/api/download?platform=windows"
-						>Download for Windows</a
-					>
-					<p class="get__mine mono" hidden>Matches this machine</p>
-				</article>
-				<article class="card get__os" data-os="macos">
-					<div class="get__os-head">
-						<h2 class="display get__os-name">macOS</h2>
-						<span class="chip chip--plain chip--square">arm64 & x64 · Pure Go</span>
-					</div>
-					<p class="body2">Host and client. VideoToolbox encode, Metal EDR HDR10 presentation.</p>
-					<a class="btn btn--primary get__btn" href="/api/download?platform=macos"
-						>Download for macOS</a
-					>
-					<p class="get__mine mono" hidden>Matches this machine</p>
-				</article>
-				<article class="card get__check" data-machine-check>
-					<div class="get__os-head">
-						<h2 class="get__check-title">Check this machine</h2>
-						<span class="chip chip--direct chip--square">Local only</span>
-					</div>
-					<p class="body2">
-						Reads your OS and GPU in this browser to pick the right build. Nothing is sent anywhere.
-					</p>
-					<button type="button" class="btn btn--ghost get__btn" data-check-run>Check this machine</button>
-					<dl class="get__result mono" data-check-result hidden>
-						<dt>OS</dt>
-						<dd data-check="os"></dd>
-						<dt>GPU</dt>
-						<dd data-check="gpu"></dd>
-						<dt>Encoder</dt>
-						<dd data-check="enc"></dd>
-					</dl>
-					<p class="get__verdict" data-check-verdict role="status"></p>
-				</article>
+	<section class="band" aria-labelledby="build-title">
+		<div class="wash band__warm" aria-hidden="true"></div>
+		<div class="wash band__cool" aria-hidden="true"></div>
+		<div class="band__head">
+			<h2 id="build-title" class="display h-band">Build from source</h2>
+			<p class="band-lead">Requires Go 1.27+. Signed installers ship in Phase 2.</p>
+		</div>
+		<BuildTerminal />
+		<dl class="strip">
+			<div class="strip__cell">
+				<dt class="mono">BINARIES</dt>
+				<dd>planck-host, planck-client</dd>
 			</div>
+			<div class="strip__cell">
+				<dt class="mono">PLATFORMS</dt>
+				<dd>Windows, macOS</dd>
+			</div>
+			<div class="strip__cell">
+				<dt class="mono">BUILD</dt>
+				<dd>Pure Go (CGO_ENABLED=0)</dd>
+			</div>
+		</dl>
+	</section>
 
-			<div class="card card--dashed get__note">
-				<span class="chip chip--relay chip--square">No release yet</span>
-				<p>
-					The first prebuilt installers (macOS Apple Silicon / Intel · Windows x64) arrive with v0.4 on
-					GitHub Releases. The buttons above fetch them automatically once published; until then they
-					open the Releases page.
+	<div class="canvas">
+		<section class="beat beat--split split" aria-labelledby="split-title">
+			<div class="wash wash--fill split__glow" aria-hidden="true"></div>
+			<div class="beat__copy split__copy">
+				<h2 id="split-title" class="display h-beat">Host and client, cleanly split.</h2>
+				<p class="beat-lead">
+					Run planck-host on the machine rendering frames and planck-client on any Windows or
+					macOS display.
 				</p>
-				<a class="link link--mono link--quiet" href={RELEASES} rel="noopener"
-					>Watch GitHub Releases <span aria-hidden="true">↗</span></a
-				>
-			</div>
-
-			<div class="src" id="source">
-				<div class="src__head">
-					<h2 class="display h3">Build from source today.</h2>
-					<p class="meta">Tested on main · Go 1.27.4+ · CGO_ENABLED=0</p>
-				</div>
-				<div class="term src__card" data-src-tabs>
-					<div class="term__bar src__tabs" hidden>
-						<div class="seg" role="tablist" aria-label="Shell">
-							<button
-								type="button"
-								class="seg__btn"
-								role="tab"
-								id="src-tab-posix"
-								aria-selected="true"
-								aria-controls="src-posix"
-								tabindex="0"><span class="dot dot--ember"></span>POSIX (macOS / Linux)</button
-							>
-							<button
-								type="button"
-								class="seg__btn"
-								role="tab"
-								id="src-tab-ps"
-								aria-selected="false"
-								aria-controls="src-ps"
-								tabindex="-1"><span class="dot dot--ember"></span>PowerShell (Windows)</button
-							>
-						</div>
-					</div>
-					<div class="src__panel" role="tabpanel" id="src-posix" aria-labelledby="src-tab-posix">
-						<div class="src__panel-bar">
-							<p class="src__shell mono">
-								<span class="dot dot--ember"></span><b>POSIX (macOS / Linux)</b>
-								<span class="c-muted">zsh / bash · Go 1.27.4+</span>
-							</p>
-							<CopyButton target="dl-posix" ember what="POSIX build" />
-						</div>
-						<pre><code id="dl-posix">{BUILD_POSIX[0]}
-{BUILD_POSIX[1]}
-<span class="em">{BUILD_POSIX[2]}</span></code></pre>
-						<div class="src__foot mono">
-							<span>Outputs bin/planck-host & bin/planck-client</span>
-							<span class="c-direct">Tested · main</span>
-						</div>
-					</div>
-					<div class="src__panel" role="tabpanel" id="src-ps" aria-labelledby="src-tab-ps">
-						<div class="src__panel-bar">
-							<p class="src__shell mono">
-								<span class="dot dot--ember"></span><b>PowerShell (Windows)</b>
-								<span class="c-muted">PowerShell 5.1+ · Go 1.27.4+</span>
-							</p>
-							<CopyButton target="dl-ps" ember what="PowerShell build" />
-						</div>
-						<pre><code id="dl-ps">{BUILD_POWERSHELL[0]}
-{BUILD_POWERSHELL[1]}
-<span class="em">{BUILD_POWERSHELL[2]}</span></code></pre>
-						<div class="src__foot mono">
-							<span>Outputs bin\planck-host.exe & bin\planck-client.exe</span>
-							<span class="c-direct">Tested · main</span>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<section class="section" id="quick-start">
-		<div class="wrap qs" data-reveal>
-			<div>
-				<p class="eyebrow">Quick start · Install before inventory</p>
-				<h2 class="display h2">Running in three steps.</h2>
-				<ol class="qs__steps" data-steps>
-					{
-						steps.map((s, i) => (
-							<li class="qs__step" data-step-index={i + 1}>
-								<button
-									type="button"
-									class="qs__head"
-									aria-expanded="true"
-									aria-controls={`qs-body-${i + 1}`}
-								>
-									<span class="qs__num mono">0{i + 1}</span>
-									<span class="qs__title">{s.title}</span>
-									<span class="qs__chev" aria-hidden="true" />
-								</button>
-								<p class="qs__body body2" id={`qs-body-${i + 1}`}>
-									{s.body}
-								</p>
-							</li>
-						))
-					}
-				</ol>
-			</div>
-			<div class="qs__preview">
-				<LauncherPreview />
-			</div>
-		</div>
-	</section>
-
-	<section class="section" id="platforms">
-		<div class="wrap" data-reveal>
-			<div class="section-head">
-				<div>
-					<p class="eyebrow">Platforms · Shipped</p>
-					<h2 class="display h2">Windows & macOS, both host and client.</h2>
-				</div>
-				<a class="link link--mono" href="/roadmap"
-					>Full capability ledger on /roadmap <span class="arrow" aria-hidden="true">→</span></a
-				>
-			</div>
-			<div class="plat">
-				{
-					platforms.map((p) => (
-						<article class="card plat__card">
-							<div class="plat__head">
-								<div>
-									<h3 class="display plat__name">{p.name}</h3>
-									<p class="eyebrow eyebrow--direct">Host + client · Shipped</p>
-								</div>
-								<span class="chip chip--plain chip--square">{p.tag}</span>
-							</div>
-							<dl class="plat__rows">
-								{p.rows.map(([k, v]) => (
-									<div class="plat__row">
-										<dt class="mono">{k}</dt>
-										<dd>{v}</dd>
-									</div>
-								))}
-							</dl>
-						</article>
-					))
-				}
-			</div>
-		</div>
-	</section>
-
-	<section class="section" id="drivers">
-		<div class="wrap" data-reveal>
-			<div class="section-head">
-				<div>
-					<p class="eyebrow eyebrow--relay">Optional drivers & virtual audio</p>
-					<h2 class="display h2">Add only what your rig needs.</h2>
-				</div>
-				<p class="section-head__aside">
-					Planck works out of the box without any driver install. Install these only when you want
-					virtual audio, headless displays, or gamepads.
+				<p class="beat__rule spec-line spec-line--ember">
+					planck-host → raw AEAD UDP + RS FEC → planck-client
 				</p>
 			</div>
-			<div class="drv">
-				<article class="card drv__card">
-					<span class="chip chip--direct chip--square">First-party · macOS CoreAudio HAL</span>
-					<h3 class="display drv__name">PlanckAudio.driver (macOS)</h3>
-					<p class="body2">
-						CoreAudio HAL virtual audio plugin for clean isolated host capture without re-routing your
-						desktop speakers.
-					</p>
-					<p class="drv__code mono">
-						Manual install into <b>/Library/Audio/Plug-Ins/HAL/</b> and restart <span class="c-direct"
-							>coreaudiod</span
-						>
-					</p>
-					<a
-						class="link drv__link"
-						href={`${REPO}/blob/main/drivers/audio/darwin/README.md`}
-						rel="noopener">Read the macOS driver guide <span class="arrow" aria-hidden="true">→</span></a
-					>
-				</article>
-				<article class="card drv__card">
-					<span class="chip chip--relay chip--square">First-party · Windows pre-WHQL</span>
-					<h3 class="display drv__name">PlanckVAD (Windows)</h3>
-					<p class="body2">
-						WDM/WaveRT kernel virtual audio driver for isolated host playback until WHQL-signed.
-					</p>
-					<p class="drv__warn" role="note">
-						<b>Spare PC or VM only.</b> Pre-WHQL test-signing lowers kernel code integrity, requires Secure
-						Boot off, and needs a reboot.
-					</p>
-					<a
-						class="link drv__link"
-						href={`${REPO}/blob/main/drivers/audio/windows/README.md`}
-						rel="noopener"
-						>Read full install, cert trust & rollback guide <span class="arrow" aria-hidden="true">→</span></a
-					>
-				</article>
-				<article class="card drv__card">
-					<span class="chip chip--relay chip--square">Third-party · Windows host</span>
-					<h3 class="display drv__name">SudoVDA</h3>
-					<p class="body2">
-						Adds a headless virtual display on Windows so you can turn off your desk monitor and match
-						your client's exact resolution and refresh rate.
-					</p>
-					<p class="drv__meta mono">
-						Windows only · <a href="https://github.com/SudoMaker/SudoVDA" rel="noopener"
-							>Get SudoVDA <span aria-hidden="true">↗</span></a
-						>
-					</p>
-				</article>
-				<article class="card drv__card">
-					<span class="chip chip--relay chip--square">Third-party · Windows host</span>
-					<h3 class="display drv__name">ViGEmBus</h3>
-					<p class="body2">
-						Creates virtual Xbox-class controllers on Windows hosts for Planck's pure-Go IOHIDManager and
-						XInput gamepad passthrough.
-					</p>
-					<p class="drv__meta mono">
-						Xbox-class pads · <a href="https://github.com/nefarius/ViGEmBus" rel="noopener"
-							>Get ViGEmBus <span aria-hidden="true">↗</span></a
-						>
-					</p>
-				</article>
-			</div>
-		</div>
-	</section>
+			<figure class="beat__art diagram split__art" style="--min: 450px">
+				<svg viewBox="0 0 628 292" role="img" aria-label="planck-host renders and encodes; raw AEAD UDP with AES-128-GCM and adaptive Reed-Solomon parity carries frames to planck-client, which decodes and presents. QUIC carries control and key export.">
+					<path d="M16 140 H612" fill="none" stroke="#F2EFEA10" stroke-dasharray="2 6"></path>
+					<path d="M16 220 H612" fill="none" stroke="#F2EFEA0C" stroke-dasharray="2 6"></path>
+					<path d="M114 126 H514" fill="none" stroke="#FF7A1F2E" stroke-width="12" stroke-linecap="round"></path>
+					<path d="M104 126 H524" fill="none" stroke="#FF7A1F" stroke-width="2" stroke-linecap="round"></path>
+					<rect x="210" y="121" width="32" height="10" rx="2" fill="#FF7A1F"></rect>
+					<rect x="254" y="121" width="32" height="10" rx="2" fill="#FF9447"></rect>
+					<rect x="298" y="121" width="32" height="10" rx="2" fill="#FFB27A"></rect>
+					<rect x="342" y="121" width="32" height="10" rx="2" fill="#FF7A1F"></rect>
+					<rect x="386" y="121" width="32" height="10" rx="2" fill="#FF9447"></rect>
+					<path d="M104 156 H524" fill="none" stroke="#FFB46B88" stroke-width="1.5" stroke-dasharray="6 6"></path>
+					<rect x="276" y="152" width="18" height="8" rx="1.5" fill="#FFB46B"></rect>
+					<rect x="334" y="152" width="18" height="8" rx="1.5" fill="#FFB46B"></rect>
+					<path d="M88 160 V220 H540 V160" fill="none" stroke="#3A3F49" stroke-width="1.25" stroke-dasharray="3 4"></path>
+					<circle cx="88" cy="140" r="20" fill="#12141A" stroke="#FF7A1F" stroke-width="1.75"></circle>
+					<circle cx="88" cy="140" r="4" fill="#F2EFEA"></circle>
+					<circle cx="540" cy="140" r="20" fill="#12141A" stroke="#4CD69B" stroke-width="1.75"></circle>
+					<circle cx="540" cy="140" r="4" fill="#F2EFEA"></circle>
+					<text x="40" y="66" class="svg-mono" font-size="12" font-weight="600" fill="#F2EFEA" dominant-baseline="central">planck-host</text>
+					<text x="32" y="85" class="svg-mono" font-size="10" fill="#8C919B" dominant-baseline="central">Render · Encode</text>
+					<text x="596" y="66" class="svg-mono" font-size="12" font-weight="600" fill="#F2EFEA" text-anchor="end" dominant-baseline="central">planck-client</text>
+					<text x="598" y="85" class="svg-mono" font-size="10" fill="#8C919B" text-anchor="end" dominant-baseline="central">Decode · Present</text>
+					<text x="204" y="103" class="svg-mono" font-size="10.5" font-weight="500" letter-spacing="0.42" fill="#FFB27A" dominant-baseline="central">RAW AEAD UDP · AES-128-GCM</text>
+					<text x="226" y="177" class="svg-mono" font-size="10" letter-spacing="0.4" fill="#B6B8BE" dominant-baseline="central">ADAPTIVE RS FEC PARITY</text>
+					<text x="182" y="239" class="svg-mono" font-size="10" letter-spacing="0.3" fill="#6E7480" dominant-baseline="central">QUIC control · ExportKeyingMaterial</text>
+				</svg>
+			</figure>
+		</section>
 
-	<section class="section">
-		<div class="wrap" data-reveal>
-			<div class="section-head section-head--center">
-				<h2 class="display h2">Platforms still on the bench.</h2>
-				<a class="link" href="/roadmap"
-					>See full status ledger on /roadmap <span class="arrow" aria-hidden="true">→</span></a
-				>
+		<section class="beat beat--stack vendors" aria-labelledby="vendors-title">
+			<div class="wash wash--fill vendors__glow" aria-hidden="true"></div>
+			<div class="beat__head vendors__head">
+				<h2 id="vendors-title" class="display h-beat">Four GPU vendors supported.</h2>
+				<p class="beat-lead">One pure-Go build supports every major desktop GPU pipeline out of the box.</p>
 			</div>
-			<ul class="bench">
+			<ul class="vendors__list">
 				{
-					bench.map((b) => (
-						<li class:list={['card', 'bench__card', { 'card--dashed': b.state === 'Planned' }]}>
-							<p class="eyebrow eyebrow--muted">{b.state}</p>
-							<h3 class="bench__name">{b.name}</h3>
-							<p class="body2">{b.body}</p>
+					vendors.map((v) => (
+						<li class="vendor" style={`--tint:${v.color}`}>
+							<span class="vendor__bar" aria-hidden="true" />
+							<span class="vendor__platform mono">{v.platform}</span>
+							<span class="vendor__name">{v.name}</span>
+							<span class="vendor__spec mono">{v.spec}</span>
 						</li>
 					))
 				}
 			</ul>
-		</div>
-	</section>
+		</section>
+
+		<section class="beat tailnet" aria-labelledby="tailnet-title">
+			<div class="wash wash--fill tailnet__green" aria-hidden="true"></div>
+			<div class="wash horizon" aria-hidden="true"></div>
+			<div class="beat--split tailnet__grid">
+				<figure class="beat__art tailnet__art">
+					<svg viewBox="0 0 596 288" role="img" aria-label="Host and client paired over a direct tailnet path, verified without a PIN.">
+						<path d="M56 206 H540" fill="none" stroke="#F2EFEA12" stroke-dasharray="2 6"></path>
+						<path d="M56 206 Q298 34 540 206" fill="none" stroke="#4CD69B24" stroke-width="16" stroke-linecap="round"></path>
+						<path d="M56 206 Q298 34 540 206" fill="none" stroke="#4CD69B" stroke-width="2.25" stroke-linecap="round"></path>
+						<polygon points="298,96 318,120 298,144 278,120" fill="#0E0F12" stroke="#4CD69B" stroke-width="1.75"></polygon>
+						<path d="M292 120 L296.5 124.5 L305 115.5" fill="none" stroke="#4CD69B" stroke-width="1.75" stroke-linecap="square"></path>
+						<rect x="164" y="202" width="28" height="8" rx="1.5" fill="#2A5E4B"></rect>
+						<rect x="200" y="202" width="28" height="8" rx="1.5" fill="#2A5E4B"></rect>
+						<rect x="236" y="202" width="28" height="8" rx="1.5" fill="#3B8C6E"></rect>
+						<rect x="272" y="202" width="28" height="8" rx="1.5" fill="#4CD69B"></rect>
+						<rect x="308" y="202" width="28" height="8" rx="1.5" fill="#3B8C6E"></rect>
+						<rect x="344" y="202" width="28" height="8" rx="1.5" fill="#2A5E4B"></rect>
+						<rect x="380" y="202" width="28" height="8" rx="1.5" fill="#2A5E4B"></rect>
+						<circle cx="56" cy="206" r="14" fill="#12141A" stroke="#FF7A1F" stroke-width="1.75"></circle>
+						<circle cx="56" cy="206" r="4" fill="#F2EFEA"></circle>
+						<circle cx="540" cy="206" r="14" fill="#12141A" stroke="#4CD69B" stroke-width="1.75"></circle>
+						<circle cx="540" cy="206" r="4" fill="#F2EFEA"></circle>
+					</svg>
+				</figure>
+				<div class="beat__copy">
+					<h2 id="tailnet-title" class="display h-beat">Tailnet discovery built in.</h2>
+					<p class="beat-lead">
+						Pair automatically over Tailscale LocalAPI using WhoIs identity on your own devices,
+						with no PIN.
+					</p>
+				</div>
+			</div>
+		</section>
+	</div>
 </Base>
 
-<script>
-	import { checkMachine } from '../scripts/machine';
-	import { tablist } from '../scripts/tabs';
-
-	// Without JavaScript both shells stay stacked and the tab bar stays hidden.
-	const src = document.querySelector<HTMLElement>('[data-src-tabs]');
-	const srcBar = src?.querySelector<HTMLElement>('.src__tabs');
-	if (src && srcBar) {
-		const list = srcBar.querySelector('[role="tablist"]');
-		tablist(list);
-		srcBar.hidden = false;
-		src.dataset.tabsReady = '';
-		list?.querySelector<HTMLElement>('[aria-selected="true"]')?.click();
-	}
-
-	// Quick start: on wide screens every step is open and the one under the pointer or focus
-	// lights its part of the launcher; on phones the steps are an accordion.
-	const steps = document.querySelector<HTMLElement>('[data-steps]');
-	const launcher = document.querySelector<HTMLElement>('[data-launcher]');
-	const narrow = matchMedia('(max-width: 900px)');
-	if (steps && launcher) {
-		const items = [...steps.querySelectorAll<HTMLElement>('.qs__step')];
-		const light = (n: string | undefined) => {
-			if (n) launcher.dataset.step = n;
-			else delete launcher.dataset.step;
-			for (const item of items) item.classList.toggle('is-lit', item.dataset.stepIndex === n);
-		};
-		for (const item of items) {
-			const head = item.querySelector<HTMLButtonElement>('.qs__head');
-			item.addEventListener('pointerenter', () => light(item.dataset.stepIndex));
-			item.addEventListener('focusin', () => light(item.dataset.stepIndex));
-			head?.addEventListener('click', () => {
-				light(item.dataset.stepIndex);
-				if (!narrow.matches) return;
-				const open = head.getAttribute('aria-expanded') === 'true';
-				for (const other of items) {
-					other.querySelector('.qs__head')?.setAttribute('aria-expanded', 'false');
-				}
-				head.setAttribute('aria-expanded', String(!open));
-			});
-		}
-		steps.addEventListener('pointerleave', () => light(undefined));
-		const syncMode = () => {
-			items.forEach((item, i) => {
-				const open = narrow.matches ? i === 0 : true;
-				item.querySelector('.qs__head')?.setAttribute('aria-expanded', String(open));
-			});
-		};
-		narrow.addEventListener('change', syncMode);
-		syncMode();
-	}
-
-	const check = document.querySelector<HTMLElement>('[data-machine-check]');
-	const run = check?.querySelector<HTMLButtonElement>('[data-check-run]');
-	run?.addEventListener('click', async () => {
-		if (!check) return;
-		run.disabled = true;
-		const result = await checkMachine();
-		const set = (key: string, value: string) => {
-			const el = check.querySelector(`[data-check="${key}"]`);
-			if (el) el.textContent = value;
-		};
-		set('os', result.os);
-		set('gpu', result.gpu);
-		set('enc', result.encoder);
-		const dl = check.querySelector<HTMLElement>('[data-check-result]');
-		if (dl) dl.hidden = false;
-		const verdict = check.querySelector<HTMLElement>('[data-check-verdict]');
-		if (verdict) verdict.textContent = result.verdict;
-		for (const card of document.querySelectorAll<HTMLElement>('[data-os]')) {
-			const mine = card.dataset.os === result.platform;
-			card.classList.toggle('is-mine', mine);
-			const tag = card.querySelector<HTMLElement>('.get__mine');
-			if (tag) tag.hidden = !mine;
-		}
-		run.textContent = 'Check again';
-		run.disabled = false;
-	});
-</script>
-
 <style>
-	.hero {
-		padding: 52px 0 88px;
-		background:
-			radial-gradient(50% 60% at 40% 0%, rgba(255, 122, 31, 0.1), transparent 70%),
-			var(--carbon-900);
-	}
-	.hero__row {
+	.strip {
+		position: relative;
 		display: flex;
-		align-items: flex-end;
-		justify-content: space-between;
-		gap: 48px;
-		margin-top: 14px;
+		padding-top: 32px;
+		border-top: 1px solid var(--bone-rule);
 	}
-	.hero__sub {
-		margin-top: 10px;
-		max-width: 760px;
-	}
-	.hero__sub code {
-		color: var(--bone-50);
-		font-size: 0.92em;
-	}
-	.hero__repo {
-		flex: none;
-	}
-
-	.get {
-		display: grid;
-		grid-template-columns: 1fr 1fr 1.1fr;
-		gap: 20px;
-		margin-top: 32px;
-	}
-	.get__os,
-	.get__check {
+	.strip__cell {
+		flex: 1 1 0;
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
-		padding: 24px;
-		transition:
-			border-color var(--dur-base) var(--ease-out),
-			box-shadow var(--dur-base) var(--ease-out);
+		gap: 8px;
+		padding-inline: 28px;
 	}
-	.get__os {
-		border-top: 2px solid var(--ember-500);
+	.strip__cell:first-child {
+		padding-left: 0;
 	}
-	.get__os.is-mine {
-		border-color: var(--ember-500);
-		box-shadow: 0 0 0 1px var(--ember-500);
+	.strip__cell:last-child {
+		padding-right: 0;
 	}
-	.get__os-head {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px;
+	.strip__cell + .strip__cell {
+		border-left: 1px solid var(--bone-rule);
 	}
-	.get__os-name {
-		font-size: 26px;
-		line-height: 32px;
-	}
-	.get__check-title {
-		font-size: 17px;
-		font-weight: 600;
-		line-height: 32px;
-	}
-	.get__btn {
-		margin-top: auto;
-		align-self: flex-start;
-	}
-	.get__mine {
-		font-size: 10px;
-		color: var(--ember-300);
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-	}
-	.get__result {
-		display: grid;
-		grid-template-columns: auto 1fr;
-		gap: 4px 14px;
+	.strip dt {
 		font-size: 11px;
-		line-height: 16px;
-		padding: 12px 14px;
-		border-radius: var(--radius-sm);
-		background: var(--carbon-950);
-		border: 1px solid var(--carbon-700);
-	}
-	.get__result[hidden] {
-		display: none;
-	}
-	.get__result dt {
-		color: var(--muted);
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-	}
-	.get__result dd {
-		color: var(--bone-50);
-		overflow-wrap: anywhere;
-	}
-	.get__verdict {
-		font-size: 14px;
-		line-height: 20px;
-		color: var(--bone-300);
-	}
-	.get__verdict:empty {
-		display: none;
-	}
-	.get__note {
-		display: flex;
-		align-items: center;
-		gap: 18px;
-		margin-top: 20px;
-		padding: 14px 22px;
-		background: transparent;
-	}
-	.get__note p {
-		flex: 1;
-		font-size: 14px;
-		line-height: 21px;
-		color: var(--bone-300);
-	}
-	.get__note .link {
-		flex: none;
-		font-size: 11px;
-	}
-
-	.src {
-		margin-top: 48px;
-	}
-	.src__head {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 16px;
-		margin-bottom: 16px;
-	}
-	.src__card {
-		border-top: 2px solid var(--ember-500);
-	}
-	.src__panel + .src__panel {
-		border-top: 1px solid var(--carbon-700);
-	}
-	[data-tabs-ready] .src__panel + .src__panel {
-		border-top: 0;
-	}
-	.src__tabs[hidden],
-	.src__panel[hidden] {
-		display: none;
-	}
-	.src__panel-bar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px;
-		padding: 10px 14px 0 20px;
-	}
-	[data-tabs-ready] .src__shell b,
-	[data-tabs-ready] .src__shell .dot {
-		display: none;
-	}
-	.src__card pre {
-		font-size: 11px;
-		line-height: 25px;
-	}
-	.src__shell {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		font-size: 11px;
-	}
-	.src__shell b {
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-	}
-	.src__foot {
-		display: flex;
-		justify-content: space-between;
-		gap: 12px;
-		padding: 12px 20px;
-		border-top: 1px solid var(--carbon-700);
-		background: var(--carbon-850);
-		font-size: 10.5px;
-		color: var(--muted);
-	}
-	.src__foot .c-direct {
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-	}
-
-	.qs {
-		display: grid;
-		grid-template-columns: 1fr 540px;
-		gap: 56px;
-		align-items: center;
-	}
-	.qs__steps {
-		margin-top: 28px;
-		border-top: 1px solid var(--carbon-700);
-	}
-	.qs__step {
-		border-bottom: 1px solid var(--carbon-700);
-		padding: 18px 0 18px;
-		transition: background-color var(--dur-base) var(--ease-out);
-	}
-	.qs__step.is-lit .qs__title {
-		color: var(--ember-300);
-	}
-	.qs__head {
-		display: grid;
-		grid-template-columns: 46px 1fr auto;
-		align-items: center;
-		width: 100%;
-		min-height: 28px;
-		text-align: left;
-		cursor: default;
-	}
-	.qs__num {
-		font-size: 15px;
-		font-weight: 600;
-		color: var(--ember-500);
-	}
-	.qs__title {
-		font-size: 17px;
-		font-weight: 600;
-		transition: color var(--dur-fast) var(--ease-out);
-	}
-	.qs__body {
-		padding: 4px 0 0 46px;
-		max-width: 640px;
-	}
-	.qs__chev {
-		display: none;
-	}
-
-	.plat {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 24px;
-	}
-	.plat__card {
-		padding: 32px;
-	}
-	.plat__head {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		padding-bottom: 18px;
-		border-bottom: 1px solid var(--carbon-700);
-	}
-	.plat__name {
-		font-size: 28px;
-		line-height: 34px;
-		margin-bottom: 4px;
-	}
-	.plat__row {
-		display: grid;
-		grid-template-columns: 136px 1fr;
-		gap: 16px;
-		padding: 13px 0;
-		border-bottom: 1px solid var(--carbon-800);
-	}
-	.plat__row:last-child {
-		border-bottom: 0;
-	}
-	.plat__row dt {
-		font-size: 10.5px;
-		line-height: 21px;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--muted);
-	}
-	.plat__row dd {
-		font-size: 14px;
-		line-height: 21px;
-	}
-
-	.drv {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 20px;
-	}
-	.drv__card {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 10px;
-		padding: 24px 26px;
-	}
-	.drv__name {
-		font-size: 21px;
-		line-height: 28px;
-		letter-spacing: -0.01em;
-	}
-	.drv__code {
-		margin-top: 8px;
-		align-self: stretch;
-		padding: 10px 12px;
-		border-radius: var(--radius-sm);
-		background: var(--carbon-950);
-		border: 1px solid var(--carbon-700);
-		font-size: 10.5px;
-		color: var(--bone-300);
-	}
-	.drv__code b {
 		font-weight: 500;
-		color: var(--bone-50);
+		letter-spacing: 0.06em;
+		line-height: 16px;
+		color: var(--bone-label);
 	}
-	.drv__warn {
-		align-self: stretch;
-		padding: 10px 14px;
-		border-radius: var(--radius-sm);
-		border: 1px solid rgba(242, 201, 76, 0.4);
-		border-left: 3px solid var(--relay);
-		background: rgba(242, 201, 76, 0.06);
-		font-size: 13px;
-		line-height: 19px;
-	}
-	.drv__warn b {
+	.strip dd {
+		font-size: 17px;
 		font-weight: 600;
-	}
-	.drv__link {
-		font-size: 14px;
-		color: var(--ember-300);
-	}
-	.drv__meta {
-		font-size: 11px;
-		color: var(--bone-50);
-	}
-	.drv__meta a {
-		display: inline-flex;
-		min-height: 32px;
-		align-items: center;
-		text-decoration: underline;
-		text-decoration-color: var(--carbon-600);
-		text-underline-offset: 3px;
-	}
-	.drv__meta a:hover {
-		text-decoration-color: var(--ember-500);
+		line-height: 24px;
+		color: var(--bone-ink);
 	}
 
-	.section-head--center {
-		align-items: center;
+	.split {
+		padding: 144px var(--pad) 128px;
 	}
-	.bench {
+	.split__glow {
+		background: radial-gradient(ellipse 46% 62% at 74% 50% in oklab, #ff7a1f1c 0%, #4cd69b0d 46%, #00000000 76%);
+	}
+	.split__copy {
+		width: 452px;
+	}
+	.split__art {
+		width: 628px;
+	}
+
+	.vendors {
+		gap: 60px;
+	}
+	.vendors__glow {
+		background: radial-gradient(ellipse 68% 52% at 50% 56% in oklab, #ff891214 0%, #c9d9ff0a 52%, #00000000 78%);
+	}
+	.vendors__head {
+		max-width: 660px;
+	}
+	.vendors__list {
+		position: relative;
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
-		gap: 16px;
+		column-gap: 4px;
 	}
-	.bench__card {
-		padding: 20px;
+	.vendor {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		padding-right: 28px;
 	}
-	.bench__card .eyebrow {
-		margin-bottom: 6px;
+	.vendor + .vendor {
+		padding-left: 28px;
 	}
-	.bench__name {
-		font-size: 16px;
+	.vendor__bar {
+		height: 4px;
+		margin-right: -28px;
+		margin-bottom: 18px;
+		border-radius: 2px;
+		background: var(--tint);
+	}
+	.vendor + .vendor .vendor__bar {
+		margin-left: -28px;
+	}
+	.vendor__platform {
+		font-size: 11px;
 		font-weight: 600;
-		margin-bottom: 4px;
+		letter-spacing: 0.05em;
+		line-height: 16px;
+		color: var(--tint);
+	}
+	.vendor__name {
+		font-size: 22px;
+		font-weight: 600;
+		letter-spacing: -0.02em;
+		line-height: 28px;
+	}
+	.vendor__spec {
+		font-size: 11.5px;
+		line-height: 18px;
+		color: var(--text-3);
+	}
+	.vendor:not(:first-child) {
+		position: relative;
+	}
+	.vendor:not(:first-child)::before {
+		content: '';
+		position: absolute;
+		left: -2px;
+		top: 50px;
+		bottom: 0;
+		width: 1px;
+		background: #232732;
 	}
 
-	@media (max-width: 1100px) {
-		.get {
-			grid-template-columns: 1fr 1fr;
+	.tailnet {
+		padding: 120px var(--pad) 156px;
+	}
+	.tailnet__green {
+		background: radial-gradient(ellipse 46% 56% at 28% 42% in oklab, #4cd69b1a 0%, #4cd69b06 44%, #00000000 76%);
+	}
+	.tailnet__grid {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 72px;
+	}
+	.tailnet__art {
+		width: 596px;
+	}
+
+	@media (max-width: 1199px) {
+		.tailnet__grid {
+			flex-direction: column-reverse;
+			align-items: flex-start;
+			gap: 48px;
 		}
-		.get__check {
-			grid-column: 1 / -1;
+		.vendors__list {
+			grid-template-columns: repeat(2, 1fr);
+			row-gap: 40px;
 		}
-		.qs {
-			grid-template-columns: minmax(0, 1fr);
+		.vendor:nth-child(3) {
+			padding-left: 0;
 		}
-		.plat,
-		.drv {
-			grid-template-columns: minmax(0, 1fr);
+		.vendor:nth-child(3) .vendor__bar {
+			margin-left: 0;
 		}
-		.bench {
-			grid-template-columns: 1fr 1fr;
+		.vendor:nth-child(3)::before {
+			display: none;
 		}
 	}
-	@media (max-width: 900px) {
-		.hero__row {
+	@media (max-width: 767px) {
+		.strip {
 			flex-direction: column;
-			align-items: flex-start;
 			gap: 20px;
+			padding-top: 24px;
 		}
-		.get__note {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 10px;
+		.strip__cell,
+		.strip__cell:first-child {
+			padding: 0;
 		}
-		.qs__head {
-			min-height: 48px;
-			cursor: pointer;
+		.strip__cell + .strip__cell {
+			border-left: 0;
+			padding-top: 20px;
+			border-top: 1px solid var(--bone-rule);
 		}
-		.qs__chev {
-			display: block;
-			width: 10px;
-			height: 10px;
-			border-right: 1.5px solid var(--bone-300);
-			border-bottom: 1.5px solid var(--bone-300);
-			transform: rotate(45deg) translateY(-3px);
-			transition: transform var(--dur-base) var(--ease-out);
+		.split,
+		.tailnet {
+			padding-block: 64px;
 		}
-		.qs__head[aria-expanded='true'] .qs__chev {
-			transform: rotate(-135deg);
+		.vendors {
+			gap: 36px;
 		}
-		.qs__head[aria-expanded='false'] + .qs__body {
-			display: none;
-		}
-		.qs__step {
-			padding: 6px 0;
-		}
-		.qs__body {
-			padding-bottom: 12px;
-		}
-	}
-	@media (max-width: 600px) {
-		.hero {
-			padding-top: 28px;
-		}
-		.get {
+		.vendors__list {
 			grid-template-columns: 1fr;
 		}
-		.get__btn {
-			align-self: stretch;
-			min-height: 48px;
+		.vendor,
+		.vendor + .vendor {
+			padding: 0;
 		}
-		.src__head {
-			flex-direction: column;
-			gap: 4px;
+		.vendor + .vendor .vendor__bar {
+			margin-left: 0;
 		}
-		.src__shell .c-muted,
-		[data-tabs-ready] .src__shell {
+		.vendor::before {
 			display: none;
-		}
-		[data-tabs-ready] .src__panel-bar {
-			justify-content: flex-end;
-		}
-		.src__tabs {
-			padding: 8px;
-		}
-		.src__tabs .seg {
-			width: 100%;
-		}
-		.src__tabs .seg__btn {
-			flex: 1;
-			justify-content: center;
-			min-height: 44px;
-			padding: 0 6px;
-			font-size: 10px;
-			white-space: nowrap;
-		}
-		.src__tabs .dot {
-			display: none;
-		}
-		.src__shell {
-			font-size: 10px;
-		}
-		.src__card pre {
-			font-size: 9px;
-			line-height: 18px;
-			padding: 16px 14px;
-			white-space: pre-wrap;
-			overflow-wrap: anywhere;
-		}
-		.src__foot {
-			flex-direction: column;
-			gap: 4px;
-		}
-		.plat__card {
-			padding: 22px 18px;
-		}
-		.plat__row {
-			grid-template-columns: 1fr;
-			gap: 2px;
-		}
-		.bench {
-			grid-template-columns: 1fr;
-		}
-		.drv__meta a {
-			min-height: 44px;
 		}
 	}
 </style>

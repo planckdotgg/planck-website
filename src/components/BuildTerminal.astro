@@ -1,95 +1,178 @@
 ---
 import { BUILD_POSIX, BUILD_POWERSHELL } from '../lib/site';
 import CopyButton from './CopyButton.astro';
+
+/** Splits a one-line build command into tokens the terminal colors. */
+function tokens(line: string) {
+	return line.split(/(git clone|go build|\bcd\b|&&|;)/).map((text) => ({
+		text,
+		kind: /^(git clone|go build|cd)$/.test(text) ? 'cmd' : /^(&&|;)$/.test(text) ? 'op' : 'arg',
+	}));
+}
+const shells = [
+	{ id: 'posix', label: 'macOS / POSIX', short: 'macOS', line: BUILD_POSIX },
+	{ id: 'ps', label: 'Windows PowerShell', short: 'Windows', line: BUILD_POWERSHELL },
+];
 ---
 
-<div class="term bt" data-build-terminal>
-	<div class="term__bar bt__bar" hidden>
-		<div class="seg" role="tablist" aria-label="Shell">
-			<button
-				class="seg__btn"
-				role="tab"
-				id="bt-tab-posix"
-				aria-selected="true"
-				aria-controls="bt-posix"
-				tabindex="0"><span class="dot dot--ember"></span>macOS / POSIX</button
-			>
-			<button
-				class="seg__btn"
-				role="tab"
-				id="bt-tab-ps"
-				aria-selected="false"
-				aria-controls="bt-ps"
-				tabindex="-1"><span class="dot dot--ember"></span>Windows PowerShell</button
-			>
+<div class="term" data-build-terminal>
+	<div class="term__bar">
+		<div class="term__tabs" role="tablist" aria-label="Shell" hidden>
+			{
+				shells.map((s, i) => (
+					<button
+						type="button"
+						class="term__tab mono"
+						role="tab"
+						id={`term-tab-${s.id}`}
+						aria-selected={i === 0 ? 'true' : 'false'}
+						aria-controls={`term-${s.id}`}
+						tabindex={i === 0 ? 0 : -1}
+					>
+						<span class="term__long">{s.label}</span>
+						<span class="term__short">{s.short}</span>
+					</button>
+				))
+			}
 		</div>
-		<CopyButton target="bt-code-posix" what="build for the selected shell" />
+		<p class="term__static mono">macOS / POSIX · Windows PowerShell</p>
+		<CopyButton target="term-code-posix" label="Copy" what="build command for the selected shell" />
 	</div>
-	<div class="bt__panels">
-		<div role="tabpanel" id="bt-posix" aria-labelledby="bt-tab-posix">
-			<pre><code id="bt-code-posix">{BUILD_POSIX[0]}
-{BUILD_POSIX[1]}
-<span class="em">{BUILD_POSIX[2]}</span></code></pre>
-			<p class="bt__note mono"># zsh / bash · switch tab for Windows PowerShell · requires Go 1.27.4+</p>
-		</div>
-		<div role="tabpanel" id="bt-ps" aria-labelledby="bt-tab-ps">
-			<pre><code id="bt-code-ps">{BUILD_POWERSHELL[0]}
-{BUILD_POWERSHELL[1]}
-<span class="em">{BUILD_POWERSHELL[2]}</span></code></pre>
-			<p class="bt__note mono"># PowerShell 5.1+ · outputs bin\planck-host.exe and bin\planck-client.exe</p>
-		</div>
-	</div>
-	<div class="bt__foot mono">
-		<span class="c-bone">Go 1.27.4+</span>
-		<span>CGO_ENABLED=0</span>
-		<span>MyGo GPU UI</span>
-		<span>Zero Rust</span>
-		<span class="c-direct bt__lic">APACHE-2.0</span>
-	</div>
+	{
+		shells.map((s) => (
+			<div class="term__panel" role="tabpanel" id={`term-${s.id}`} aria-labelledby={`term-tab-${s.id}`} tabindex="0">
+				<pre class="mono"><code id={`term-code-${s.id}`}>{tokens(s.line).map((t) => (
+					<span class={`tok-${t.kind}`}>{t.text}</span>
+				))}</code></pre>
+			</div>
+		))
+	}
 </div>
 
 <script>
 	import { tablist } from '../scripts/tabs';
 	for (const root of document.querySelectorAll<HTMLElement>('[data-build-terminal]')) {
-		const bar = root.querySelector<HTMLElement>('.bt__bar');
-		const list = bar?.querySelector('[role="tablist"]') ?? null;
+		const list = root.querySelector<HTMLElement>('[role="tablist"]');
 		const copy = root.querySelector<HTMLButtonElement>('[data-copy]');
-		tablist(list, (tab) => {
-			const panel = tab.getAttribute('aria-controls');
-			if (copy) copy.dataset.copyTarget = panel === 'bt-ps' ? 'bt-code-ps' : 'bt-code-posix';
-		});
-		if (bar) bar.hidden = false;
+		if (!list) continue;
+		list.hidden = false;
 		root.dataset.tabsReady = '';
-		list?.querySelector<HTMLElement>('[aria-selected="true"]')?.click();
+		tablist(list, (tab) => {
+			if (copy) copy.dataset.copyTarget = tab.id === 'term-tab-ps' ? 'term-code-ps' : 'term-code-posix';
+		});
+		list.querySelector<HTMLElement>('[aria-selected="true"]')?.click();
 	}
 </script>
 
 <style>
-	.bt__bar[hidden] {
+	.term {
+		position: relative;
+		width: 100%;
+		overflow: clip;
+		border-radius: 10px;
+		border: 1px solid #242833;
+		background: #0e0f12;
+		box-shadow: #0e0f1226 0 24px 56px;
+	}
+	.term__bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		height: 50px;
+		padding-inline: 28px;
+		background: #13151b;
+		border-bottom: 1px solid #222630;
+	}
+	.term__tabs {
+		display: flex;
+		gap: 28px;
+		height: 100%;
+	}
+	.term__tabs[hidden] {
 		display: none;
 	}
-	.bt:not([data-tabs-ready]) .bt__panels > [role='tabpanel'] + [role='tabpanel'] {
-		border-top: 1px solid var(--carbon-700);
-	}
-	.bt pre {
-		padding-bottom: 6px;
-	}
-	.bt__note {
-		padding: 0 20px 20px;
-		font-size: 11px;
-		color: var(--muted);
-	}
-	.bt__foot {
+	.term__tab {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 6px 16px;
-		padding: 12px 20px;
-		border-top: 1px solid var(--carbon-700);
-		background: var(--carbon-850);
-		font-size: 11px;
-		color: var(--muted);
+		align-items: center;
+		height: 100%;
+		padding-top: 2px;
+		border-bottom: 2px solid transparent;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		color: #7e8492;
+		white-space: nowrap;
 	}
-	.bt__lic {
-		margin-left: auto;
+	.term__tab:hover {
+		color: var(--text-2);
+	}
+	.term__tab[aria-selected='true'] {
+		border-bottom-color: var(--accent);
+		font-weight: 600;
+		color: var(--text);
+	}
+	.term__tab:focus-visible {
+		outline-offset: -2px;
+	}
+	.term__short {
+		display: none;
+	}
+	.term__static {
+		font-size: 12px;
+		color: #7e8492;
+	}
+	.term[data-tabs-ready] .term__static {
+		display: none;
+	}
+	.term__panel {
+		background: #0b0c0f;
+		overflow-x: auto;
+		scrollbar-width: thin;
+		scrollbar-color: #3a3f49 transparent;
+	}
+	.term__panel[hidden] {
+		display: none;
+	}
+	.term:not([data-tabs-ready]) .term__panel + .term__panel {
+		border-top: 1px solid #222630;
+	}
+	.term__panel:focus-visible {
+		outline-offset: -3px;
+	}
+	.term pre {
+		margin: 0;
+		padding: 32px 24px;
+		font-size: 10.75px;
+		line-height: 24px;
+		color: var(--text);
+		white-space: pre;
+	}
+	.tok-cmd {
+		color: var(--focus);
+	}
+	.tok-op {
+		color: var(--control-edge);
+	}
+	@media (max-width: 767px) {
+		.term__bar {
+			padding-inline: 16px;
+		}
+		.term__tabs {
+			gap: 18px;
+		}
+		.term__long {
+			display: none;
+		}
+		.term__short {
+			display: inline;
+		}
+		.term__tab,
+		.term__static {
+			font-size: 11px;
+		}
+		.term pre {
+			padding: 24px 16px;
+		}
 	}
 </style>

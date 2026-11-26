@@ -1,564 +1,279 @@
 ---
+import PageHero from '../components/PageHero.astro';
 import Base from '../layouts/Base.astro';
-import { CONTACT, ISSUES, RELEASES, REPO } from '../lib/site';
+import { REPO } from '../lib/site';
 
-type Status = 'Shipped' | 'Partial' | 'Planned';
-const ledger: { name: string; status: Status; body: string }[] = [
+const shipped = [
+	'Windows and macOS host and client',
+	'Zero-copy Metal and D3D11',
+	'NVIDIA NVENC, AMD AMF, Intel oneVPL, Apple VideoToolbox',
+	'Raw AEAD UDP and adaptive RS FEC',
+	'Native Tailscale LocalAPI',
+];
+const phases = [
 	{
-		name: 'Windows & macOS Host + Client',
-		status: 'Shipped',
-		body: 'Pure Go (Go 1.27.4+ · CGO_ENABLED=0), native planck-host & planck-client, MyGo GPU UI, Launcher v0.4.',
+		title: 'Phase 2 — Studio & LAN',
+		lead: 'Targets studio workstations, local wavelet streaming, and broader OS support.',
+		tone: '#FF7A1F',
+		items: [
+			'PyroWave LAN 4:4:4 wavelet mode',
+			'Signed installers',
+			'Linux host',
+			'WASAPI per-process Discord echo exclusion',
+			'Zero-copy OBS / Spout / Syphon texture sink',
+		],
 	},
 	{
-		name: 'Tailscale & Raw AEAD Transport',
-		status: 'Shipped',
-		body: 'LAN-first discovery, Tailscale LocalAPI WhoIs auth, 1152 B MTU-safe UDP datagrams, 0 allocs/datagram in raw AEAD UDP loopback (BenchmarkRawMediaPath · 20bc2df).',
+		title: 'Phase 3 — Cloud & Co-op',
+		lead: 'Extends sessions beyond your own network with shareable links, relays, and new client platforms.',
+		tone: '#8C919B',
+		items: [
+			'Instant planck.gg/j/ co-op & /w/ watch links',
+			'Edge relays',
+			'iOS, Apple TV, Android TV clients',
+		],
 	},
 	{
-		name: 'Interactive Hotkeys & Clipboard',
-		status: 'Shipped',
-		body: 'Bidirectional text & PNG clipboard (skips entries marked concealed or transient), custom chord capture, Send ⌃⌥Del.',
-	},
-	{
-		name: 'PyroWave (LAN 4:4:4)',
-		status: 'Shipped',
-		body: 'Wired LAN 4:4:4, intra-frame wavelet codec; stock macOS & Windows client decoders advertise 4:4:4 for PyroWave.',
-	},
-	{
-		name: 'Pure-Go Gamepads',
-		status: 'Shipped',
-		body: 'IOHIDManager & XInput client capture with SDL mapping; virtual Xbox-360 host injection on Windows via ViGEmBus.',
-	},
-	{
-		name: 'End-to-End HDR10',
-		status: 'Partial',
-		body: 'BT.2020 PQ host encode (NVENC / AMF / oneVPL); macOS client presentation shipped via Metal EDR · Windows planned.',
-	},
-	{
-		name: 'First-Party Virtual Audio',
-		status: 'Partial',
-		body: 'PlanckAudio.driver (macOS CoreAudio HAL, manual install) and PlanckVAD (Windows, pre-WHQL test-signing).',
-	},
-	{
-		name: 'HEVC 4:4:4 Host Encode',
-		status: 'Partial',
-		body: '10-bit HEVC 4:4:4 host encode on NVIDIA & Intel Windows; stock clients decode HEVC 4:2:0 (use PyroWave for wired LAN 4:4:4).',
-	},
-	{
-		name: 'Live Display Switch & SudoVDA',
-		status: 'Partial',
-		body: 'One active display now (mid-session switch + optional Windows SudoVDA) · simultaneous multi-monitor planned.',
-	},
-	{
-		name: 'Linux Host & Client',
-		status: 'Planned',
-		body: 'Native Linux host and client (VA-API / NVENC) staying pure Go and Apache-2.0.',
-	},
-	{
-		name: 'Mobile & TV Clients',
-		status: 'Planned',
-		body: 'Native iOS, iPad, Apple TV, and Android TV clients built on the same low-latency transport.',
-	},
-	{
-		name: 'Planck Cloud & Planck Teams',
-		status: 'Planned',
-		body: 'planck.gg/j/ links, managed edge relays, optional accounts, SSO/SAML, SCIM, RBAC, and audit logs.',
-	},
-	{
-		name: 'Creator & Broadcast Pipeline',
-		status: 'Planned',
-		body: 'Zero-copy OBS / Spout / Syphon GPU texture sink, multi-track isolated audio, and Planck Broadcast.',
+		title: 'Phase 4 — Broadcast',
+		lead: "Builds a lightweight broadcast stack directly on Planck's native GPU capture and encode pipeline.",
+		tone: '#5A606C',
+		items: ['Native single-PC compositor', 'Multi-stream broadcast engine'],
 	},
 ];
-const filters = ['All', 'Shipped', 'Partial', 'Planned'] as const;
-const count = (s: (typeof filters)[number]) =>
-	s === 'All' ? ledger.length : ledger.filter((r) => r.status === s).length;
 ---
 
 <Base
-	title="Planck status & roadmap: what runs today, what comes next"
-	description="Planck's capability ledger: what is shipped, partial, and planned for the open-source desktop host and client, plus Planck Cloud and Planck Teams."
+	title="Roadmap · Planck"
+	description="Four phases, one engine: the pure-Go core ships today; studio and LAN, cloud and co-op, and broadcast follow."
 	active="roadmap"
+	og="roadmap.jpg"
 >
-	<section class="hero">
-		<div class="wrap">
-			<span class="chip">Status & roadmap · Synced to v0.4</span>
-			<h1 class="display h1 hero__title">What runs today. What comes next.</h1>
-			<p class="lead hero__sub">
-				Planck's desktop host and client ship today under Apache-2.0 for Windows and macOS. Every
-				capability below is separated cleanly into Shipped, Partial, and Planned.
-			</p>
+	<PageHero
+		title="Four phases. One engine."
+		lead="From a pure-Go streaming core to studio capture, co-op relays, and native broadcast."
+		cta={{ href: REPO, label: 'Follow on GitHub', arrow: true }}
+		zenith="radial-gradient(ellipse 60% 64% at 24% 0% in oklab, #C9D9FF16 0%, #789BFF06 46%, #00000000 76%)"
+		aura="radial-gradient(ellipse 48% 72% at 78% 58% in oklab, #FF7A1F2E 0%, #E8650C12 42%, #00000000 76%)"
+	>
+		<svg viewBox="0 0 472 296" role="img" aria-label="Four stacked phases: P1 Core MVP (current), P2 Studio and LAN, P3 Cloud and co-op, P4 Broadcast.">
+			<path d="M52 246 L422 50" fill="none" stroke="#FF7A1F55" stroke-width="1.5" stroke-dasharray="4 5"></path>
+			<polygon points="218,46 436,46 406,96 188,96" fill="#12141A" stroke="#252933" stroke-width="1.25"></polygon>
+			<polygon points="168,98 386,98 356,148 138,148" fill="#14171E" stroke="#2F3440" stroke-width="1.25"></polygon>
+			<polygon points="118,150 336,150 306,200 88,200" fill="#171A22" stroke="#3D4352" stroke-width="1.25"></polygon>
+			<polygon points="68,202 286,202 256,252 38,252" fill="#1B1E26" stroke="#FF7A1F" stroke-width="1.75"></polygon>
+			<path d="M38 252 H256" fill="none" stroke="#FF7A1F" stroke-width="3.5"></path>
+			<circle cx="68" cy="227" r="4" fill="#4CD69B"></circle>
+			<circle cx="118" cy="175" r="3" fill="#FFB46B"></circle>
+			<circle cx="168" cy="123" r="3" fill="#8C919B"></circle>
+			<circle cx="218" cy="71" r="3" fill="#5A606C"></circle>
+			<text x="82" y="227" class="svg-mono" font-size="11" font-weight="600" letter-spacing="0.44" fill="#F2EFEA" dominant-baseline="central">P1 · CORE MVP</text>
+			<text x="132" y="175" class="svg-mono" font-size="10.5" letter-spacing="0.42" fill="#B6B8BE" dominant-baseline="central">P2 · STUDIO &amp; LAN</text>
+			<text x="182" y="123" class="svg-mono" font-size="10.5" letter-spacing="0.42" fill="#8C919B" dominant-baseline="central">P3 · CLOUD &amp; CO-OP</text>
+			<text x="232" y="71" class="svg-mono" font-size="10.5" letter-spacing="0.42" fill="#6E7480" dominant-baseline="central">P4 · BROADCAST</text>
+		</svg>
+	</PageHero>
+
+	<section class="band" aria-labelledby="p1-title">
+		<div class="wash band__warm" aria-hidden="true"></div>
+		<div class="wash band__cool" aria-hidden="true"></div>
+		<div class="band__head p1__head">
+			<p class="now mono">Now</p>
+			<h2 id="p1-title" class="display h-band">Phase 1 — Core MVP</h2>
+			<p class="band-lead">The pure-Go streaming core, shipping from source today.</p>
 		</div>
+		<ul class="shipped">
+			{
+				shipped.map((item) => (
+					<li>
+						<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+							<path d="M3 8.5 L6.5 12 L13 4.5" fill="none" stroke="#13804F" stroke-width="1.75" stroke-linecap="square" />
+						</svg>
+						<span>
+							{item}
+							<span class="sr-only"> (shipped)</span>
+						</span>
+					</li>
+				))
+			}
+		</ul>
 	</section>
 
-	<section class="ledger-section" id="ledger">
-		<div class="wrap">
-			<div class="ledger-head">
-				<h2 class="display h2 ledger-head__title">Capability ledger</h2>
-				<p class="legend mono"><span class="c-direct">Shipped</span> = available from source on main · no installers yet</p>
-				<div class="filters" role="group" aria-label="Filter by status" data-filters>
-					{
-						filters.map((f) => (
-							<button
-								type="button"
-								class={`filter filter--${f.toLowerCase()}`}
-								aria-pressed={f === 'All' ? 'true' : 'false'}
-								data-filter={f}
-							>
-								{f}
-								<span class="filter__n">{count(f)}</span>
-							</button>
-						))
-					}
-				</div>
-			</div>
-			<p class="sr-only" role="status" data-filter-status>Showing all {ledger.length} capabilities.</p>
-			<div class="card ledger">
-				<table>
-					<caption class="sr-only">Planck capabilities and their status</caption>
-					<thead class="sr-only">
-						<tr>
-							<th scope="col">Capability</th>
-							<th scope="col">Status</th>
-							<th scope="col">Details</th>
-						</tr>
-					</thead>
-					<tbody>
-						{
-							ledger.map((r) => (
-								<tr data-status={r.status}>
-									<th scope="row" class:list={['ledger__name', { 'is-planned': r.status === 'Planned' }]}>
-										{r.name}
-									</th>
-									<td class="ledger__status">
-										<span class={`badge badge--${r.status.toLowerCase()} mono`}>{r.status}</span>
-									</td>
-									<td class="ledger__body">{r.body}</td>
-								</tr>
-							))
-						}
-					</tbody>
-				</table>
-			</div>
+	<div class="canvas">
+		<ol class="timeline" aria-label="Upcoming phases">
+			{
+				phases.map((p) => (
+					<li class="phase" style={`--tone:${p.tone}`}>
+						<span class="phase__node" aria-hidden="true" />
+						<div class="phase__copy">
+							<h2 class="display phase__title">{p.title}</h2>
+							<p class="phase__lead">{p.lead}</p>
+						</div>
+						<ul class="phase__items">
+							{p.items.map((item) => (
+								<li>
+									<span class="phase__dash" aria-hidden="true" />
+									{item}
+								</li>
+							))}
+						</ul>
+					</li>
+				))
+			}
+		</ol>
+		<div class="timeline__horizon" aria-hidden="true">
+			<div class="wash horizon"></div>
 		</div>
-	</section>
-
-	<section class="section">
-		<div class="wrap services" data-reveal>
-			<article class="card card--dashed service">
-				<span class="chip chip--plain chip--square chip--dashed">Planned</span>
-				<h2 class="display service__name">Planck Cloud</h2>
-				<p class="service__who">
-					<b>Who it serves:</b> Solo gamers, co-op guests, and travelers connecting outside a personal
-					tailnet.
-				</p>
-				<ul class="service__list service__list--ember">
-					<li>Instant <code class="c-ember">planck.gg/j/</code> co-op and guest join links</li>
-					<li>Low-latency non-AWS edge relays when direct P2P cannot punch through</li>
-					<li>Optional cloud profile sync and included mobile/TV convenience clients</li>
-				</ul>
-				<div class="service__foot mono">
-					<span>Never required for LAN or Tailscale</span>
-					<a href={RELEASES} rel="noopener">Watch releases on GitHub <span aria-hidden="true">→</span></a>
-				</div>
-			</article>
-			<article class="card card--dashed service">
-				<span class="chip chip--plain chip--square chip--dashed">Planned</span>
-				<h2 class="display service__name">Planck Teams</h2>
-				<p class="service__who">
-					<b>Who it serves:</b> Game studios, VFX desks, and remote engineering fleets managing contractors.
-				</p>
-				<ul class="service__list service__list--direct">
-					<li>SSO/SAML, SCIM provisioning, and workstation fleet RBAC</li>
-					<li>Session audit logs, watermarking, and clipboard/USB policy controls</li>
-					<li>Dedicated managed edge relays and commercial SLA</li>
-				</ul>
-				<div class="service__foot mono">
-					<span>Solo commercial stays free (Apache-2.0)</span>
-					<a href={`mailto:${CONTACT}`}>{CONTACT}</a>
-				</div>
-			</article>
-		</div>
-		<p class="wrap updates meta">
-			No waitlist form: follow <a href={RELEASES} rel="noopener">GitHub Releases</a> for builds and
-			<a href={ISSUES} rel="noopener">GitHub Issues</a> for what is being worked on.
-		</p>
-	</section>
-
-	<section class="section commit">
-		<div class="wrap commit__grid" data-reveal>
-			<div>
-				<p class="eyebrow">The commitment</p>
-				<h2 class="display h2">The solo core stays Apache-2.0. Forever.</h2>
-				<p class="lead commit__lead">
-					4:4:4 chroma, 10-bit HDR10, display switching, virtual displays, Linux when it lands, and
-					native Tailscale stay free in the open-source repo. Paid products fund the work through
-					separate hosted services, never by paywalling local hardware.
-				</p>
-			</div>
-			<div class="commit__actions">
-				<a class="btn btn--primary btn--lg" href="/download">Download the Core</a>
-				<a class="btn btn--ghost btn--lg" href={REPO} rel="noopener"
-					>Read source on GitHub <span aria-hidden="true">↗</span></a
-				>
-			</div>
-		</div>
-	</section>
+	</div>
 </Base>
 
-<script>
-	const group = document.querySelector<HTMLElement>('[data-filters]');
-	const status = document.querySelector<HTMLElement>('[data-filter-status]');
-	const rows = [...document.querySelectorAll<HTMLTableRowElement>('tr[data-status]')];
-	const buttons = [...(group?.querySelectorAll<HTMLButtonElement>('[data-filter]') ?? [])];
-	for (const button of buttons) {
-		button.addEventListener('click', () => {
-			const want = button.dataset.filter ?? 'All';
-			for (const b of buttons) b.setAttribute('aria-pressed', String(b === button));
-			let shown = 0;
-			for (const row of rows) {
-				const on = want === 'All' || row.dataset.status === want;
-				row.hidden = !on;
-				if (on) shown++;
-			}
-			if (status) {
-				status.textContent =
-					want === 'All'
-						? `Showing all ${rows.length} capabilities.`
-						: `Showing ${shown} ${want.toLowerCase()} of ${rows.length} capabilities.`;
-			}
-		});
-	}
-</script>
-
 <style>
-	.hero {
-		padding: 44px 0 40px;
-		background:
-			radial-gradient(60% 120% at 10% 0%, rgba(255, 122, 31, 0.09), transparent 70%),
-			var(--carbon-900);
-		border-bottom: 1px solid var(--carbon-800);
-	}
-	.hero__title {
-		margin-top: 16px;
-	}
-	.hero__sub {
-		margin-top: 12px;
+	.p1__head {
+		gap: 16px;
 		max-width: 720px;
 	}
-
-	.ledger-section {
-		padding: 36px 0 88px;
+	.now {
+		align-self: flex-start;
+		padding: 5px 14px;
+		border-radius: 999px;
+		background: var(--ground);
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		line-height: 14px;
+		color: var(--direct);
 	}
-	.ledger-head {
+	.shipped {
+		position: relative;
+		border-top: 1px solid var(--bone-rule);
+	}
+	.shipped li {
+		display: flex;
+		align-items: center;
+		gap: 18px;
+		padding-block: 22px;
+		border-bottom: 1px solid var(--bone-rule);
+		font-size: 18px;
+		font-weight: 500;
+		line-height: 26px;
+		color: var(--bone-ink);
+	}
+	.shipped svg {
+		flex-shrink: 0;
+	}
+
+	.timeline {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		padding: 144px var(--pad) 48px;
+	}
+	.timeline::before {
+		content: '';
+		position: absolute;
+		left: calc(var(--pad) + 6px);
+		top: 156px;
+		bottom: 220px;
+		width: 1px;
+		background: #23262e;
+	}
+	.phase {
+		position: relative;
+		display: flex;
+		align-items: flex-start;
+		gap: 56px;
+		padding: 0 0 120px 44px;
+	}
+	.phase:last-child {
+		padding-bottom: 96px;
+	}
+	.phase__node {
+		position: absolute;
+		left: 1px;
+		top: 14px;
+		width: 11px;
+		height: 11px;
+		background: var(--ground);
+		border: 1.5px solid var(--tone);
+	}
+	.phase__copy {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		flex-shrink: 0;
+		width: 416px;
+		max-width: 100%;
+	}
+	.phase__title {
+		font-size: clamp(30px, 2.78vw, 40px);
+		line-height: 1.15;
+		letter-spacing: -0.034em;
+	}
+	.phase__lead {
+		font-size: 17px;
+		line-height: 27px;
+		color: var(--muted);
+	}
+	.phase__items {
+		flex: 1 1 0;
+		border-top: 1px solid #242833;
+	}
+	.phase__items li {
 		display: flex;
 		align-items: center;
 		gap: 16px;
-		margin-bottom: 20px;
-	}
-	.ledger-head__title {
-		font-size: 28px;
-		line-height: 34px;
-		margin-right: auto;
-	}
-	.legend {
-		padding: 6px 12px;
-		border: 1px solid var(--carbon-700);
-		border-radius: var(--radius-sm);
-		font-size: 10px;
-		color: var(--bone-300);
-	}
-	.filters {
-		display: flex;
-		gap: 8px;
-	}
-	.filter {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		min-height: 32px;
-		padding: 0 14px;
-		border-radius: 999px;
-		border: 1px solid var(--carbon-600);
-		font-family: var(--font-mono);
-		font-stretch: 87.5%;
-		font-size: 11px;
-		color: var(--bone-300);
-		transition:
-			background-color var(--dur-fast) var(--ease-out),
-			border-color var(--dur-fast) var(--ease-out),
-			color var(--dur-fast) var(--ease-out);
-	}
-	.filter:hover {
-		color: var(--bone-50);
-	}
-	.filter__n {
-		font-size: 10px;
-		color: var(--muted);
-	}
-	.filter--shipped {
-		color: var(--direct);
-		border-color: rgba(76, 214, 155, 0.35);
-	}
-	.filter--partial {
-		color: var(--relay);
-		border-color: rgba(242, 201, 76, 0.45);
-	}
-	.filter--planned {
-		border-style: dashed;
-	}
-	.filter[aria-pressed='true'] {
-		background: var(--carbon-800);
-		border-color: var(--bone-300);
-		color: var(--bone-50);
-	}
-	.filter--shipped[aria-pressed='true'] {
-		background: rgba(76, 214, 155, 0.12);
-		border-color: var(--direct);
-		color: var(--direct);
-	}
-	.filter--partial[aria-pressed='true'] {
-		background: rgba(242, 201, 76, 0.12);
-		border-color: var(--relay);
-		color: var(--relay);
-	}
-
-	.ledger {
-		overflow: hidden;
-	}
-	.ledger table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-	.ledger tbody tr + tr {
-		border-top: 1px solid var(--carbon-800);
-	}
-	.ledger th,
-	.ledger td {
-		padding: 16px 24px;
-		text-align: left;
-		vertical-align: middle;
-	}
-	.ledger__name {
-		width: 272px;
-		font-size: 14px;
-		font-weight: 600;
-	}
-	.ledger__name.is-planned {
-		color: var(--bone-300);
-	}
-	.ledger__status {
-		width: 104px;
-		padding-left: 0 !important;
-	}
-	.ledger__body {
-		font-size: 14px;
-		line-height: 20px;
-		color: var(--bone-300);
-	}
-	.badge {
-		display: inline-flex;
-		padding: 3px 10px;
-		border-radius: 4px;
-		border: 1px solid;
-		font-size: 10px;
-		line-height: 14px;
-		font-weight: 500;
-	}
-	.badge--shipped {
-		color: var(--direct);
-		border-color: rgba(76, 214, 155, 0.45);
-		background: rgba(76, 214, 155, 0.08);
-	}
-	.badge--partial {
-		color: var(--relay);
-		border-color: rgba(242, 201, 76, 0.5);
-		background: rgba(242, 201, 76, 0.08);
-	}
-	.badge--planned {
-		color: var(--bone-300);
-		border-color: var(--carbon-600);
-		border-style: dashed;
-	}
-
-	.services {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 24px;
-	}
-	.service {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 12px;
-		padding: 30px 32px;
-	}
-	.service__name {
-		font-size: 30px;
-		line-height: 36px;
-	}
-	.service__who {
-		color: var(--bone-300);
-		font-size: 15px;
-		line-height: 22px;
-	}
-	.service__who b {
-		color: var(--bone-50);
-		font-weight: 600;
-	}
-	.service__list {
-		align-self: stretch;
-		padding-top: 18px;
-		border-top: 1px solid var(--carbon-700);
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		font-size: 14px;
-	}
-	.service__list li {
-		display: flex;
-		gap: 10px;
-	}
-	.service__list li::before {
-		content: '';
-		flex: none;
-		width: 5px;
-		height: 5px;
-		margin-top: 10px;
-		border-radius: 50%;
-	}
-	.service__list--ember li::before {
-		background: var(--ember-500);
-	}
-	.service__list--direct li::before {
-		background: var(--direct);
-	}
-	.service__list code {
-		font-size: 0.95em;
-	}
-	.service__foot {
-		align-self: stretch;
-		display: flex;
-		justify-content: space-between;
-		gap: 12px;
-		margin-top: auto;
-		padding-top: 16px;
-		border-top: 1px solid var(--carbon-700);
-		font-size: 10.5px;
-		color: var(--muted);
-	}
-	.service__foot a {
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		min-height: 24px;
-		color: var(--bone-50);
-	}
-	.service__foot a:hover {
-		color: var(--ember-300);
-	}
-	.updates {
-		margin-top: 20px;
-	}
-	.updates a {
-		color: var(--bone-300);
-		text-decoration: underline;
-		text-underline-offset: 3px;
-	}
-
-	.commit {
-		background:
-			radial-gradient(60% 120% at 0% 50%, rgba(255, 122, 31, 0.1), transparent 70%),
-			var(--carbon-900);
-	}
-	.commit__grid {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 48px;
-	}
-	.commit__lead {
-		margin-top: 18px;
-		max-width: 720px;
+		padding-block: 18px;
+		border-bottom: 1px solid #1c2029;
 		font-size: 16px;
+		font-weight: 500;
 		line-height: 24px;
+		color: #e2e4e9;
 	}
-	.commit__actions {
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
-		width: 200px;
-		flex: none;
+	.phase__dash {
+		flex-shrink: 0;
+		width: 12px;
+		height: 1.5px;
+		background: var(--tone);
+	}
+	.timeline__horizon {
+		position: relative;
+		height: 220px;
+		overflow: clip;
+	}
+	.timeline__horizon .horizon {
+		height: 220px;
 	}
 
-	@media (max-width: 1100px) {
-		.ledger-head {
-			flex-wrap: wrap;
+	@media (max-width: 1199px) {
+		.phase {
+			flex-direction: column;
+			gap: 28px;
 		}
-		.ledger-head__title {
+		.phase__items {
 			width: 100%;
 		}
 	}
-	@media (max-width: 900px) {
-		.services {
-			grid-template-columns: 1fr;
+	@media (max-width: 767px) {
+		.shipped li {
+			gap: 14px;
+			padding-block: 16px;
+			font-size: 16px;
+			line-height: 24px;
 		}
-		.commit__grid {
-			flex-direction: column;
-			align-items: flex-start;
+		.timeline {
+			padding-top: 72px;
 		}
-		.ledger table,
-		.ledger tbody,
-		.ledger tr,
-		.ledger th,
-		.ledger td {
-			display: block;
+		.timeline::before {
+			top: 84px;
 		}
-		.ledger tbody tr {
-			display: grid;
-			grid-template-columns: 1fr auto;
-			gap: 6px 12px;
-			padding: 14px 16px;
+		.phase {
+			padding: 0 0 72px 32px;
 		}
-		.ledger tbody tr[hidden] {
-			display: none;
+		.phase:last-child {
+			padding-bottom: 48px;
 		}
-		.ledger th,
-		.ledger td {
-			padding: 0;
-			width: auto;
-		}
-		.ledger__body {
-			grid-column: 1 / -1;
-		}
-	}
-	@media (max-width: 600px) {
-		.hero {
-			padding: 28px 0 28px;
-		}
-		.filters {
-			width: 100%;
-		}
-		.filters {
-			flex-wrap: wrap;
-		}
-		.filter {
-			flex: 1;
-			justify-content: center;
-			min-height: 44px;
-			padding: 0 6px;
-		}
-		.service {
-			padding: 22px 18px;
-		}
-		.service__foot {
-			flex-direction: column;
-		}
-		.service__foot a {
-			min-height: 44px;
-		}
-		.commit__actions {
-			width: 100%;
+		.phase__lead {
+			font-size: 16px;
+			line-height: 25px;
 		}
 	}
 </style>

@@ -1,172 +1,196 @@
 ---
-import { CONTACT, ISSUES, LICENSE_URL, REPO } from '../lib/site';
-import Mark from './Mark.astro';
+import {
+	ARCHITECTURE,
+	BENCHMARKS,
+	DOCS,
+	ISSUES,
+	LICENSE_URL,
+	PROTOCOL,
+	RELEASES,
+	REPO,
+} from '../lib/site';
+import Wordmark from './Wordmark.astro';
 
-const columns = [
+const groups = [
 	{
 		title: 'Product',
 		links: [
-			{ href: '/', label: 'Overview' },
-			{ href: '/gaming', label: 'Gaming' },
-			{ href: '/work', label: 'Work & Creative' },
 			{ href: '/download', label: 'Download' },
+			{ href: '/api/download?platform=windows', label: 'Windows' },
+			{ href: '/api/download?platform=macos', label: 'macOS' },
+			{ href: RELEASES, label: 'Changelog' },
 		],
 	},
 	{
-		title: 'Technical',
+		title: 'Developers',
 		links: [
-			{ href: '/#numbers', label: 'Measured Numbers' },
-			{ href: '/work#encoders', label: 'Encoder Matrix' },
-			{ href: '/#network', label: 'Tailscale & UDP' },
-			{ href: '/download#drivers', label: 'Virtual Drivers' },
+			{ href: DOCS, label: 'Docs' },
+			{ href: ARCHITECTURE, label: 'Architecture' },
+			{ href: PROTOCOL, label: 'Protocol' },
+			{ href: BENCHMARKS, label: 'Benchmarks' },
 		],
 	},
 	{
 		title: 'Open Source',
 		links: [
-			{ href: REPO, label: 'GitHub Repository' },
-			{ href: LICENSE_URL, label: 'Apache-2.0 License' },
-			{ href: '/roadmap', label: 'Cloud & Roadmap' },
-			{ href: ISSUES, label: 'Issue Tracker' },
+			{ href: REPO, label: 'GitHub' },
+			{ href: RELEASES, label: 'Releases' },
+			{ href: ISSUES, label: 'Issues' },
+			{ href: LICENSE_URL, label: 'Apache-2.0' },
 		],
 	},
 ];
 ---
 
 <footer class="footer">
-	<div class="wrap">
-		<div class="footer__top">
-			<div class="footer__brand">
-				<a href="/" class="footer__lockup" aria-label="Planck home">
-					<Mark size={22} />
-					<span class="display">planck</span>
-				</a>
-				<p>Exact. Quiet. Quick. Open-source desktop and game streaming in pure Go.</p>
-			</div>
-			<div class="footer__cols">
-				{
-					columns.map((col) => (
-						<div>
-							<h2 class="footer__title mono">{col.title}</h2>
-							<ul>
-								{col.links.map((l) => (
-									<li>
-										<a href={l.href}>{l.label}</a>
-									</li>
-								))}
-							</ul>
-						</div>
-					))
-				}
-				<div>
-					<h2 class="footer__title mono">Status</h2>
-					<ul class="footer__status mono">
-						<li>Pre-release · main</li>
-						<li>Windows · macOS</li>
-						<li><a href={`mailto:${CONTACT}`}>{CONTACT}</a></li>
+	<div class="footer__floor wash" aria-hidden="true"></div>
+	<div class="footer__cols">
+		<div class="footer__brand">
+			<a href="/" aria-label="Planck home" class="footer__home">
+				<Wordmark width={125} height={26} />
+			</a>
+			<p class="footer__tag mono">planck.gg · Pure Go</p>
+		</div>
+		{
+			groups.map((g, i) => (
+				<nav class:list={['footer__group', { 'footer__group--wide': i === 2 }]} aria-label={g.title}>
+					<h2 class="footer__title mono">{g.title}</h2>
+					<ul>
+						{g.links.map((l, j) => (
+							<li>
+								<a class:list={{ 'is-lead': j === 0 }} href={l.href}>
+									{l.label}
+								</a>
+							</li>
+						))}
 					</ul>
-				</div>
-			</div>
-		</div>
-		<div class="footer__legal">
-			<p>© 2026 Planck. Core desktop host and client licensed under Apache-2.0.</p>
-			<p class="mono">planck.gg</p>
-		</div>
+				</nav>
+			))
+		}
+	</div>
+	<div class="footer__monument" aria-hidden="true">
+		<Wordmark width={1152} height={240} ink="#454852" ember="#B5551E" />
+	</div>
+	<div class="footer__bar">
+		<p>Planck · planck.gg</p>
 	</div>
 </footer>
 
 <style>
 	.footer {
-		background: var(--carbon-950);
-		border-top: 1px solid rgba(44, 48, 56, 0.6);
-		padding-top: 56px;
-	}
-	.footer__top {
+		position: relative;
+		overflow: clip;
 		display: flex;
-		justify-content: space-between;
-		gap: 48px;
-		padding-bottom: 44px;
+		flex-direction: column;
+		gap: 108px;
+		padding: 128px var(--pad) 56px;
+		background: linear-gradient(in oklab 180deg, #0e0f12 0%, #090a0d 100%);
 	}
-	.footer__lockup {
-		display: inline-flex;
-		align-items: center;
-		gap: 10px;
-		font-size: 18px;
-		min-height: 32px;
-	}
-	.footer__brand p {
-		margin-top: 14px;
-		max-width: 320px;
-		color: var(--muted);
-		font-size: 14px;
-		line-height: 20px;
+	.footer__floor {
+		left: 0;
+		right: 0;
+		bottom: -340px;
+		height: 340px;
+		background: radial-gradient(ellipse 68% 72% at 50% 100% in oklab, #ff7a1f1a 0%, #00000000 74%);
 	}
 	.footer__cols {
-		display: grid;
-		grid-template-columns: repeat(4, auto);
+		position: relative;
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
 		gap: 64px;
+	}
+	.footer__brand {
+		flex: 1.8 1 0;
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+	}
+	.footer__home {
+		align-self: flex-start;
+	}
+	.footer__tag {
+		font-size: 12px;
+		line-height: 20px;
+		color: #8b909c;
+	}
+	.footer__group {
+		flex: 1 1 0;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
 	}
 	.footer__title {
 		font-size: 11px;
-		font-weight: 600;
-		letter-spacing: 0.1em;
+		font-weight: 500;
+		letter-spacing: 0.08em;
+		line-height: 16px;
 		text-transform: uppercase;
-		margin-bottom: 6px;
+		color: #9da3b0;
 	}
-	.footer__cols a {
-		display: inline-flex;
-		align-items: center;
-		min-height: 25px;
-		color: var(--muted);
-		font-size: 14px;
-		transition: color var(--dur-fast) var(--ease-out);
-	}
-	.footer__cols a:hover {
-		color: var(--bone-50);
-	}
-	.footer__status {
-		font-size: 12px;
-		line-height: 23px;
-		color: var(--bone-300);
-	}
-	.footer__status a {
-		font-size: 12px;
-		color: var(--bone-300);
-	}
-	.footer__legal {
+	.footer__group ul {
 		display: flex;
-		justify-content: space-between;
-		gap: 16px;
-		border-top: 1px solid rgba(44, 48, 56, 0.6);
-		padding-block: 22px 28px;
+		flex-direction: column;
+		gap: 10px;
+	}
+	.footer__group a {
+		display: inline-block;
+		padding-block: 1px;
+		font-size: 15px;
+		line-height: 22px;
 		color: var(--muted);
+		transition: color 120ms var(--ease-out);
+	}
+	.footer__group a.is-lead {
+		color: #d4d6dc;
+	}
+	.footer__group a:hover {
+		color: var(--text);
+	}
+	.footer__monument {
+		position: relative;
+		display: flex;
+		justify-content: center;
+		padding-block: 12px;
+	}
+	.footer__monument :global(svg) {
+		width: 100%;
+		height: auto;
+	}
+	.footer__bar {
+		position: relative;
+		padding-top: 28px;
+		border-top: 1px solid #1a1d24;
 		font-size: 13px;
+		line-height: 18px;
+		color: #8b909c;
 	}
-	.footer__legal .mono {
-		font-size: 11px;
-		color: var(--bone-300);
-	}
-	@media (max-width: 1100px) {
-		.footer__top {
-			flex-direction: column;
+	@media (max-width: 767px) {
+		.footer {
+			gap: 56px;
+			padding: 72px 24px 40px;
 		}
 		.footer__cols {
-			gap: 40px;
+			flex-wrap: wrap;
+			gap: 36px 24px;
 		}
-	}
-	@media (max-width: 700px) {
-		.footer__cols {
-			grid-template-columns: 1fr 1fr;
-			gap: 28px 24px;
+		.footer__brand {
+			flex-basis: 100%;
+			gap: 14px;
 		}
-		.footer__cols a,
-		.footer__status a,
-		.footer__lockup {
-			min-height: 44px;
+		.footer__group {
+			flex: 1 1 calc(50% - 12px);
 		}
-		.footer__legal {
-			flex-direction: column;
-			gap: 4px;
+		.footer__group--wide {
+			flex-basis: 100%;
+		}
+		.footer__group--wide ul {
+			flex-direction: row;
+			flex-wrap: wrap;
+			gap: 10px 36px;
+		}
+		.footer__bar {
+			padding-top: 24px;
 		}
 	}
 </style>

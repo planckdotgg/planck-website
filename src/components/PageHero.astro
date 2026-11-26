@@ -1,0 +1,50 @@
+---
+interface Props {
+	title: string;
+	lead: string;
+	cta: { href: string; label: string; arrow?: boolean };
+	/** Background of the cool wash at the top left (a CSS gradient). */
+	zenith: string;
+	zenithHeight?: number;
+	/** Background of the warm wash behind the art (a CSS gradient). */
+	aura: string;
+	/** Width of the art column in px. */
+	artWidth?: number;
+}
+const { title, lead, cta, zenith, zenithHeight = 320, aura, artWidth = 472 } = Astro.props;
+---
+
+<section class="page-hero" aria-labelledby="page-title">
+	<div class="wash page-hero__zenith" style={`height:${zenithHeight}px;background-image:${zenith}`} aria-hidden="true">
+	</div>
+	<div class="wash wash--fill" style={`background-image:${aura}`} aria-hidden="true"></div>
+	<div class="page-hero__grid">
+		<div class="page-hero__copy">
+			<h1 id="page-title" class="display h-page">{title}</h1>
+			<p class="lead">{lead}</p>
+			<div class="page-hero__cta">
+				<a class="btn btn--primary btn--tall" href={cta.href}>
+					{cta.label}
+					{
+						cta.arrow && (
+							<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+								<path d="M3.5 8 H12.5 M8.5 4 L12.5 8 L8.5 12" fill="none" stroke="#1A0B02" stroke-width="1.75" stroke-linecap="square" />
+							</svg>
+						)
+					}
+				</a>
+			</div>
+		</div>
+		<div class="page-hero__art" style={`width:${artWidth}px`}>
+			<slot />
+		</div>
+	</div>
+</section>
+
+<style>
+	.page-hero__zenith {
+		left: 0;
+		right: 0;
+		top: 0;
+	}
+</style>

@@ -27,8 +27,8 @@ const image = new URL(`/og/${og}`, Astro.site);
 		<meta name="description" content={description} />
 		{noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
 		<meta name="theme-color" content="#0E0F12" />
-		<link rel="icon" href="/favicon.ico" sizes="32x32" />
-		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="/favicon.ico" sizes="16x16 32x32" />
+		<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/site.webmanifest" />
 		<link rel="sitemap" href="/sitemap-index.xml" />
@@ -43,7 +43,7 @@ const image = new URL(`/og/${og}`, Astro.site);
 		<meta property="og:image" content={image} />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
-		<meta property="og:image:alt" content="Planck: open-source desktop and game streaming in pure Go" />
+		<meta property="og:image:alt" content="Planck: open-source game streaming in pure Go" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
@@ -57,7 +57,6 @@ const image = new URL(`/og/${og}`, Astro.site);
 		</main>
 		<Footer />
 		<script>
-			import '../scripts/reveal';
 			import '../scripts/copy';
 		</script>
 	</body>

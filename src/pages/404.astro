@@ -7,20 +7,16 @@ import Base from '../layouts/Base.astro';
 	description="This address has no page. Head back to Planck's home, download, or roadmap."
 	noindex
 >
-	<section class="nf">
-		<div class="wrap nf__inner">
-			<div class="nf__bands" aria-hidden="true">
-				<span></span><span></span><span class="is-lost"></span><span></span>
-			</div>
-			<p class="eyebrow">404 · Frame not delivered</p>
-			<h1 class="display h1">No frame at this address.</h1>
-			<p class="lead nf__lead">
-				The page you asked for does not exist, or it moved. Every other slice arrived fine.
-			</p>
+	<section class="nf" aria-labelledby="nf-title">
+		<div class="wash wash--fill nf__zenith" aria-hidden="true"></div>
+		<div class="wash wash--fill nf__aura" aria-hidden="true"></div>
+		<div class="nf__inner">
+			<p class="nf__code mono">404 · Frame not delivered</p>
+			<h1 id="nf-title" class="display h-page">No frame at this address.</h1>
+			<p class="lead nf__lead">The page you asked for does not exist, or it moved.</p>
 			<div class="nf__actions">
-				<a class="btn btn--primary btn--lg" href="/">Back to home</a>
-				<a class="btn btn--ghost btn--lg" href="/download">Download</a>
-				<a class="link link--quiet" href="/roadmap">Roadmap <span class="arrow" aria-hidden="true">→</span></a>
+				<a class="btn btn--primary btn--tall" href="/">Back to home</a>
+				<a class="btn btn--ghost btn--tall" href="/download">Download</a>
 			</div>
 		</div>
 	</section>
@@ -28,51 +24,45 @@ import Base from '../layouts/Base.astro';
 
 <style>
 	.nf {
-		min-height: calc(100vh - var(--nav-h) - 240px);
+		position: relative;
+		overflow: clip;
 		display: flex;
 		align-items: center;
-		padding: 96px 0;
-		background:
-			radial-gradient(50% 70% at 50% 40%, rgba(255, 122, 31, 0.1), transparent 70%),
-			var(--carbon-900);
+		justify-content: center;
+		min-height: 560px;
+		padding: 96px var(--pad);
+		background: var(--ground);
+		text-align: center;
+	}
+	.nf__zenith {
+		background: radial-gradient(ellipse 58% 64% at 50% 0% in oklab, #c9d9ff16 0%, #789bff06 46%, #00000000 76%);
+	}
+	.nf__aura {
+		background: radial-gradient(ellipse 46% 60% at 50% 70% in oklab, #ff7a1f2b 0%, #e8650c12 42%, #00000000 76%);
 	}
 	.nf__inner {
+		position: relative;
 		display: flex;
 		flex-direction: column;
-		align-items: flex-start;
-		gap: 12px;
+		align-items: center;
+		gap: 18px;
+		max-width: 640px;
 	}
-	.nf__bands {
-		display: grid;
-		gap: 6px;
-		width: 132px;
-		margin-bottom: 28px;
-	}
-	.nf__bands span {
-		height: 10px;
-		border-radius: 2px;
-		background: var(--bone-50);
-	}
-	.nf__bands .is-lost {
-		background: transparent;
-		border: 1px dashed var(--ember-500);
-		transform: translateX(18px);
-		animation: lost 2.4s var(--ease-inout) infinite alternate;
-	}
-	@keyframes lost {
-		to {
-			transform: translateX(34px);
-			opacity: 0.4;
-		}
+	.nf__code {
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		line-height: 16px;
+		color: var(--focus);
 	}
 	.nf__lead {
-		max-width: 560px;
+		max-width: 480px;
 	}
 	.nf__actions {
 		display: flex;
 		flex-wrap: wrap;
-		align-items: center;
-		gap: 12px;
-		margin-top: 18px;
+		justify-content: center;
+		gap: 14px;
+		padding-top: 10px;
 	}
 </style>

@@ -1,9 +1,18 @@
 {
 	"name": "Planck",
 	"short_name": "Planck",
+	"description": "Open-source game streaming in pure Go for Windows and macOS.",
 	"icons": [
-		{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-		{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+		{
+			"src": "/icon-192.png",
+			"sizes": "192x192",
+			"type": "image/png"
+		},
+		{
+			"src": "/icon-512.png",
+			"sizes": "512x512",
+			"type": "image/png"
+		}
 	],
 	"theme_color": "#0E0F12",
 	"background_color": "#0E0F12",

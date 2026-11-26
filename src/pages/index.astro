@@ -1,902 +1,521 @@
 ---
-import { Picture } from 'astro:assets';
-import canyon from '../assets/hero-gaming-hdr10@2x.png';
-import BuildTerminal from '../components/BuildTerminal.astro';
-import CopyButton from '../components/CopyButton.astro';
-import StreamFrame from '../components/StreamFrame.astro';
+import ChromaLens from '../components/ChromaLens.astro';
+import HeroDemo from '../components/HeroDemo.astro';
 import Base from '../layouts/Base.astro';
-import { BUILD_POSIX_SHORT, BUILD_POWERSHELL, REPO } from '../lib/site';
+import { REPO } from '../lib/site';
 
-const routes = [
-	{
-		name: 'LAN Direct',
-		meta: '1452 B UDP',
-		body: 'Preferred automatically whenever host and client share a local subnet.',
-		aside: 'LAN-first auto',
-		tone: 'direct',
-	},
-	{
-		name: 'Tailscale Direct',
-		meta: '1152 B · WhoIs',
-		body: "Zero-PIN peer trust tuned for Tailscale's 1280-byte MTU without fragmentation.",
-		aside: 'Direct WireGuard',
-		tone: 'direct',
-	},
-	{
-		name: 'DERP Relay / Offline',
-		meta: '',
-		body: 'Surfaced plainly on the host card and HUD, never hidden behind a spinner.',
-		aside: 'Direct vs. DERP aware',
-		tone: 'relay',
-	},
-];
-
-const free = [
-	{
-		title: '4:4:4 Chroma',
-		body: 'HEVC 4:4:4 host encode (NVIDIA & Intel) · PyroWave LAN 4:4:4, never gated behind a subscription.',
-		tag: 'NVENC / oneVPL · PyroWave LAN',
-	},
-	{
-		title: '10-Bit HDR10',
-		body: 'BT.2020 PQ host encode presented natively on macOS displays.',
-		tag: 'macOS Metal EDR client',
-	},
-	{
-		title: 'Live display switching & Windows virtual displays',
-		body: 'Switch physical monitors mid-session plus headless Windows SudoVDA support.',
-		tag: 'Windows & macOS',
-	},
-	{
-		title: 'Personal & Commercial Use',
-		body: 'Use the same open-source host, client, Tailscale WhoIs, and virtual audio at home or work.',
-		tag: 'Apache-2.0 core',
-	},
+const features = [
+	{ name: '4:4:4 Chroma', spec: 'Full subpixel color', short: 'Full subpixel' },
+	{ name: '10-bit HDR10', spec: 'BT.2020 · PQ transfer', short: 'BT.2020 · PQ' },
+	{ name: 'Multi-monitor', spec: 'Independent streams', short: 'Independent' },
+	{ name: 'Virtual Displays', spec: 'Headless host ready', short: 'Headless ready' },
 ];
 ---
 
 <Base
-	title="Planck: open-source desktop and game streaming in pure Go"
-	description="As close to plugged in as a packet gets. Open-source desktop and game streaming for Windows and macOS: HEVC 4:4:4 host encode, PyroWave LAN 4:4:4, HDR10, and native Tailscale."
+	title="Planck · Play like it’s local"
+	description="Open-source game streaming in pure Go for Windows and macOS: zero-copy capture, 4:4:4 chroma, 10-bit HDR10, and native Tailscale."
 >
-	<section class="hero">
-		<div class="wrap">
-			<div class="chip-row">
-				<span class="chip">Pre-release · Apache-2.0 · Pure Go</span>
-				<span class="chip-text hero__chip-meta">Windows & macOS · No account required</span>
-			</div>
-			<div class="hero__row">
-				<div class="hero__copy">
-					<h1 class="display h1 hero__title">As close to plugged in as a packet gets.</h1>
-					<p class="lead hero__sub">
-					<span class="hero__sub-wide"
-						>Open-source desktop and game streaming in pure Go. Free HEVC 4:4:4 host encode (NVIDIA
-						& Intel), PyroWave LAN 4:4:4, HDR10, and native Tailscale.</span
-					>
-					<span class="hero__sub-narrow"
-						>Open-source streaming in pure Go. HEVC 4:4:4 host encode (NVIDIA & Intel), PyroWave LAN
-						4:4:4, HDR10, and native Tailscale.</span
-					>
-					</p>
-				</div>
-				<div class="hero__actions">
-					<div class="hero__buttons">
-						<a class="btn btn--primary btn--lg" href="/download">Build from source</a>
-						<a class="btn btn--ghost btn--lg hero__numbers" href="#numbers">Read the numbers</a>
-					</div>
-					<p class="meta hero__meta">Windows & macOS · no installers yet</p>
-				</div>
-			</div>
-			<div class="hero__frame">
-				<StreamFrame />
-			</div>
-			<a class="link hero__numbers-mobile" href="#numbers"
-				>Read the numbers <span class="arrow" aria-hidden="true">→</span></a
-			>
-		</div>
-	</section>
-
-	<section class="section" id="numbers">
-		<div class="wrap" data-reveal>
-			<div class="section-head">
-				<div>
-					<p class="eyebrow">Verified benchmarks</p>
-					<h2 class="display h2">Lab measurements.</h2>
-				</div>
-				<p class="section-head__aside">
-					Every figure cites its exact test harness, workload, and date. Headless host → decode runs
-					exclude display present.
-				</p>
-			</div>
-			<div class="lab">
-				<article class="card lab__lead">
-					<div class="lab__lead-head">
-						<p class="eyebrow c-ember-soft">Lead measurement · Host encode</p>
-						<span class="chip chip--plain chip--square lab__date">2026-11-23</span>
-					</div>
-					<p class="display lab__figure">1.41<span class="unit">ms</span></p>
-					<h3 class="lab__title">NVENC HEVC encode p50</h3>
-					<p class="body2">
-						1.71 ms host → decode p50 (headless) on Windows RTX 4080 at 1080p120 synthetic load.
-					</p>
-					<p class="meta lab__cite">RTX 4080 · 1080p120 synth · TestLiveSynthHardware · 2026-11-23</p>
-				</article>
-				<div class="lab__side">
-					<article class="card lab__small">
-						<p class="lab__small-fig">
-							<span class="display c-direct">0</span>
-							<span class="mono c-direct lab__small-unit">allocs/datagram</span>
-						</p>
-						<h3 class="lab__small-title">0 allocs/datagram in raw AEAD UDP loopback</h3>
-						<p class="meta">BenchmarkRawMediaPath · M5 Pro & Windows · 20bc2df</p>
-					</article>
-					<article class="card lab__small">
-						<p class="lab__small-fig">
-							<span class="display">0.87</span><span class="unit lab__small-ms">ms</span>
-						</p>
-						<h3 class="lab__small-title">VideoToolbox decode p50</h3>
-						<p class="meta">docs/spikes/phase0-spike2.md · Apple M5 Pro · 1080p120 · 2026-11-23</p>
-					</article>
-				</div>
-				<div class="lab__more">
-					<a class="link" href="/gaming#bench"
-						>See all lab measurements <span class="arrow" aria-hidden="true">→</span></a
-					>
-					<p class="meta">0.87 ms VideoToolbox decode · 0 allocs/datagram in raw AEAD UDP loopback</p>
-				</div>
+	<section class="hero" aria-labelledby="hero-title">
+		<div class="wash hero__zenith" aria-hidden="true"></div>
+		<div class="wash hero__aura" aria-hidden="true"></div>
+		<div class="wash hero__core" aria-hidden="true"></div>
+		<div class="hero__copy">
+			<h1 id="hero-title" class="display h-hero">Play like it’s local</h1>
+			<p class="hero__lead">Open-source game streaming in pure Go for Windows and macOS.</p>
+			<div class="hero__ctas">
+				<a class="btn btn--primary" href="/download">Download</a>
+				<a class="btn btn--ghost" href={REPO}>GitHub</a>
 			</div>
 		</div>
+		<HeroDemo />
 	</section>
 
-	<div class="reorder">
-		<section class="section" id="network">
-			<div class="wrap net" data-reveal>
-				<div class="net__copy">
-					<p class="eyebrow eyebrow--direct">Native Tailscale & LAN</p>
-					<h2 class="display h2">LAN at home. Tailscale away. Zero port forwarding.</h2>
-					<p class="lead net__lead">
-						Planck checks your local subnet first and reads Tailscale's LocalAPI directly. Own devices
-						authenticate via WhoIs without a PIN, and every link states its exact wire.
-					</p>
+	<section class="band engine" aria-labelledby="engine-title">
+		<div class="wash engine__warm" aria-hidden="true"></div>
+		<div class="wash engine__cool" aria-hidden="true"></div>
+		<div class="band__head engine__head">
+			<h2 id="engine-title" class="display engine__title">Zero-copy from capture to glass</h2>
+			<p class="band-lead">Native Metal and D3D11 pipelines stream frames over raw AEAD UDP.</p>
+		</div>
+		<dl class="metrics">
+			<div class="metric">
+				<dt class="metric__label">NVENC HEVC encode p50</dt>
+				<dd class="metric__value">1.41<span class="metric__unit"> ms</span></dd>
+			</div>
+			<div class="metric">
+				<dt class="metric__label">VideoToolbox decode p50</dt>
+				<dd class="metric__value">0.87<span class="metric__unit"> ms</span></dd>
+			</div>
+			<div class="metric">
+				<dt class="metric__label">Allocs per UDP packet</dt>
+				<dd class="metric__value metric__value--zero">0</dd>
+			</div>
+		</dl>
+		<p class="band__foot engine__foot">NVIDIA NVENC · AMD AMF · Intel oneVPL · Apple VideoToolbox</p>
+	</section>
+
+	<div class="story">
+		<section class="beat beat--split crisp" aria-labelledby="crisp-title">
+			<div class="wash crisp__glow" aria-hidden="true"></div>
+			<div class="crisp__copy">
+				<div class="beat__head crisp__head">
+					<h2 id="crisp-title" class="display story__title">Crisp text, never paywalled</h2>
+					<p class="beat-lead">Every display and color mode ships free in the open-source core.</p>
 				</div>
-				<ul class="card net__routes">
+				<dl class="specs">
 					{
-						routes.map((r) => (
-							<li class={`net__route net__route--${r.tone}`}>
-								<div>
-									<p class="net__name mono">
-										<span class={`dot dot--${r.tone}`} />
-										<b class={`c-${r.tone}`}>{r.name}</b>
-										{r.meta && <span class="c-muted">{r.meta}</span>}
-									</p>
-									<p class="body2 net__body">{r.body}</p>
-								</div>
-								<p class="net__aside mono">{r.aside}</p>
-							</li>
+						features.map((f) => (
+							<div class="specs__row">
+								<dt>{f.name}</dt>
+								<dd class="mono">
+									<span class="specs__long">{f.spec}</span>
+									<span class="specs__short">{f.short}</span>
+								</dd>
+							</div>
 						))
 					}
-				</ul>
+				</dl>
 			</div>
+			<ChromaLens />
 		</section>
 
-		<section class="section paths-section">
-			<div class="wrap paths" data-reveal>
-				<a class="card path path--gaming" href="/gaming">
-					<div class="path__media">
-						<Picture
-							src={canyon}
-							alt=""
-							widths={[640, 1248]}
-							sizes="(max-width: 900px) 100vw, 612px"
-							formats={['avif', 'webp']}
-							fallbackFormat="jpg"
-			quality={78}
-							class="path__img"
-						/>
-						<span class="hud path__badge"
-							><span class="dot dot--ember"></span>HDR10 · Sub-frame slices</span
-						>
-						<span class="path__enc mono">NVENC · AMF · oneVPL</span>
-					</div>
-					<div class="path__body">
-						<p class="eyebrow">Gaming</p>
-						<h2 class="display h3">Your desktop GPU in any room.</h2>
-						<p class="body2">
-							Stream from your desk to a laptop or couch with controller passthrough, low-jitter pacing,
-							and an auto-hiding HUD.
-						</p>
-						<span class="link path__link">Explore Gaming <span class="arrow" aria-hidden="true">→</span></span>
-					</div>
-				</a>
-				<a class="card path path--work" href="/work">
-					<div class="path__media path__code" aria-hidden="true">
-						<div class="path__code-bar mono">
-							<span class="path__lights"><i></i><i></i><i></i></span>
-							<span class="path__file">chroma444.go</span>
-							<span class="path__code-tags">
-								<span class="chip chip--square">Display 2 · 4K</span>
-								<span class="c-direct">PyroWave 4:4:4</span>
-							</span>
-						</div>
-						<div class="path__split mono">
-							<div>
-								<p class="path__label c-muted">4:2:0 · Subsampled</p>
-								<p><span class="k">func</span> EncodeSlice(s *<span class="t">Surface</span>) {'{'}</p>
-								<p>cfg.Chroma = <span class="n">0xFF7A1F</span></p>
-								<p><span class="k">return</span> <span class="t">SubmitZeroCopy</span>(s)</p>
-								<p>{'}'}</p>
-							</div>
-							<div>
-								<p class="path__label c-direct">4:4:4 · Full chroma</p>
-								<p><span class="k">func</span> EncodeSlice(s *<span class="t">Surface</span>) {'{'}</p>
-								<p>cfg.Chroma = <span class="n">0xFF7A1F</span></p>
-								<p><span class="k">return</span> <span class="t">SubmitZeroCopy</span>(s)</p>
-								<p>{'}'}</p>
-							</div>
-						</div>
-					</div>
-					<div class="path__body">
-						<p class="eyebrow eyebrow--direct">Work & Creative</p>
-						<h2 class="display h3">Your workstation, from any desk.</h2>
-						<p class="body2">
-							Switch active displays mid-session and stream your workstation over LAN or Tailscale.<span
-								class="path__extra"
-							>{' '}Free HEVC 4:4:4 host encode and PyroWave LAN 4:4:4.</span
-							>
-						</p>
-						<span class="link link--quiet path__link c-bone"
-							>Explore Work <span class="arrow" aria-hidden="true">→</span></span
-						>
-					</div>
-				</a>
+		<section class="beat beat--stack lan" aria-labelledby="lan-title">
+			<div class="wash lan__glow" aria-hidden="true"></div>
+			<div class="beat__head lan__head">
+				<h2 id="lan-title" class="display story__title">LAN at home, Tailscale away</h2>
+				<p class="beat-lead">
+					Peers connect directly over your local network or Tailscale without port forwarding.
+				</p>
+			</div>
+			<figure class="lan__stage">
+				<svg class="lan__wide" viewBox="0 0 1152 286" role="img" aria-labelledby="lan-desc">
+					<path d="M84 216 H1068" fill="none" stroke="#F2EFEA12" stroke-dasharray="2 6"></path>
+					<path d="M84 216 Q576 -26 1068 216" fill="none" stroke="#FF944718" stroke-width="14" stroke-linecap="round"></path>
+					<path d="M84 216 Q576 -26 1068 216" fill="none" stroke="#FFB27A99" stroke-width="1.6" stroke-dasharray="6 7"></path>
+					<path d="M84 216 Q576 108 1068 216" fill="none" stroke="#4CD69B2E" stroke-width="16" stroke-linecap="round"></path>
+					<path d="M84 216 Q576 108 1068 216" fill="none" stroke="#4CD69B" stroke-width="2.5" stroke-linecap="round"></path>
+					<path d="M312 174 Q576 146 840 174" fill="none" stroke="#D8FFF0CC" stroke-width="1.2" stroke-linecap="round"></path>
+					<circle cx="316" cy="174" r="3" fill="#4CD69B"></circle>
+					<circle cx="576" cy="162" r="3" fill="#C9FFE7"></circle>
+					<circle cx="836" cy="174" r="3" fill="#4CD69B"></circle>
+					<circle cx="84" cy="216" r="40" fill="none" stroke="#FF7A1F24"></circle>
+					<circle cx="84" cy="216" r="24" fill="#FF7A1F12" stroke="#FF7A1F77" stroke-width="1.25"></circle>
+					<circle cx="84" cy="216" r="10" fill="#FF7A1F33" stroke="#FF9447" stroke-width="1.5"></circle>
+					<circle cx="84" cy="216" r="4" fill="#F2EFEA"></circle>
+					<circle cx="1068" cy="216" r="40" fill="none" stroke="#4CD69B24"></circle>
+					<circle cx="1068" cy="216" r="24" fill="#4CD69B12" stroke="#4CD69B77" stroke-width="1.25"></circle>
+					<circle cx="1068" cy="216" r="10" fill="#4CD69B33" stroke="#4CD69B" stroke-width="1.5"></circle>
+					<circle cx="1068" cy="216" r="4" fill="#F2EFEA"></circle>
+					<text x="576" y="72" class="svg-mono" font-size="12" font-weight="500" letter-spacing="0.48" fill="#FFB27A" text-anchor="middle" dominant-baseline="central">Tailscale Direct</text>
+					<text x="576" y="194" class="svg-mono" font-size="12" font-weight="600" letter-spacing="0.48" fill="#4CD69B" text-anchor="middle" dominant-baseline="central">LAN Direct</text>
+					<text x="66" y="272" class="svg-ui" font-size="15" font-weight="600" fill="#F2EFEA" dominant-baseline="central">Host</text>
+					<text x="1090" y="272" class="svg-ui" font-size="15" font-weight="600" fill="#F2EFEA" text-anchor="end" dominant-baseline="central">Client</text>
+				</svg>
+				<svg class="lan__narrow" viewBox="0 0 342 196" role="img" aria-labelledby="lan-desc">
+					<path d="M36 144 H306" fill="none" stroke="#F2EFEA14" stroke-dasharray="2 5"></path>
+					<path d="M36 144 Q171 -10 306 144" fill="none" stroke="#FF94471A" stroke-width="10" stroke-linecap="round"></path>
+					<path d="M36 144 Q171 -10 306 144" fill="none" stroke="#FFB27A99" stroke-width="1.5" stroke-dasharray="5 6"></path>
+					<path d="M36 144 Q171 76 306 144" fill="none" stroke="#4CD69B2E" stroke-width="12" stroke-linecap="round"></path>
+					<path d="M36 144 Q171 76 306 144" fill="none" stroke="#4CD69B" stroke-width="2.2" stroke-linecap="round"></path>
+					<circle cx="171" cy="110" r="2.8" fill="#C9FFE7"></circle>
+					<circle cx="36" cy="144" r="22" fill="none" stroke="#FF7A1F26"></circle>
+					<circle cx="36" cy="144" r="12" fill="#FF7A1F1A" stroke="#FF9447" stroke-width="1.3"></circle>
+					<circle cx="36" cy="144" r="3.5" fill="#F2EFEA"></circle>
+					<circle cx="306" cy="144" r="22" fill="none" stroke="#4CD69B26"></circle>
+					<circle cx="306" cy="144" r="12" fill="#4CD69B1A" stroke="#4CD69B" stroke-width="1.3"></circle>
+					<circle cx="306" cy="144" r="3.5" fill="#F2EFEA"></circle>
+					<text x="171" y="45.5" class="svg-mono" font-size="11.5" font-weight="500" letter-spacing="0.35" fill="#FFB27A" text-anchor="middle" dominant-baseline="central">Tailscale Direct</text>
+					<text x="171" y="129.5" class="svg-mono" font-size="11.5" font-weight="600" letter-spacing="0.35" fill="#4CD69B" text-anchor="middle" dominant-baseline="central">LAN Direct</text>
+					<text x="20" y="180" class="svg-ui" font-size="13" font-weight="600" fill="#F2EFEA" dominant-baseline="central">Host</text>
+					<text x="326" y="180" class="svg-ui" font-size="13" font-weight="600" fill="#F2EFEA" text-anchor="end" dominant-baseline="central">Client</text>
+				</svg>
+				<figcaption id="lan-desc" class="sr-only">
+					Host and client linked directly over the LAN, with Tailscale Direct as the path when
+					away.
+				</figcaption>
+			</figure>
+			<p class="beat__foot spec-line lan__foot">
+				LocalAPI discovery · WhoIs auth · 1280-byte MTU‑safe
+			</p>
+		</section>
+
+		<section class="beat oss" aria-labelledby="oss-title">
+			<div class="wash wash--fill oss__glow" aria-hidden="true"></div>
+			<div class="oss__inner">
+				<h2 id="oss-title" class="display oss__title">Pure Go, open source</h2>
+				<p class="oss__lead">
+					Two native Apache-2.0 binaries for Windows and macOS, minus Rust and Electron.
+				</p>
+				<div class="oss__cta">
+					<a class="btn btn--ghost oss__btn" href={REPO}>GitHub</a>
+				</div>
 			</div>
 		</section>
 	</div>
-
-	<section class="section free">
-		<div class="wrap free__grid" data-reveal>
-			<div class="free__head">
-				<p class="free__price">
-					<span class="display c-ember">$0</span>
-					<span class="mono c-ember-soft free__per">/ month, forever</span>
-				</p>
-				<h2 class="display h2">What stays free.</h2>
-				<p class="lead free__lead">
-					Every solo visual and workflow feature ships free under Apache-2.0, for personal and
-					commercial use, with zero paywalled color or display tiers.
-				</p>
-			</div>
-			<ul class="free__list">
-				{
-					free.map((f) => (
-						<li class="free__row">
-							<span class="dot dot--direct free__dot" />
-							<div>
-								<h3 class="free__title">{f.title}</h3>
-								<p class="body2">{f.body}</p>
-							</div>
-							<p class="free__tag mono">{f.tag}</p>
-						</li>
-					))
-				}
-			</ul>
-		</div>
-	</section>
-
-	<section class="section oss">
-		<div class="wrap oss__grid" data-reveal>
-			<div>
-				<p class="eyebrow eyebrow--muted">Open source · Pure Go</p>
-				<h2 class="display h2">
-					Native host and client. <span class="oss__h-wide">Nothing hidden.</span><span
-						class="oss__h-narrow">Zero bloat.</span
-					>
-				</h2>
-				<p class="lead oss__lead">
-					Ships as two pure-Go executables, planck-host and planck-client, with MyGo GPU presentation.
-					Zero Electron, zero Rust, zero mandatory account.
-				</p>
-				<div class="oss__actions">
-					<a class="btn btn--primary btn--lg" href="/download">Build from source</a>
-					<a class="btn btn--ghost btn--lg oss__roadmap" href="/roadmap">View Roadmap</a>
-					<a class="btn btn--text" href={REPO} rel="noopener"
-						>GitHub <span aria-hidden="true">↗</span></a
-					>
-				</div>
-			</div>
-			<div class="oss__term-wide">
-				<BuildTerminal />
-			</div>
-			<div class="term oss__term-narrow">
-				<div class="term__bar">
-					<span class="meta c-bone">Build from source</span>
-					<CopyButton target="m-build" ember what="POSIX build" />
-				</div>
-				<pre><code id="m-build">{BUILD_POSIX_SHORT.join('\n')}</code></pre>
-				<noscript>
-					<pre style="border-top: 1px solid var(--carbon-700);"><code>{BUILD_POWERSHELL.join('\n')}</code></pre>
-				</noscript>
-				<p class="meta oss__m-note">Go 1.27.4+ · macOS / POSIX (Windows PowerShell on /download)</p>
-			</div>
-		</div>
-	</section>
 </Base>
 
 <style>
 	.hero {
-		padding: 26px 0 28px;
-		background:
-			radial-gradient(farthest-corner at 50% 68%, rgba(255, 122, 31, 0.14), rgba(255, 122, 31, 0.03) 50%, transparent 78%),
-			var(--carbon-900);
+		position: relative;
+		overflow: clip;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 28px;
+		padding: 30px clamp(16px, 5vw, 72px) 32px;
+		background: linear-gradient(
+			in oklab 180deg,
+			#0b0c0f 0%,
+			#100e12 44%,
+			#1a100b 82%,
+			#110c0a 100%
+		);
+	}
+	.hero__zenith {
+		left: 0;
+		right: 0;
+		top: -60px;
+		height: 340px;
+		background: radial-gradient(
+			ellipse 68% 58% at 50% 0% in oklab,
+			#c9d9ff1a 0%,
+			#789bff08 45%,
+			#00000000 76%
+		);
+	}
+	.hero__aura {
+		left: 0;
+		right: 0;
+		top: 180px;
+		bottom: 0;
+		background: radial-gradient(
+			ellipse 88% 66% at 50% 62% in oklab,
+			#ff7a1f4a 0%,
+			#e8650c22 36%,
+			#a846030c 62%,
+			#00000000 82%
+		);
+	}
+	.hero__core {
+		left: 200px;
+		right: 200px;
+		top: 260px;
+		height: 380px;
+		background: radial-gradient(
+			ellipse 58% 48% at 62% 52% in oklab,
+			#ffb46b2b 0%,
+			#ff7a1f0d 48%,
+			#00000000 76%
+		);
 	}
 	.hero__copy {
+		position: relative;
 		display: flex;
 		flex-direction: column;
-		gap: 10px;
-		max-width: 760px;
+		align-items: center;
+		gap: 14px;
+		max-width: 780px;
+		text-align: center;
 	}
-	.hero__row {
+	.hero__lead {
+		max-width: 620px;
+		font-size: 18px;
+		line-height: 26px;
+		color: #c2c5ce;
+	}
+	.hero__ctas {
 		display: flex;
-		align-items: flex-end;
+		gap: 14px;
+		padding-top: 8px;
+	}
+	.hero__ctas .btn--primary {
+		box-shadow:
+			#ff7a1f66 0 0 34px,
+			#0000006e 0 10px 22px;
+	}
+
+	.engine {
+		gap: 80px;
+		padding-block: 168px;
+	}
+	.engine__warm {
+		top: -120px;
+		right: -80px;
+		width: 760px;
+		height: 520px;
+		background: radial-gradient(
+			ellipse 68% 64% at 72% 34% in oklab,
+			#ff7a1f24 0%,
+			#ffb46b0f 44%,
+			#f2efea00 76%
+		);
+	}
+	.engine__cool {
+		bottom: -100px;
+		left: -60px;
+		width: 680px;
+		height: 420px;
+		background: radial-gradient(ellipse 65% 60% at 30% 70% in oklab, #0e0f120d 0%, #f2efea00 72%);
+	}
+	.engine__head {
+		gap: 18px;
+		max-width: 700px;
+	}
+	.engine__title {
+		font-size: clamp(32px, 3.47vw, 50px);
+		line-height: 1.12;
+		letter-spacing: -0.034em;
+		color: var(--bone-ink);
+	}
+	.engine__head .band-lead {
+		max-width: 640px;
+	}
+	.engine .metrics {
+		flex-direction: row;
+	}
+	.engine__foot {
+		padding-top: 28px;
+	}
+
+	.story {
+		display: flex;
+		flex-direction: column;
+		overflow: clip;
+		background: linear-gradient(in oklab 180deg, #0b0c0f 0%, #0e0f12 22%, #0e0f12 100%);
+	}
+	.story__title {
+		font-size: clamp(32px, 3.6vw, 52px);
+		line-height: 1.077;
+		letter-spacing: -0.036em;
+	}
+	.crisp {
+		gap: 64px;
+		padding: 168px 120px 112px var(--pad);
+	}
+	.crisp__glow {
+		top: 40px;
+		bottom: 0;
+		left: 420px;
+		right: -80px;
+		background: radial-gradient(
+			ellipse 56% 70% at 78% 50% in oklab,
+			#ff7a1f2b 0%,
+			#ffb46b10 38%,
+			#00000000 72%
+		);
+	}
+	.crisp__copy {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 28px;
+		flex-shrink: 0;
+		width: 528px;
+		max-width: 100%;
+	}
+	.crisp__head {
+		gap: 16px;
+	}
+	.specs {
+		display: flex;
+		flex-direction: column;
+		padding-top: 8px;
+		margin: 0;
+	}
+	.specs__row {
+		display: flex;
+		align-items: center;
 		justify-content: space-between;
-		gap: 48px;
-		margin-top: 14px;
+		gap: 16px;
+		padding-block: 14px;
+		border-top: 1px solid #f2efea1a;
 	}
-	.hero__sub-narrow {
-		display: none;
+	.specs__row:last-child {
+		border-bottom: 1px solid #f2efea1a;
 	}
-	.hero__actions {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 10px;
-		flex: none;
-		padding-bottom: 4px;
+	.specs dt {
+		font-size: 15px;
+		font-weight: 500;
+		line-height: 20px;
 	}
-	.hero__buttons {
-		display: flex;
-		gap: 10px;
+	.specs dd {
+		margin: 0;
+		font-size: 11px;
+		line-height: 16px;
+		color: var(--text-3);
+		text-align: right;
 	}
-	.hero__frame {
-		margin-top: 20px;
-		box-shadow: 0 24px 64px rgba(0, 0, 0, 0.62);
-		border-radius: var(--radius-md);
-	}
-	.hero__numbers-mobile {
+	.specs__short {
 		display: none;
 	}
 
-	.lab {
-		display: grid;
-		grid-template-columns: 738fr 490fr;
-		gap: 20px;
+	.lan {
+		gap: 16px;
+		padding: 88px var(--pad) 116px;
 	}
-	.lab__lead {
-		padding: 36px;
-		border-top: 2px solid var(--ember-500);
+	.lan__glow {
+		top: 80px;
+		bottom: 20px;
+		left: 80px;
+		right: 80px;
+		background: radial-gradient(
+			ellipse 56% 52% at 50% 60% in oklab,
+			#4cd69b1e 0%,
+			#4cd69b08 42%,
+			#00000000 72%
+		);
 	}
-	.lab__lead-head {
+	.lan__head {
+		gap: 14px;
+		max-width: 640px;
+	}
+	.lan__stage {
+		position: relative;
+		width: 100%;
+	}
+	.lan__wide {
+		width: 100%;
+		height: auto;
+		overflow: visible;
+	}
+	.lan__narrow {
+		display: none;
+		width: 100%;
+		height: auto;
+	}
+
+	.oss {
 		display: flex;
-		justify-content: space-between;
+		flex-direction: column;
 		align-items: center;
+		padding: 140px var(--pad) 168px;
 	}
-	.lab__date {
-		font-size: 10px;
-		letter-spacing: 0.04em;
+	.oss__glow {
+		background: radial-gradient(
+			ellipse 68% 58% at 50% 46% in oklab,
+			#ff7a1f2e 0%,
+			#e8650c14 38%,
+			#0e0f1200 72%
+		);
 	}
-	.lab__figure {
-		margin-top: 14px;
-		font-size: 76px;
-		line-height: 76px;
-		color: var(--ember-500);
-		letter-spacing: -0.04em;
-	}
-	.lab__figure .unit {
-		font-size: 20px;
-		color: var(--ember-300);
-	}
-	.lab__title {
-		margin: 14px 0 6px;
-		font-size: 18px;
-		font-weight: 600;
-	}
-	.lab__cite {
-		margin-top: 28px;
-		padding-top: 16px;
-		border-top: 1px solid var(--carbon-700);
-	}
-	.lab__side {
-		display: grid;
-		gap: 20px;
-	}
-	.lab__small {
-		padding: 24px 28px;
-	}
-	.lab__small-fig {
+	.oss__inner {
+		position: relative;
 		display: flex;
-		align-items: baseline;
-		gap: 8px;
-		font-size: 40px;
-		line-height: 42px;
-		letter-spacing: -0.03em;
+		flex-direction: column;
+		align-items: center;
+		gap: 20px;
+		max-width: 680px;
+		text-align: center;
 	}
-	.lab__small-unit {
-		font-size: 14px;
-		letter-spacing: 0;
+	.oss__title {
+		font-size: clamp(36px, 4.17vw, 60px);
+		line-height: 1.067;
+		letter-spacing: -0.038em;
 	}
-	.lab__small-ms {
-		font-size: 14px;
+	.oss__lead {
+		max-width: 580px;
+		font-size: clamp(16px, 1.32vw, 19px);
+		line-height: 1.58;
+		color: var(--text-2);
 	}
-	.lab__small-title {
-		margin: 10px 0 4px;
+	.oss__cta {
+		padding-top: 14px;
+	}
+	.oss__btn {
+		height: 48px;
+		padding-inline: 34px;
+		background: #f2efea14;
+		border-color: #f2efea48;
 		font-size: 15px;
 		font-weight: 600;
 	}
-	.lab__more {
-		display: none;
-	}
 
-	.net {
-		display: grid;
-		grid-template-columns: 450px 1fr;
-		gap: 76px;
-		align-items: center;
-	}
-	.net__lead {
-		margin-top: 22px;
-		font-size: 16px;
-		line-height: 24px;
-	}
-	.net__routes {
-		overflow: hidden;
-	}
-	.net__route {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 24px;
-		padding: 20px 24px 20px 26px;
-		border-left: 3px solid var(--direct);
-	}
-	.net__route + .net__route {
-		border-top: 1px solid var(--carbon-700);
-	}
-	.net__route--relay {
-		border-left-color: var(--relay);
-	}
-	.net__name {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		font-size: 12px;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-	}
-	.net__name .c-muted {
-		text-transform: none;
-		letter-spacing: 0;
-		font-size: 11px;
-	}
-	.net__body {
-		margin-top: 4px;
-	}
-	.net__aside {
-		flex: none;
-		font-size: 12px;
-		color: var(--bone-50);
-	}
-	.net__route--relay .net__aside {
-		color: var(--muted);
-	}
-
-	.paths {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 24px;
-	}
-	.path {
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-		transition: border-color var(--dur-base) var(--ease-out);
-	}
-	.path--gaming {
-		border-top: 2px solid var(--ember-500);
-	}
-	.path--work {
-		border-top: 2px solid var(--direct);
-	}
-	.path:hover {
-		border-color: var(--carbon-600);
-	}
-	.path--gaming:hover {
-		border-top-color: var(--ember-500);
-	}
-	.path--work:hover {
-		border-top-color: var(--direct);
-	}
-	.path__media {
-		position: relative;
-		height: 192px;
-		overflow: hidden;
-		border-bottom: 1px solid var(--carbon-700);
-	}
-	.path__media :global(.path__img) {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		object-position: 30% 45%;
-		transition: transform 600ms var(--ease-out);
-	}
-	.path:hover .path__media :global(.path__img) {
-		transform: scale(1.03);
-	}
-	.path__badge {
-		position: absolute;
-		top: 14px;
-		left: 16px;
-		padding: 4px 12px;
-		font-size: 10px;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		border-color: rgba(255, 122, 31, 0.5);
-		gap: 8px;
-	}
-	.path__enc {
-		position: absolute;
-		right: 24px;
-		bottom: 12px;
-		font-size: 10px;
-		color: var(--bone-50);
-		text-shadow: 0 1px 4px #000;
-	}
-	.path__code {
-		background: var(--carbon-950);
-		font-size: 10.5px;
-		line-height: 21px;
-	}
-	.path__code-bar {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		padding: 7px 14px;
-		border-bottom: 1px solid var(--carbon-700);
-		background: var(--carbon-850);
-	}
-	.path__lights {
-		display: inline-flex;
-		gap: 5px;
-	}
-	.path__lights i {
-		width: 7px;
-		height: 7px;
-		border-radius: 50%;
-		background: var(--fault);
-	}
-	.path__lights i:nth-child(2) {
-		background: var(--relay);
-	}
-	.path__lights i:nth-child(3) {
-		background: var(--direct);
-	}
-	.path__file {
-		padding: 1px 8px;
-		border: 1px solid var(--carbon-600);
-		border-radius: 4px;
-	}
-	.path__code-tags {
-		margin-left: auto;
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		font-size: 10px;
-	}
-	.path__code-tags .chip {
-		font-size: 9px;
-		padding: 0 6px;
-	}
-	.path__split {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		height: calc(100% - 32px);
-	}
-	.path__split > div {
-		padding: 28px 16px;
-		white-space: nowrap;
-		overflow: hidden;
-	}
-	.path__split > div + div {
-		border-left: 1px solid var(--ember-500);
-	}
-	.path__label {
-		font-size: 9.5px;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-	}
-	.path__split .k {
-		color: #ff8a6b;
-	}
-	.path__split .t {
-		color: var(--direct);
-	}
-	.path__split .n {
-		color: var(--ember-500);
-	}
-	.path__split > div:first-child p:not(.path__label) {
-		text-shadow:
-			0.6px 0 0 rgba(255, 122, 31, 0.35),
-			-0.6px 0 0 rgba(76, 214, 155, 0.25);
-	}
-	.path__body {
-		padding: 28px 32px 32px;
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		flex: 1;
-	}
-	.path__link {
-		margin-top: 6px;
-	}
-
-	.free {
-		background:
-			radial-gradient(60% 80% at 0% 60%, rgba(255, 122, 31, 0.1), transparent 70%),
-			var(--carbon-900);
-	}
-	.free__grid {
-		display: grid;
-		grid-template-columns: 440px 1fr;
-		gap: 62px;
-		align-items: center;
-	}
-	.free__price {
-		display: flex;
-		align-items: baseline;
-		gap: 14px;
-		font-size: 72px;
-		line-height: 76px;
-	}
-	.free__per {
-		font-size: 12px;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-	}
-	.free__lead {
-		margin-top: 16px;
-		font-size: 16px;
-		line-height: 24px;
-	}
-	.free__list {
-		border-top: 1px solid var(--carbon-700);
-	}
-	.free__row {
-		display: grid;
-		grid-template-columns: 10px 1fr auto;
-		gap: 14px 12px;
-		align-items: center;
-		padding: 22px 0;
-		border-bottom: 1px solid var(--carbon-700);
-	}
-	.free__dot {
-		align-self: start;
-		margin-top: 9px;
-	}
-	.free__title {
-		font-size: 16px;
-		font-weight: 600;
-		line-height: 24px;
-	}
-	.free__tag {
-		font-size: 11px;
-		color: var(--muted);
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		text-align: right;
-	}
-
-	.oss__grid {
-		display: grid;
-		grid-template-columns: 560px 1fr;
-		gap: 90px;
-		align-items: center;
-	}
-	.oss__h-narrow {
-		display: none;
-	}
-	.oss__lead {
-		margin-top: 22px;
-		font-size: 16px;
-		line-height: 24px;
-	}
-	.oss__actions {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		margin-top: 28px;
-	}
-	.oss__term-narrow {
-		display: none;
-	}
-	.oss__m-note {
-		padding: 0 14px 14px;
-	}
-
-	@media (max-width: 1100px) {
-		.net,
-		.free__grid,
-		.oss__grid {
-			grid-template-columns: 1fr;
-			gap: 40px;
+	@media (max-width: 1199px) {
+		.crisp {
+			padding-right: var(--pad);
 		}
-		.hero__row {
-			flex-direction: column;
-			align-items: flex-start;
-		}
-		.hero__actions {
-			align-items: flex-start;
+		.crisp :global(.lens) {
+			align-self: center;
 		}
 	}
-	@media (max-width: 900px) {
-		.hero__title {
-			font-size: 44px;
-			line-height: 48px;
-		}
-		.lab {
-			grid-template-columns: 1fr;
-		}
-		.paths {
-			grid-template-columns: 1fr;
-		}
-	}
-	@media (max-width: 600px) {
+	@media (max-width: 767px) {
 		.hero {
-			padding: 12px 0;
+			gap: 28px;
+			padding: 32px 16px 40px;
 		}
-		.hero__chip-meta {
+		.hero__copy {
+			padding-inline: 8px;
+		}
+		.hero__lead {
+			max-width: 318px;
+			font-size: 15px;
+			line-height: 23px;
+		}
+		.hero__ctas {
+			gap: 10px;
+			padding-top: 6px;
+		}
+		.hero__ctas .btn {
+			height: 48px;
+			font-size: 15px;
+		}
+		.engine {
+			gap: 28px;
+			padding-block: 56px;
+		}
+		.engine__head {
+			gap: 12px;
+		}
+		.engine .metrics {
+			flex-direction: column;
+		}
+		.engine__foot {
+			padding-top: 16px;
+		}
+		.crisp {
+			gap: 30px;
+			padding: 72px 24px 64px;
+		}
+		.crisp__copy {
+			display: contents;
+		}
+		.crisp__head {
+			order: 0;
+		}
+		.crisp :global(.lens) {
+			order: 1;
+			width: 342px;
+		}
+		.specs {
+			order: 2;
+			align-self: stretch;
+			padding-top: 0;
+		}
+		.specs dt {
+			font-size: 15px;
+		}
+		.specs__long {
 			display: none;
 		}
-		.hero__title {
-			font-size: 30px;
-			line-height: 34px;
-		}
-		.hero__sub-wide {
-			display: none;
-		}
-		.hero__sub-narrow {
+		.specs__short {
 			display: inline;
 		}
-		.hero__row {
-			gap: 16px;
-			margin-top: 10px;
+		.lan {
+			gap: 18px;
+			padding: 52px 24px 72px;
 		}
-		.hero__actions,
-		.hero__buttons {
-			width: 100%;
-			align-items: stretch;
-		}
-		.hero__actions {
-			gap: 8px;
-		}
-		.hero__buttons .btn {
-			flex: 1;
-			min-height: 48px;
-		}
-		.hero__numbers {
+		.lan__wide {
 			display: none;
 		}
-		.hero__meta {
-			text-align: center;
-		}
-		.hero__frame {
-			margin-top: 14px;
-		}
-		.hero__numbers-mobile {
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			min-height: 44px;
-			margin-top: 2px;
-		}
-		#numbers {
-			padding-top: 28px;
-		}
-
-		.lab__side {
-			display: none;
-		}
-		.lab__lead {
-			padding: 22px 20px;
-		}
-		.lab__figure {
-			font-size: 64px;
-			line-height: 68px;
-		}
-		.lab__more {
-			display: block;
-			margin-top: 12px;
-		}
-		.lab__more .link {
-			min-height: 44px;
-		}
-
-		.reorder {
-			display: flex;
-			flex-direction: column;
-		}
-		.paths-section {
-			order: -1;
-		}
-		.net__route {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 6px;
-			padding: 16px 16px 16px 18px;
-		}
-		.path__media {
-			height: 160px;
-		}
-		.path__extra {
-			display: none;
-		}
-		.path__body {
-			padding: 22px 20px 24px;
-		}
-		.path__link {
-			min-height: 44px;
-		}
-		.path__code-tags .chip {
-			display: none;
-		}
-		.path__split > div {
-			padding: 16px 12px;
-			font-size: 9.5px;
-		}
-
-		.free__price {
-			font-size: 56px;
-			line-height: 60px;
-		}
-		.free__row {
-			grid-template-columns: 1fr;
-			gap: 4px;
-		}
-		.free__dot {
-			display: none;
-		}
-		.free__tag {
-			order: -1;
-			text-align: left;
-			color: var(--direct);
-		}
-
-		.oss__h-wide {
-			display: none;
-		}
-		.oss__h-narrow {
-			display: inline;
-		}
-		.oss__actions {
-			flex-direction: column;
-			align-items: stretch;
-		}
-		.oss__actions .btn {
-			min-height: 52px;
-		}
-		.oss__roadmap {
-			display: none;
-		}
-		.oss__term-wide {
-			display: none;
-		}
-		.oss__term-narrow {
+		.lan__narrow {
 			display: block;
 		}
-		.oss__term-narrow pre {
-			padding: 16px 14px;
-			font-size: 9px;
-			line-height: 20px;
-			white-space: pre-wrap;
-			overflow-wrap: anywhere;
+		.oss {
+			padding: 72px 24px 96px;
+		}
+		.oss__lead {
+			font-size: 15px;
 		}
 	}
 </style>

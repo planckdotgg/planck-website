@@ -1,0 +1,338 @@
+---
+/**
+ * The home page's round 4:2:0 / 4:4:4 comparison. The same code card is drawn twice: once with
+ * the color fringes that chroma subsampling leaves on thin text, once clean. A range input
+ * moves the split.
+ */
+const rows = [
+	{
+		key: 'Chroma',
+		value: '"4:4:4"',
+		tone: 'green',
+		note: '// full chroma',
+		short: { note: '// full' },
+	},
+	{
+		key: 'Depth',
+		value: '10',
+		tone: 'ember',
+		note: '// BT.2020 PQ',
+		short: { value: '10-bit', note: '// HDR10' },
+	},
+	{
+		key: 'Encode',
+		value: '1.41ms',
+		tone: 'green',
+		note: '// NVENC p50',
+		short: { note: '// NVENC' },
+	},
+	{ key: 'Accent', value: '"#FF7A1F"', tone: 'ember', note: '// ember' },
+];
+const sides = ['subsampled', 'full'] as const;
+---
+
+<figure class="lens" data-lens style="--split: 50%">
+	<div class="lens__glow" aria-hidden="true"></div>
+	<div class="lens__disc">
+		{
+			sides.map((side) => (
+				<div class:list={['lens__half', `lens__half--${side}`]} aria-hidden={side === 'subsampled' ? 'true' : undefined}>
+					<div class="lens__card">
+						<div class="lens__top mono">
+							<span>session.go</span>
+							<span>1440p · 240 Hz</span>
+						</div>
+						<div class="lens__code">
+							<p class="lens__title">Subpixel text fidelity</p>
+							<p class="lens__line mono">
+								<span class="t-ember">type</span> <span class="lens__long">StreamConfig</span><span class="lens__short">StreamCfg</span> <span class="t-ember">struct</span> {'{'}
+							</p>
+							{rows.map((r) => (
+								<p class:list={['lens__line lens__line--field mono', { 'lens__long-row': !r.short }]}>
+									<span class="lens__key">{r.key}</span>
+									<span class:list={['lens__val', `t-${r.tone}`]}><span class="lens__long">{r.value}</span><span class="lens__short">{r.short?.value ?? r.value}</span></span>
+									<span class="lens__note"><span class="lens__long">{r.note}</span><span class="lens__short">{r.short?.note ?? r.note}</span></span>
+								</p>
+							))}
+							<p class="lens__line mono">{'}'}</p>
+						</div>
+						<div class="lens__foot mono">
+							<span class="t-ember">#FF7A1F</span>
+							<span class="t-green">#4CD69B</span>
+							<span class="t-bone">0 allocs</span>
+						</div>
+					</div>
+				</div>
+			))
+		}
+		<span class="lens__tag lens__tag--left mono" aria-hidden="true">4:2:0</span>
+		<span class="lens__tag lens__tag--right mono" aria-hidden="true">4:4:4</span>
+		<span class="lens__divider" aria-hidden="true"></span>
+		<span class="lens__handle" aria-hidden="true">
+			<svg width="12" height="8" viewBox="0 0 14 10">
+				<path d="M4.5 1.5 L1 5 L4.5 8.5 M9.5 1.5 L13 5 L9.5 8.5" fill="none" stroke="#F2EFEA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+			</svg>
+		</span>
+		<input
+			class="lens__range"
+			type="range"
+			min="8"
+			max="92"
+			value="50"
+			aria-label="Split between 4:2:0 and 4:4:4"
+			aria-valuetext="Half 4:2:0, half 4:4:4"
+		/>
+	</div>
+	<figcaption class="sr-only">
+		The same code at 4:2:0 chroma, with color fringes on thin strokes, and at 4:4:4, clean.
+	</figcaption>
+</figure>
+
+<script>
+	for (const lens of document.querySelectorAll<HTMLElement>('[data-lens]')) {
+		const range = lens.querySelector<HTMLInputElement>('input[type="range"]');
+		if (!range) continue;
+		const update = () => {
+			const v = Number(range.value);
+			lens.style.setProperty('--split', `${v}%`);
+			range.setAttribute('aria-valuetext', `${Math.round(v)}% 4:2:0, ${Math.round(100 - v)}% 4:4:4`);
+		};
+		range.addEventListener('input', update);
+		update();
+	}
+</script>
+
+<style>
+	.lens {
+		position: relative;
+		width: 488px;
+		max-width: 100%;
+		aspect-ratio: 1;
+		flex-shrink: 0;
+	}
+	.lens__glow {
+		position: absolute;
+		inset: -24px;
+		border-radius: 999px;
+		background: radial-gradient(
+			circle farthest-corner at 58% 50% in oklab,
+			#ff7a1f24 0%,
+			#ffb46b0b 44%,
+			#00000000 72%
+		);
+	}
+	.lens__disc {
+		position: absolute;
+		inset: 2.46%;
+		border-radius: 999px;
+		overflow: clip;
+		background: #090a0e;
+		border: 1px solid #343944;
+		box-shadow:
+			#000000cc 0 28px 72px,
+			#ff7a1f18 0 0 48px;
+		container-type: inline-size;
+	}
+	.lens__half {
+		position: absolute;
+		inset: 0;
+	}
+	.lens__half--subsampled {
+		clip-path: inset(0 calc(100% - var(--split)) 0 0);
+	}
+	.lens__half--full {
+		clip-path: inset(0 0 0 var(--split));
+	}
+	.lens__card {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: 14px;
+		padding: 13.8cqi 12.5cqi;
+		font-size: 11px;
+		line-height: 14px;
+	}
+	.lens__top,
+	.lens__foot {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding-inline: 10px;
+		font-size: 11px;
+		line-height: 14px;
+	}
+	.lens__top {
+		padding-bottom: 10px;
+		border-bottom: 1px solid #242833;
+		color: var(--muted);
+	}
+	.lens__top span:first-child {
+		color: var(--text-3);
+		letter-spacing: 0.04em;
+	}
+	.lens__foot {
+		padding-top: 10px;
+		border-top: 1px solid #242833;
+	}
+	.lens__code {
+		display: flex;
+		flex-direction: column;
+		gap: 9px;
+	}
+	.lens__title {
+		font-size: 24px;
+		font-weight: 600;
+		letter-spacing: -0.025em;
+		line-height: 28px;
+		color: var(--text);
+	}
+	.lens__line {
+		display: flex;
+		align-items: baseline;
+		gap: 7px;
+		font-size: 11.5px;
+		line-height: 20px;
+		white-space: pre;
+		color: #c2c5ce;
+	}
+	.lens__line--field {
+		gap: 0;
+		padding-left: 14px;
+	}
+	.lens__key {
+		width: 68px;
+		color: #d4d6dc;
+	}
+	.lens__val {
+		width: 96px;
+	}
+	.lens__note {
+		color: #7e8492;
+	}
+	.lens__short {
+		display: none;
+	}
+	.t-bone {
+		color: var(--text);
+	}
+	.lens__half--full .t-ember {
+		color: var(--accent);
+	}
+	.lens__half--full .t-green {
+		color: var(--direct);
+	}
+	.lens__half--subsampled .t-ember {
+		color: #e38952;
+		text-shadow:
+			#782e0e73 1px 0 0,
+			#782e0e59 -1px 0 0;
+	}
+	.lens__half--subsampled .t-green {
+		color: #73cfaa;
+		text-shadow:
+			#185c4073 1px 0 0,
+			#185c4059 -1px 0 0;
+	}
+	.lens__tag {
+		position: absolute;
+		top: 9%;
+		font-size: 11px;
+		font-weight: 500;
+		letter-spacing: 0.06em;
+		line-height: 14px;
+		color: #9da3b0;
+		pointer-events: none;
+	}
+	.lens__tag--left {
+		left: 23.3%;
+	}
+	.lens__tag--right {
+		right: 23.3%;
+		font-weight: 600;
+		color: var(--focus);
+	}
+	.lens__divider {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: var(--split);
+		width: 1.5px;
+		margin-left: -0.75px;
+		background: var(--accent);
+		pointer-events: none;
+	}
+	.lens__handle {
+		position: absolute;
+		top: 84.5%;
+		left: var(--split);
+		width: 28px;
+		height: 28px;
+		margin-left: -14px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 999px;
+		background: #0e0f12eb;
+		border: 1.5px solid var(--accent);
+		pointer-events: none;
+	}
+	.lens__range {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		margin: 0;
+		opacity: 0;
+		cursor: ew-resize;
+		touch-action: pan-y;
+	}
+	.lens__range:focus-visible ~ .lens__handle,
+	.lens__disc:has(.lens__range:focus-visible) .lens__handle {
+		outline: 2px solid var(--focus);
+		outline-offset: 3px;
+	}
+	@container (max-width: 400px) {
+		.lens__long,
+		.lens__long-row {
+			display: none;
+		}
+		.lens__short {
+			display: inline;
+		}
+		.lens__card {
+			gap: 8px;
+			padding-inline: 11cqi;
+		}
+		.lens__top,
+		.lens__foot {
+			padding-inline: 6px;
+			font-size: 10px;
+		}
+		.lens__code {
+			gap: 4px;
+		}
+		.lens__title {
+			font-size: 17px;
+			line-height: 22px;
+		}
+		.lens__line {
+			gap: 5px;
+			font-size: 10px;
+			line-height: 18px;
+		}
+		.lens__line--field {
+			padding-left: 8px;
+		}
+		.lens__key {
+			width: 54px;
+		}
+		.lens__val {
+			width: 62px;
+		}
+		.lens__handle {
+			top: 87%;
+		}
+	}
+</style>
