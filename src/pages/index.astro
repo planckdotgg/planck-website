@@ -230,6 +230,7 @@ const slowest = Math.max(...vendors.map((v) => v.ms));
 		flex-direction: column;
 		padding-bottom: clamp(72px, 10vh, 132px);
 		background: linear-gradient(in oklab 180deg, #0b0c0f 0%, #100e12 54%, #130e11 100%);
+		overflow-x: clip;
 	}
 	.hero__head {
 		position: relative;
