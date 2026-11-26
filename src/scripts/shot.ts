@@ -2,6 +2,8 @@
  * Keeps the session meter alive: a frame-time bar graph and a glass-to-glass figure that drift
  * the way a real 120 Hz session does, around the measured 8.4 ms p50.
  */
+import type { Telemetry } from './flux-sim';
+
 const BASE = 8.4;
 
 function start(root: HTMLElement) {
@@ -16,6 +18,7 @@ function start(root: HTMLElement) {
 	let shown = BASE;
 	let running = false;
 	let timer = 0;
+	let seq = 0;
 
 	const paint = () => {
 		for (let i = 0; i < bars.length; i++) {
@@ -33,6 +36,13 @@ function start(root: HTMLElement) {
 		const drift = (Math.random() - 0.5) * 0.5 + (BASE - shown) * 0.25;
 		shown = Math.max(7.4, Math.min(9.9, shown + drift));
 		paint();
+		const detail: Telemetry = {
+			g2g: shown,
+			sample: samples[samples.length - 1],
+			spike,
+			seq: seq++,
+		};
+		root.dispatchEvent(new CustomEvent('planck:telemetry', { bubbles: true, detail }));
 	};
 
 	const run = (on: boolean) => {
@@ -40,6 +50,9 @@ function start(root: HTMLElement) {
 		running = on;
 		clearInterval(timer);
 		if (on) timer = window.setInterval(step, 130);
+		root.dispatchEvent(
+			new CustomEvent('planck:telemetry-state', { bubbles: true, detail: { running: on } }),
+		);
 	};
 
 	paint();

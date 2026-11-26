@@ -1,6 +1,7 @@
 ---
 import ChromaLens from '../components/ChromaLens.astro';
 import ClientShot from '../components/ClientShot.astro';
+import HeroFlux from '../components/HeroFlux.astro';
 import Base from '../layouts/Base.astro';
 import { REPO } from '../lib/site';
 
@@ -26,6 +27,7 @@ const slowest = Math.max(...vendors.map((v) => v.ms));
 	description="Open-source game streaming in pure Go for Windows and macOS: zero-copy capture, 4:4:4 chroma, 10-bit HDR10, and native Tailscale."
 >
 	<section class="hero" aria-labelledby="hero-title">
+		<HeroFlux />
 		<div class="hero__head">
 			<div class="wash hero__zenith" aria-hidden="true"></div>
 			<div class="wash hero__aura" aria-hidden="true"></div>
@@ -261,8 +263,12 @@ const slowest = Math.max(...vendors.map((v) => v.ms));
 			#00000000 74%
 		);
 	}
+	.hero.is-flux .hero__aura {
+		opacity: 0.7;
+	}
 	.hero__copy {
 		position: relative;
+		z-index: 2;
 		display: flex;
 		flex-direction: column;
 		align-items: center;

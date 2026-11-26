@@ -85,7 +85,7 @@ const frames = Array.from({ length: 38 }, (_, i) => i);
 <figure class="shot" data-shot>
 	<div class="shot__glow" aria-hidden="true"></div>
 	<div class="shot__stack">
-	<div class="shot__frame">
+	<div class="shot__frame" data-shot-frame>
 		<div class="app" aria-hidden="true">
 			<nav class="rail">
 				<span class="rail__mark">
@@ -261,6 +261,7 @@ const frames = Array.from({ length: 38 }, (_, i) => i);
 <style>
 	.shot {
 		position: relative;
+		z-index: 2;
 		margin: 0;
 		display: flex;
 		justify-content: center;
@@ -281,6 +282,9 @@ const frames = Array.from({ length: 38 }, (_, i) => i);
 			#00000000 74%
 		);
 	}
+	:global(.hero.is-flux) .shot__glow {
+		opacity: 0.6;
+	}
 	/* The window runs wider than the text column, so the fold reads as a screen, not a card. */
 	.shot__stack {
 		position: relative;
@@ -300,6 +304,16 @@ const frames = Array.from({ length: 38 }, (_, i) => i);
 			#ff7a1f1f 0 0 80px,
 			#000000e6 0 44px 90px -24px,
 			#00000080 0 8px 24px;
+	}
+	/* Hero light landing on the glass lights the top border it lands on. Not inherited, so a
+	   change restyles the frame alone, not the whole client inside it. */
+	@property --flux-impact {
+		syntax: '<number>';
+		inherits: false;
+		initial-value: 0;
+	}
+	:global(.hero.is-flux) .shot__frame {
+		border-top-color: color-mix(in oklab, #262a33, #ffd1a3 calc(var(--flux-impact) * 70%));
 	}
 
 	/* The client. Every size is a share of the frame, so the whole app scales as one piece.
