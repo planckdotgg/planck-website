@@ -1,5 +1,5 @@
 import sceneSvg from '../../assets/hero-scene.svg?raw';
-import { type ControlInput, combine, InputDelay } from './input';
+import { applyKey, type ControlInput, combine, InputDelay, releaseAll } from './input';
 import { Renderer } from './render';
 import { parseScene } from './scene';
 import { createState, type SimState, step } from './sim';
@@ -7,10 +7,6 @@ import { createState, type SimState, step } from './sim';
 const DT = 1 / 240;
 const LATENCY = { planck: 4, cloud: 45 } as const;
 type Mode = keyof typeof LATENCY;
-
-const STEER_LEFT = new Set(['KeyA', 'ArrowLeft']);
-const STEER_RIGHT = new Set(['KeyD', 'ArrowRight']);
-const BRAKE = new Set(['ShiftLeft', 'ShiftRight']);
 
 function setup(root: HTMLElement) {
 	const dialog = root.querySelector<HTMLDialogElement>('[data-demo-dialog]');
@@ -42,6 +38,8 @@ function setup(root: HTMLElement) {
 	let fps = 60;
 	let lastReadout = 0;
 	let opener: HTMLElement | null = null;
+	let running = false;
+	let engaged = false;
 
 	const current = (): ControlInput => {
 		let left = 0;
@@ -70,12 +68,15 @@ function setup(root: HTMLElement) {
 			if (on && focus) r.focus();
 		}
 		readout();
+		if (dialog.open && !running) draw();
 	};
+
+	const draw = () => renderer.draw({ state, mode, reduced: reducedQuery.matches });
 
 	const resize = () => {
 		const rect = stage.getBoundingClientRect();
 		renderer.resize(rect.width, rect.height, window.devicePixelRatio || 1);
-		renderer.draw({ state, mode, reduced: reducedQuery.matches });
+		draw();
 	};
 
 	const tick = (now: number) => {
@@ -93,7 +94,7 @@ function setup(root: HTMLElement) {
 			const at = Math.min(now, start + k * DT * 1000);
 			step(state, delay.sample(at, LATENCY[mode]), DT);
 		}
-		renderer.draw({ state, mode, reduced: reducedQuery.matches });
+		draw();
 		if (now - lastReadout > 250) {
 			lastReadout = now;
 			readout();
@@ -102,38 +103,51 @@ function setup(root: HTMLElement) {
 
 	const start = () => {
 		cancelAnimationFrame(frame);
+		running = true;
 		last = performance.now();
 		acc = 0;
 		frame = requestAnimationFrame(tick);
 	};
-	const stop = () => cancelAnimationFrame(frame);
+	const stop = () => {
+		cancelAnimationFrame(frame);
+		running = false;
+	};
+	// With reduced motion the run waits on a still frame until the player first steers or brakes.
+	const mayRun = () => engaged || !reducedQuery.matches;
+	const engage = () => {
+		const input = current();
+		if (input.steer === 0 && !input.brake) return;
+		engaged = true;
+		if (!running && dialog.open && !document.hidden) start();
+	};
+	const releaseControls = () => {
+		releaseAll(keys);
+		pointers.clear();
+		record(performance.now());
+	};
 
 	const open = (from: HTMLElement) => {
 		opener = from;
 		state = createState((Math.random() * 2 ** 32) >>> 0);
 		delay.clear();
-		keys.left = keys.right = keys.brake = false;
+		releaseAll(keys);
 		pointers.clear();
+		engaged = false;
 		fps = 60;
 		document.documentElement.classList.add('demo-open');
 		dialog.showModal();
 		stage.focus({ preventScroll: true });
 		resize();
 		readout();
-		start();
+		if (mayRun()) start();
 	};
 
 	const onKey = (e: KeyboardEvent, down: boolean) => {
 		const inRadios = (e.target as HTMLElement).getAttribute?.('role') === 'radio';
-		if (inRadios && e.key.startsWith('Arrow')) return;
-		let handled = true;
-		if (STEER_LEFT.has(e.code)) keys.left = down;
-		else if (STEER_RIGHT.has(e.code)) keys.right = down;
-		else if (BRAKE.has(e.code)) keys.brake = down;
-		else handled = false;
-		if (!handled) return;
+		if (!applyKey(keys, e.code, down, inRadios && e.key.startsWith('Arrow'))) return;
 		e.preventDefault();
 		record(e.timeStamp);
+		if (down) engage();
 	};
 
 	for (const b of openers) {
@@ -148,11 +162,7 @@ function setup(root: HTMLElement) {
 	});
 	dialog.addEventListener('keydown', (e) => onKey(e, true));
 	dialog.addEventListener('keyup', (e) => onKey(e, false));
-	window.addEventListener('blur', () => {
-		keys.left = keys.right = keys.brake = false;
-		pointers.clear();
-		record(performance.now());
-	});
+	window.addEventListener('blur', releaseControls);
 
 	stage.addEventListener('pointerdown', (e) => {
 		if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -161,6 +171,7 @@ function setup(root: HTMLElement) {
 		pointers.set(e.pointerId, e.clientX < rect.left + rect.width / 2 ? 'left' : 'right');
 		stage.setPointerCapture(e.pointerId);
 		record(e.timeStamp);
+		engage();
 	});
 	const release = (e: PointerEvent) => {
 		if (!pointers.delete(e.pointerId)) return;
@@ -192,8 +203,10 @@ function setup(root: HTMLElement) {
 
 	document.addEventListener('visibilitychange', () => {
 		if (!dialog.open) return;
-		if (document.hidden) stop();
-		else start();
+		if (document.hidden) {
+			releaseControls();
+			stop();
+		} else if (mayRun()) start();
 	});
 
 	selectMode('planck');

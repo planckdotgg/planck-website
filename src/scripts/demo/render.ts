@@ -179,7 +179,8 @@ export class Renderer {
 			const want = racer.x * 0.65 + 760 * 0.35;
 			const lo = visibleW / 2;
 			const hi = WORLD_W - visibleW / 2;
-			this.camX += (Math.max(lo, Math.min(hi, want)) - this.camX) * 0.12;
+			const target = Math.max(lo, Math.min(hi, want));
+			this.camX = reduced ? target : this.camX + (target - this.camX) * 0.12;
 		}
 		const left = this.camX - visibleW / 2;
 		const top = this.height - WORLD_H * s;

@@ -81,6 +81,7 @@ const sides = ['subsampled', 'full'] as const;
 			value="50"
 			aria-label="Split between 4:2:0 and 4:4:4"
 			aria-valuetext="Half 4:2:0, half 4:4:4"
+			hidden
 		/>
 	</div>
 	<figcaption class="sr-only">
@@ -98,6 +99,8 @@ const sides = ['subsampled', 'full'] as const;
 			range.setAttribute('aria-valuetext', `${Math.round(v)}% 4:2:0, ${Math.round(100 - v)}% 4:4:4`);
 		};
 		range.addEventListener('input', update);
+		range.hidden = false;
+		lens.dataset.lensReady = '';
 		update();
 	}
 </script>
@@ -277,6 +280,10 @@ const sides = ['subsampled', 'full'] as const;
 		background: #0e0f12eb;
 		border: 1.5px solid var(--accent);
 		pointer-events: none;
+	}
+	.lens:not([data-lens-ready]) .lens__handle,
+	.lens__range[hidden] {
+		display: none;
 	}
 	.lens__range {
 		position: absolute;

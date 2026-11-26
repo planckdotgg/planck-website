@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { combine, InputDelay, NEUTRAL } from './input';
+import { applyKey, combine, InputDelay, NEUTRAL, releaseAll } from './input';
 import { layer, parseScene, SHAPE_COUNT } from './scene';
 import {
 	createState,
@@ -82,6 +82,28 @@ describe('combine', () => {
 			steer: 1,
 			brake: true,
 		});
+	});
+});
+
+describe('applyKey', () => {
+	test('a steer key released while the latency radio has focus is let go', () => {
+		const keys = { left: false, right: false, brake: false };
+		expect(applyKey(keys, 'ArrowLeft', true)).toBe(true);
+		expect(keys.left).toBe(true);
+		expect(applyKey(keys, 'ArrowLeft', false, true)).toBe(true);
+		expect(keys.left).toBe(false);
+	});
+
+	test('an arrow press the radio uses itself does not steer', () => {
+		const keys = { left: false, right: false, brake: false };
+		expect(applyKey(keys, 'ArrowRight', true, true)).toBe(false);
+		expect(keys.right).toBe(false);
+	});
+
+	test('releaseAll drops every held key', () => {
+		const keys = { left: true, right: true, brake: true };
+		releaseAll(keys);
+		expect(keys).toEqual({ left: false, right: false, brake: false });
 	});
 });
 

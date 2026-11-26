@@ -62,6 +62,34 @@ export class InputDelay {
 	}
 }
 
+export interface HeldKeys {
+	left: boolean;
+	right: boolean;
+	brake: boolean;
+}
+
+const STEER_LEFT = new Set(['KeyA', 'ArrowLeft']);
+const STEER_RIGHT = new Set(['KeyD', 'ArrowRight']);
+const BRAKE = new Set(['ShiftLeft', 'ShiftRight']);
+
+/**
+ * Applies one key event to the held keys and returns whether it was a demo control.
+ * `focusOwnsKey` marks a press the focused control uses itself (arrows on the latency radios):
+ * that press is left alone, but a release always lands so a key held from the stage never sticks.
+ */
+export function applyKey(keys: HeldKeys, code: string, down: boolean, focusOwnsKey = false) {
+	if (down && focusOwnsKey) return false;
+	if (STEER_LEFT.has(code)) keys.left = down;
+	else if (STEER_RIGHT.has(code)) keys.right = down;
+	else if (BRAKE.has(code)) keys.brake = down;
+	else return false;
+	return true;
+}
+
+export function releaseAll(keys: HeldKeys) {
+	keys.left = keys.right = keys.brake = false;
+}
+
 /** Combines held keys and pointer sides into one control state. */
 export function combine(
 	keys: { left: boolean; right: boolean; brake: boolean },

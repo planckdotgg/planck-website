@@ -54,7 +54,7 @@ const poster = sceneSvg.replace(
 			<p class="demo__label" id="demo-latency-label">Simulated input latency</p>
 			<p class="demo__hint mono" aria-hidden="true">
 				<span class="demo__hint-keys">A / D steer &amp; bank · Shift airbrake</span>
-				<span class="demo__hint-touch">Hold left or right to steer</span>
+				<span class="demo__hint-touch">Hold a side to steer · both to brake</span>
 			</p>
 			<div class="seg" role="radiogroup" aria-labelledby="demo-latency-label">
 				<button type="button" class="seg__opt" role="radio" data-mode="planck" aria-checked="true">
@@ -412,7 +412,8 @@ const poster = sceneSvg.replace(
 
 	@media (max-width: 1099px) {
 		.demo__hint {
-			display: none;
+			position: static;
+			transform: none;
 		}
 	}
 	@media (pointer: coarse) {
@@ -458,6 +459,17 @@ const poster = sceneSvg.replace(
 		}
 		.demo__label {
 			text-align: center;
+		}
+		.demo__hint {
+			margin-top: -6px;
+			text-align: center;
+			white-space: normal;
+		}
+		.demo__hint-keys {
+			display: none;
+		}
+		.demo__hint-touch {
+			display: inline;
 		}
 		.seg {
 			justify-content: center;
