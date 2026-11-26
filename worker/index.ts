@@ -2,10 +2,14 @@
  * The Worker of the site. Cloudflare serves the pages as static files from dist/ and runs this
  * code only for `/api/*` (see wrangler.jsonc).
  *
- * GET /api/download?platform=windows|macos
+ * GET /api/download?platform=windows|macos|linux[&arch=arm64|amd64|x64][&format=installer|portable]
  *     Redirects (302) to the matching file of the newest GitHub release of GITHUB_REPO. Without
- *     `platform`, the platform comes from the User-Agent. With no release, no matching file, or
- *     a GitHub error, it redirects to the releases page, so a person always lands somewhere useful.
+ *     `platform`, the platform comes from the User-Agent. `arch` and `format` are strict: no
+ *     file of that kind means the releases page, never another one.
+ * GET /api/download?checksums=1 (or asset=checksums, asset=SHA256SUMS.txt)
+ *     Redirects to the checksums file of the newest release.
+ *     With no release, no matching file, or a GitHub error, it redirects to the releases page,
+ *     so a person always lands somewhere useful.
  */
 
 export interface Env {
@@ -21,7 +25,9 @@ export interface ReleaseCache {
 	put(key: string, response: Response): Promise<void>;
 }
 
-export type Platform = 'windows' | 'macos';
+export type Platform = 'windows' | 'macos' | 'linux';
+export type Arch = 'arm64' | 'amd64';
+export type Format = 'installer' | 'portable';
 
 interface Asset {
 	name: string;
@@ -42,28 +48,88 @@ const MATCH: Record<Platform, { name: RegExp; ext: string[] }> = {
 		name: /(^|[-_.])(mac(os)?|darwin|osx)([-_.]|$)|\.dmg$|\.pkg$/i,
 		ext: ['.dmg', '.pkg', '.zip', '.tar.gz'],
 	},
+	linux: {
+		name: /(^|[-_.])linux([-_.]|$)|\.appimage$|\.deb$|\.rpm$/i,
+		ext: ['.tar.gz', '.appimage', '.deb', '.rpm'],
+	},
 };
+
+const ARM = /arm64|aarch64/i;
+const X64 = /amd64|x64|x86[_-]64/i;
+const CHECKSUMS = /^(sha256sums(\.txt)?|checksums?(\.txt)?)$/i;
+
+const wants = (value: string | null, ...allowed: string[]) =>
+	value !== null && allowed.includes(value.toLowerCase());
 
 export function platformFrom(url: URL, userAgent: string | null): Platform | undefined {
 	const asked = url.searchParams.get('platform')?.toLowerCase();
-	if (asked === 'windows' || asked === 'macos') return asked;
+	if (asked === 'windows' || asked === 'macos' || asked === 'linux') return asked;
 	if (asked) return undefined;
 	const ua = userAgent ?? '';
 	// iPhone and iPad user agents also say "Mac OS X"; they cannot run the desktop app.
 	if (/iPhone|iPad|iPod|Android/i.test(ua)) return undefined;
 	if (/Windows/i.test(ua)) return 'windows';
 	if (/Macintosh|Mac OS X/i.test(ua)) return 'macos';
+	// ChromeOS also says "X11" and "Linux", but runs no Linux desktop build.
+	if (/Linux|X11/i.test(ua) && !/CrOS/i.test(ua)) return 'linux';
 	return undefined;
 }
 
-/** The best file for the platform: right extension first, then a universal or arm64 Mac build. */
-export function pickAsset(assets: Asset[], platform: Platform): Asset | undefined {
+/** `undefined` when `arch` is absent, `null` when it is present but not one we know. */
+function archFrom(url: URL): Arch | null | undefined {
+	const asked = url.searchParams.get('arch');
+	if (asked === null) return undefined;
+	if (wants(asked, 'arm64', 'aarch64')) return 'arm64';
+	if (wants(asked, 'amd64', 'x64', 'x86_64')) return 'amd64';
+	return null;
+}
+
+function formatFrom(url: URL): Format | null | undefined {
+	const asked = url.searchParams.get('format');
+	if (asked === null) return undefined;
+	if (wants(asked, 'installer', 'portable')) return asked.toLowerCase() as Format;
+	return null;
+}
+
+function isChecksumsRequest(url: URL): boolean {
+	const p = url.searchParams;
+	return p.get('checksums') === '1' || wants(p.get('asset'), 'checksums', 'sha256sums.txt');
+}
+
+export interface Pick {
+	arch?: Arch;
+	format?: Format;
+}
+
+/**
+ * The best file for the platform: right extension first, then the architecture. With `arch`,
+ * only that architecture qualifies (a universal Mac build fits both). With `format`, only that
+ * kind of Windows file qualifies. Without them, Macs prefer universal or arm64, others x64.
+ */
+export function pickAsset(
+	assets: Asset[],
+	platform: Platform,
+	{ arch, format }: Pick = {},
+): Asset | undefined {
 	const { name, ext } = MATCH[platform];
-	const candidates = assets.filter((a) => name.test(a.name) && ext.some((e) => a.name.endsWith(e)));
+	const lower = (a: Asset) => a.name.toLowerCase();
+	let kinds = ext;
+	if (format && platform === 'windows') {
+		kinds = format === 'portable' ? ['.zip'] : ['.exe', '.msi'];
+	}
+	const candidates = assets.filter(
+		(a) =>
+			name.test(a.name) &&
+			kinds.some((e) => lower(a).endsWith(e)) &&
+			(!arch ||
+				(arch === 'arm64' ? ARM : X64).test(a.name) ||
+				(platform === 'macos' && /universal/i.test(a.name))),
+	);
 	const rank = (a: Asset) => {
-		const byExt = ext.findIndex((e) => a.name.endsWith(e));
-		const byArch = platform === 'macos' && /universal|arm64|aarch64/i.test(a.name) ? 0 : 1;
-		return byExt * 2 + byArch;
+		const byExt = kinds.findIndex((e) => lower(a).endsWith(e));
+		const preferred =
+			platform === 'macos' ? /universal|arm64|aarch64/i.test(a.name) : X64.test(a.name);
+		return byExt * 2 + (preferred ? 0 : 1);
 	};
 	return candidates.sort((a, b) => rank(a) - rank(b))[0];
 }
@@ -141,7 +207,9 @@ async function latestAssets(
 			browser_download_url,
 		}));
 	} else if (response.status === 403 || response.status === 429) {
-		console.error(`GitHub did not give the newest release (${response.status}); reading its pages.`);
+		console.error(
+			`GitHub did not give the newest release (${response.status}); reading its pages.`,
+		);
 		const fromPages = await pageAssets(repo, send);
 		if (!fromPages) return undefined;
 		assets = fromPages;
@@ -169,10 +237,18 @@ export async function download(
 ): Promise<Response> {
 	const repo = env.GITHUB_REPO || DEFAULT_REPO;
 	const releases = `https://github.com/${repo}/releases`;
-	const platform = platformFrom(new URL(request.url), request.headers.get('User-Agent'));
-	if (!platform) return redirect(releases);
+	const url = new URL(request.url);
+	if (isChecksumsRequest(url)) {
+		const assets = await latestAssets(repo, env, send, cache);
+		const file = assets?.find((a) => CHECKSUMS.test(a.name));
+		return redirect(file?.browser_download_url ?? releases);
+	}
+	const platform = platformFrom(url, request.headers.get('User-Agent'));
+	const arch = archFrom(url);
+	const format = formatFrom(url);
+	if (!platform || arch === null || format === null) return redirect(releases);
 	const assets = await latestAssets(repo, env, send, cache);
-	const file = assets && pickAsset(assets, platform);
+	const file = assets && pickAsset(assets, platform, { arch, format });
 	return redirect(file?.browser_download_url ?? releases);
 }
 

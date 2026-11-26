@@ -3,6 +3,7 @@ interface Props {
 	title: string;
 	lead: string;
 	cta: { href: string; label: string; arrow?: boolean };
+	secondary?: { href: string; label: string };
 	/** Background of the cool wash at the top left (a CSS gradient). */
 	zenith: string;
 	zenithHeight?: number;
@@ -11,7 +12,16 @@ interface Props {
 	/** Width of the art column in px. */
 	artWidth?: number;
 }
-const { title, lead, cta, zenith, zenithHeight = 320, aura, artWidth = 472 } = Astro.props;
+const {
+	title,
+	lead,
+	cta,
+	secondary,
+	zenith,
+	zenithHeight = 320,
+	aura,
+	artWidth = 472,
+} = Astro.props;
 ---
 
 <section class="page-hero" aria-labelledby="page-title">
@@ -33,6 +43,13 @@ const { title, lead, cta, zenith, zenithHeight = 320, aura, artWidth = 472 } = A
 						)
 					}
 				</a>
+				{
+					secondary && (
+						<a class="btn btn--ghost btn--tall" href={secondary.href}>
+							{secondary.label}
+						</a>
+					)
+				}
 			</div>
 		</div>
 		<div class="page-hero__art" style={`width:${artWidth}px`}>
@@ -42,6 +59,10 @@ const { title, lead, cta, zenith, zenithHeight = 320, aura, artWidth = 472 } = A
 </section>
 
 <style>
+	.page-hero__cta {
+		flex-wrap: wrap;
+		gap: 12px;
+	}
 	.page-hero__zenith {
 		left: 0;
 		right: 0;

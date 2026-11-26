@@ -4,6 +4,36 @@ import PageHero from '../components/PageHero.astro';
 import Base from '../layouts/Base.astro';
 import { REPO } from '../lib/site';
 
+const platforms = [
+	{
+		id: 'macos',
+		label: 'MACOS · 13+',
+		name: 'macOS',
+		note: 'Signed and notarized Developer ID DMG. Includes the Planck.app client and planck-host.',
+		primary: { href: '/api/download?platform=macos&arch=arm64', label: 'Apple Silicon' },
+		secondary: { href: '/api/download?platform=macos&arch=amd64', label: 'Intel (x86_64)' },
+		color: '#C9D9FF',
+	},
+	{
+		id: 'windows',
+		label: 'WINDOWS · 10/11 X64',
+		name: 'Windows',
+		note: 'Windows builds are unsigned for now, so SmartScreen will prompt until code signing is in place.',
+		primary: { href: '/api/download?platform=windows&format=installer', label: 'Installer (.exe)' },
+		secondary: { href: '/api/download?platform=windows&format=portable', label: 'Portable ZIP' },
+		color: '#FF8912',
+	},
+	{
+		id: 'linux',
+		label: 'LINUX · CLI PREVIEW',
+		name: 'Linux',
+		note: 'Command-line preview only. There is no desktop app on Linux yet.',
+		primary: { href: '/api/download?platform=linux&arch=amd64', label: 'x86_64' },
+		secondary: { href: '/api/download?platform=linux&arch=arm64', label: 'arm64' },
+		color: '#4CD69B',
+	},
+];
+
 const vendors = [
 	{
 		platform: 'WINDOWS · D3D11',
@@ -34,14 +64,15 @@ const vendors = [
 
 <Base
 	title="Download · Planck"
-	description="Build planck-host and planck-client from source for Windows or macOS. Pure Go, CGO_ENABLED=0, four GPU vendors."
+	description="Download Planck for macOS, Windows, and Linux, or build planck-host and planck-client from source. Pure Go, CGO_ENABLED=0, four GPU vendors."
 	active="download"
 	og="download.jpg"
 >
 	<PageHero
-		title="Two native binaries."
-		lead="Compile planck-host and planck-client for Windows or macOS directly from source."
-		cta={{ href: REPO, label: 'View source on GitHub', arrow: true }}
+		title="Download Planck."
+		lead="Ready-to-run builds of the client and host for macOS, Windows, and Linux, straight from GitHub Releases. Prefer to compile it yourself? Build from source below."
+		cta={{ href: '/api/download', label: 'Download latest release', arrow: true }}
+		secondary={{ href: `${REPO}/releases/latest`, label: 'GitHub Releases' }}
 		zenith="radial-gradient(ellipse 58% 64% at 22% 0% in oklab, #C9D9FF16 0%, #789BFF06 46%, #00000000 76%)"
 		aura="radial-gradient(ellipse 46% 74% at 76% 52% in oklab, #FF7A1F2B 0%, #E8650C12 42%, #00000000 76%)"
 	>
@@ -78,12 +109,39 @@ const vendors = [
 		</svg>
 	</PageHero>
 
+	<section class="downloads" aria-labelledby="downloads-title">
+		<div class="downloads__head">
+			<h2 id="downloads-title" class="display h-beat">Direct downloads</h2>
+			<p class="beat-lead">Version 0.1.0 from GitHub Releases. Pick your platform.</p>
+		</div>
+		<ul class="downloads__list">
+			{
+				platforms.map((p) => (
+					<li class="dl" id={p.id} style={`--tint:${p.color}`}>
+						<span class="dl__bar" aria-hidden="true" />
+						<span class="dl__label mono">{p.label}</span>
+						<h3 class="dl__name">{p.name}</h3>
+						<p class="dl__note">{p.note}</p>
+						<div class="dl__actions">
+							<a class="btn btn--primary" href={p.primary.href}>{p.primary.label}</a>
+							<a class="btn btn--ghost" href={p.secondary.href}>{p.secondary.label}</a>
+						</div>
+					</li>
+				))
+			}
+		</ul>
+		<p class="downloads__foot spec-line">
+			<a href="/api/download?asset=SHA256SUMS.txt">SHA-256 Checksums</a>
+			<a href={`${REPO}/releases`}>All Releases &amp; Release Notes on GitHub</a>
+		</p>
+	</section>
+
 	<section class="band" aria-labelledby="build-title">
 		<div class="wash band__warm" aria-hidden="true"></div>
 		<div class="wash band__cool" aria-hidden="true"></div>
 		<div class="band__head">
 			<h2 id="build-title" class="display h-band">Build from source</h2>
-			<p class="band-lead">Requires Go 1.27+. Signed installers ship in Phase 2.</p>
+			<p class="band-lead">Requires Go 1.27+. Prefer a prebuilt binary? Use the direct downloads above.</p>
 		</div>
 		<BuildTerminal />
 		<dl class="strip">
@@ -202,6 +260,82 @@ const vendors = [
 </Base>
 
 <style>
+	.downloads {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 48px;
+		padding: 96px var(--pad) 104px;
+		border-top: 1px solid #232732;
+	}
+	.downloads__head {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		max-width: 660px;
+	}
+	.downloads__list {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 20px;
+	}
+	.dl {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 0 28px 28px;
+		border: 1px solid #232732;
+		border-radius: 8px;
+		background: #13151b;
+		overflow: clip;
+	}
+	.dl__bar {
+		height: 4px;
+		margin-inline: -28px;
+		margin-bottom: 18px;
+		background: var(--tint);
+	}
+	.dl__label {
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.05em;
+		line-height: 16px;
+		color: var(--tint);
+	}
+	.dl__name {
+		font-size: 26px;
+		font-weight: 600;
+		letter-spacing: -0.02em;
+		line-height: 32px;
+	}
+	.dl__note {
+		flex: 1;
+		font-size: 14.5px;
+		line-height: 22px;
+		color: var(--text-3);
+	}
+	.dl__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		padding-top: 8px;
+	}
+	.downloads__foot {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px 32px;
+		padding-top: 24px;
+		border-top: 1px solid #232732;
+	}
+	.downloads__foot a {
+		color: var(--text-2);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+	.downloads__foot a:hover {
+		color: var(--focus);
+	}
+
 	.strip {
 		position: relative;
 		display: flex;
@@ -334,6 +468,9 @@ const vendors = [
 	}
 
 	@media (max-width: 1199px) {
+		.downloads__list {
+			grid-template-columns: 1fr;
+		}
 		.tailnet__grid {
 			flex-direction: column-reverse;
 			align-items: flex-start;
@@ -367,6 +504,10 @@ const vendors = [
 			border-left: 0;
 			padding-top: 20px;
 			border-top: 1px solid var(--bone-rule);
+		}
+		.downloads {
+			padding-block: 56px;
+			gap: 36px;
 		}
 		.split,
 		.tailnet {
