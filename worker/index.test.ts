@@ -365,3 +365,36 @@ describe('/api/download page fallback for the new queries', () => {
 		expect(res.headers.get('Location')).toBe(RELEASES);
 	});
 });
+
+describe('/api/download with the published v0.1.0 assets', () => {
+	const V010 = [
+		'planck-0.1.0-windows-x64.zip',
+		'planck-0.1.0-linux-x86_64.tar.gz',
+		'planck-0.1.0-linux-aarch64.tar.gz',
+		'planck-0.1.0-macos-universal.dmg',
+		'SHA256SUMS.txt',
+	];
+	const LINUX_ARM_UA = 'Mozilla/5.0 (X11; Linux aarch64)';
+	const to = async (query: string, ua?: string) => {
+		const gh = github(() => Response.json(release(...V010)));
+		const res = await handle(get(query, ua), env, gh.send);
+		return res.headers.get('Location');
+	};
+
+	test('a Linux aarch64 User-Agent without arch gets the aarch64 tarball', async () => {
+		expect(await to('', LINUX_ARM_UA)).toBe(`${ASSET}/planck-0.1.0-linux-aarch64.tar.gz`);
+	});
+
+	test('a Linux x86_64 User-Agent without arch gets the x86_64 tarball', async () => {
+		expect(await to('', LINUX_UA)).toBe(`${ASSET}/planck-0.1.0-linux-x86_64.tar.gz`);
+	});
+
+	test('an explicit arch beats the Linux User-Agent', async () => {
+		expect(await to('?arch=amd64', LINUX_ARM_UA)).toBe(`${ASSET}/planck-0.1.0-linux-x86_64.tar.gz`);
+	});
+
+	test('Windows and macOS keep their defaults', async () => {
+		expect(await to('', WIN_UA)).toBe(`${ASSET}/planck-0.1.0-windows-x64.zip`);
+		expect(await to('', MAC_UA)).toBe(`${ASSET}/planck-0.1.0-macos-universal.dmg`);
+	});
+});

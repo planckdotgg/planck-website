@@ -71,7 +71,7 @@ const vendors = [
 	<PageHero
 		title="Download Planck."
 		lead="Ready-to-run builds of the client and host for macOS, Windows, and Linux, straight from GitHub Releases. Prefer to compile it yourself? Build from source below."
-		cta={{ href: '/api/download', label: 'Download latest release', arrow: true }}
+		cta={{ href: '#downloads', label: 'Download latest release', arrow: true }}
 		secondary={{ href: `${REPO}/releases/latest`, label: 'GitHub Releases' }}
 		zenith="radial-gradient(ellipse 58% 64% at 22% 0% in oklab, #C9D9FF16 0%, #789BFF06 46%, #00000000 76%)"
 		aura="radial-gradient(ellipse 46% 74% at 76% 52% in oklab, #FF7A1F2B 0%, #E8650C12 42%, #00000000 76%)"
@@ -109,10 +109,10 @@ const vendors = [
 		</svg>
 	</PageHero>
 
-	<section class="downloads" aria-labelledby="downloads-title">
+	<section id="downloads" class="downloads" aria-labelledby="downloads-title">
 		<div class="downloads__head">
 			<h2 id="downloads-title" class="display h-beat">Direct downloads</h2>
-			<p class="beat-lead">Version 0.1.0 from GitHub Releases. Pick your platform.</p>
+			<p class="beat-lead">Latest release from GitHub Releases. Pick your platform.</p>
 		</div>
 		<ul class="downloads__list">
 			{

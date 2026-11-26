@@ -244,7 +244,15 @@ export async function download(
 		return redirect(file?.browser_download_url ?? releases);
 	}
 	const platform = platformFrom(url, request.headers.get('User-Agent'));
-	const arch = archFrom(url);
+	let arch = archFrom(url);
+	// Mac browsers report Intel even on Apple Silicon, so only Linux user agents are trusted.
+	if (
+		arch === undefined &&
+		platform === 'linux' &&
+		ARM.test(request.headers.get('User-Agent') ?? '')
+	) {
+		arch = 'arm64';
+	}
 	const format = formatFrom(url);
 	if (!platform || arch === null || format === null) return redirect(releases);
 	const assets = await latestAssets(repo, env, send, cache);
