@@ -97,16 +97,25 @@ export function text(str: string, x: number, y: number, s: TextStyle): string {
 	return `<path fill="${s.fill}" d="${d}"/>`;
 }
 
-/** Runs split by " · ", with the separators in their own colour. Returns the SVG and its width. */
-export function strip(str: string, x: number, y: number, s: TextStyle, sepFill: string) {
+/** Runs split by " · ", with the separators in their own colour. Returns the SVG and its width.
+    With `gap`, the dot sits `gap` px from each run instead of a space either side. */
+export function strip(
+	str: string,
+	x: number,
+	y: number,
+	s: TextStyle,
+	sepFill: string,
+	gap?: number,
+) {
 	const parts = str.split(' · ');
-	const sep = ' · ';
+	const sep = gap === undefined ? ' · ' : '·';
 	let pen = x;
 	let out = '';
 	parts.forEach((p, i) => {
 		if (i > 0) {
+			pen += gap ?? 0;
 			out += text(sep, pen, y, { ...s, fill: sepFill });
-			pen += measure(sep, s) + (s.tracking ?? 0) * s.size;
+			pen += measure(sep, s) + (s.tracking ?? 0) * s.size + (gap ?? 0);
 		}
 		out += text(p, pen, y, s);
 		pen += measure(p, s) + (s.tracking ?? 0) * s.size;
@@ -153,6 +162,68 @@ export function chrome(): string {
 		<rect x="0" y="${H - 6}" width="${W}" height="6" fill="#FF7A1F"/>`;
 }
 
+/** A gradient stop: offset, colour, opacity. */
+export type Stop = readonly [number, string, number];
+
+/**
+ * CSS `radial-gradient(ellipse A% B% at 50% C%, …)` filling the box (x, y, w, h), as an SVG
+ * rect. resvg has no elliptical radius, so the circle is stretched vertically about its centre.
+ */
+export function glow(
+	id: string,
+	[x, y, w, h]: readonly [number, number, number, number],
+	[a, b, c]: readonly [number, number, number],
+	stops: readonly Stop[],
+): string {
+	const cx = x + 0.5 * w;
+	const cy = y + c * h;
+	const rx = a * w;
+	const k = (b * h) / rx;
+	const stopTags = stops
+		.map(
+			([at, color, alpha]) =>
+				`<stop offset="${at}" stop-color="${color}" stop-opacity="${alpha}"/>`,
+		)
+		.join('');
+	const transform = `translate(0 ${cy}) scale(1 ${k}) translate(0 ${-cy})`;
+	return `<defs><radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${cx}" cy="${cy}" r="${rx}" gradientTransform="${transform}">${stopTags}</radialGradient></defs>
+		<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#${id})"/>`;
+}
+
+/** The hero's light source grazing the right edge, kept faint so it never reads as a border. */
+function edgeBeam(): string {
+	const box = [1040, -60, 440, 750] as const;
+	return [
+		glow(
+			'edge-halo',
+			box,
+			[0.42, 0.72, 0.6],
+			[
+				[0, '#E8650C', 0.07],
+				[1, GROUND, 0],
+			],
+		),
+		glow(
+			'edge-column',
+			box,
+			[0.18, 0.58, 0.62],
+			[
+				[0, '#FF7A1F', 0.1],
+				[1, '#FF7A1F', 0],
+			],
+		),
+		glow(
+			'edge-core',
+			box,
+			[0.05, 0.46, 0.64],
+			[
+				[0, '#FFBA78', 0.16],
+				[1, '#FF8912', 0],
+			],
+		),
+	].join('');
+}
+
 /** The instrument plate under docs cards: ground, grid, ember horizon, crop marks, header rule. */
 export function plate(): string {
 	const lines: string[] = [];
@@ -174,6 +245,7 @@ export function plate(): string {
 		<path d="${vertical}" stroke="#F2EFEA08" stroke-width="1" shape-rendering="crispEdges"/>
 		<path d="${horizontal}" stroke="#F2EFEA06" stroke-width="1" shape-rendering="crispEdges"/>
 		<rect x="0" y="270" width="${W}" height="354" fill="url(#horizon)"/>
+		${edgeBeam()}
 		<path d="M${SAFE} ${SAFE + 16} V${SAFE} H${SAFE + 16} M${r - 16} ${SAFE} H${r} V${SAFE + 16} M${SAFE} ${b - 16} V${b} H${SAFE + 16} M${r - 16} ${b} H${r} V${b - 16}" fill="none" stroke="#F2EFEA1F" stroke-width="1.25"/>
 		<path d="M${SAFE} 136.5 H${r}" stroke="#F2EFEA1A" stroke-width="1"/>`;
 }

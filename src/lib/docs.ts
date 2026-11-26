@@ -123,14 +123,14 @@ export const DOC_PAGES: DocPage[] = [
 			'Measured Planck latency at v0.1.0: NVENC, AMF and VideoToolbox encode, sub-frame slices, pipeline stages and transport paths, each with rig and source.',
 		og: 'docs-benchmarks.png',
 		ogAlt:
-			'Planck docs card: Measured latency. NVENC 1.04 ms, first slice 0.70 ms, on a 2.5GbE LAN.',
+			'Planck docs card: Measured latency. NVENC encode 1.04 ms, first slice out 0.70 ms, AMF encode 2.78 ms, VideoToolbox decode 0.87 ms.',
 		source: 'docs/perf/phase2-results.md',
 		tocDepth: 2,
 		card: {
 			eyebrow: 'DOCS / BENCHMARKS',
 			title: ['Measured latency'],
-			summary: 'Every figure from a repo doc, on one rig, with its caveat attached.',
-			telemetry: '1.04 ms NVENC · 0.70 ms 1st slice · 2.5GbE LAN',
+			summary: 'Every stage of the pipeline, timed on real hardware.',
+			telemetry: 'RTX 4080 · RX 6700 XT · UHD 770 · M5 PRO',
 		},
 	},
 	{

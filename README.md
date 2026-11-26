@@ -47,10 +47,11 @@ bun run preview   # build, then serve dist/ and the Worker with wrangler on :878
 ```
 
 `bun run og` re-renders the twelve 1200×630 PNG social cards in `public/og/`. Docs cards (and
-`/download`) are drawn from the text in `src/lib/docs.ts`; the other marketing cards keep their
-hero art from `src/assets/og/*.png`. Text is converted to paths with fontkit from the site's own
-WOFF2 fonts, so no system font is involved. Run it after changing card text, a hero export, or
-the wordmark, and commit the output.
+`/download`) are drawn from the text in `src/lib/docs.ts`; the other marketing cards draw the
+Ember Beam over a crop of the real client, `src/assets/og/client.png`. Text is converted to paths
+with fontkit from the site's own WOFF2 fonts, so no system font is involved. Run it after changing
+card text, the client, or the wordmark, and commit the output. When the client (`ClientShot`)
+changes, refresh its capture first with `bun run build && bun scripts/og/capture.ts` (needs Chrome).
 
 ## `/api/download`
 

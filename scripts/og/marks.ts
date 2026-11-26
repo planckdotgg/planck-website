@@ -1,6 +1,6 @@
 /** The 320×320 mini-marks drawn at the right of each docs card, in local coordinates. Strokes
     of 1 to 2px, the blackbody ramp and signal colours, fills only at low alpha. */
-import { text } from './plate';
+import { measure, text } from './plate';
 
 const mono = (size: number, fill: string, weight = 400) =>
 	({ face: 'mono', size, weight, fill }) as const;
@@ -75,30 +75,41 @@ function wire(): string {
 	return out;
 }
 
-/** Five latency bars with p50 needles; the longest is clipped off-scale. */
+/** The measured Phase 0 / Phase 1B latencies on a 0–3 ms scale, tones in pipeline order. */
 function bars(): string {
 	const rows = [
-		{ len: 92, p50: 64 },
-		{ len: 300, p50: 128, clip: true },
-		{ len: 168, p50: 120 },
-		{ len: 0, p50: 0 },
-		{ len: 226, p50: 200 },
+		{ label: 'NVENC encode', ms: 1.04, tone: '#FF8912' },
+		{ label: '1st slice out', ms: 0.7, tone: '#FFB46B' },
+		{ label: 'AMF encode', ms: 2.78, tone: '#FFD1A3' },
+		{ label: 'VideoToolbox decode', ms: 0.87, tone: '#C9D9FF' },
 	];
-	let out = `<path d="M0 12 V308" stroke="#2C3038" stroke-width="1"/>`;
+	const perMs = 320 / 3;
+	const unit = { ...mono(10, '#8C919B', 500), anchor: 'end' } as const;
+	let out = '';
 	rows.forEach((r, i) => {
-		const c = 36 + i * 62;
-		const tone = RAMP[i] ?? '#FF8912';
-		if (r.len === 0) {
-			out += `<rect x="0.5" y="${c - 7.5}" width="299" height="15" rx="2" fill="none" stroke="#2C3038" stroke-dasharray="3 4"/>`;
-			return;
-		}
-		out += `<rect x="0" y="${c - 7}" width="${r.len}" height="14" rx="2" fill="${tone}33"/>`;
-		out += `<rect x="${r.p50 - 1.5}" y="${c - 11}" width="3" height="22" rx="1" fill="${tone}"/>`;
-		if (r.clip) {
-			out += `<path d="M${r.len} ${c - 9} V${c + 9}" stroke="#FFD1A3" stroke-width="1.5" stroke-dasharray="2 2"/>`;
-			out += `<path d="M${r.len + 6} ${c - 5} l5 5 l-5 5" fill="none" stroke="#FFD1A3" stroke-width="1.5"/>`;
-		}
+		const y = 52 * i;
+		const len = Math.round(r.ms * perMs);
+		out += text(r.label, 0, 12 + y, mono(12, '#B6B8BE', 500));
+		out += text('ms', 320, 12 + y, unit);
+		out += text(r.ms.toFixed(2), 320 - measure('ms', unit) - 4, 12 + y, {
+			face: 'ui',
+			size: 18,
+			weight: 600,
+			stretch: 125,
+			tracking: -0.02,
+			fill: r.tone,
+			anchor: 'end',
+		});
+		out += `<rect x="0.5" y="${26.5 + y}" width="319" height="11" rx="2" fill="#F2EFEA0A" stroke="#22252B" stroke-width="1"/>`;
+		out += `<rect x="1" y="${27 + y}" width="${len - 2}" height="10" rx="2" fill="${r.tone}42"/>`;
+		out += `<rect x="${len - 3}" y="${21 + y}" width="3" height="20" rx="1" fill="${r.tone}"/>`;
 	});
+	out += `<path d="M0 216.5 H320" stroke="#2C3038" stroke-width="1"/>`;
+	const tick = mono(11, '#6E7480');
+	out += text('0', 0, 234, tick);
+	out += text('1', 107, 234, { ...tick, anchor: 'middle' });
+	out += text('2', 213, 234, { ...tick, anchor: 'middle' });
+	out += text('3 ms', 320, 234, { ...tick, anchor: 'end' });
 	return out;
 }
 
