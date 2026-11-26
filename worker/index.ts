@@ -69,6 +69,42 @@ export function pickAsset(assets: Asset[], platform: Platform): Asset | undefine
 }
 
 /**
+ * The files of the newest release read from github.com pages, which have no REST rate limit.
+ * Used when the API refuses the Worker's shared egress IP. `undefined` means it failed.
+ */
+async function pageAssets(repo: string, send: typeof fetch): Promise<Asset[] | undefined> {
+	try {
+		const latest = await send(`https://github.com/${repo}/releases/latest`, {
+			redirect: 'manual',
+			headers: { 'User-Agent': 'planck-website' },
+		});
+		const tag = /\/releases\/tag\/([^/?#]+)/.exec(latest.headers.get('Location') ?? '')?.[1];
+		if (!tag) return undefined;
+		const page = await send(
+			`https://github.com/${repo}/releases/expanded_assets/${encodeURIComponent(decodeURIComponent(tag))}`,
+			{ headers: { 'User-Agent': 'planck-website' } },
+		);
+		if (!page.ok) return undefined;
+		const html = await page.text();
+		const prefix = `/${repo}/releases/download/${tag}/`;
+		const seen = new Set<string>();
+		const assets: Asset[] = [];
+		for (const match of html.matchAll(/href="([^"]+)"/g)) {
+			const href = (match[1] ?? '').replace(/&amp;/g, '&');
+			if (!href.startsWith(prefix)) continue;
+			const name = decodeURIComponent(href.slice(prefix.length).split(/[?#]/)[0] ?? '');
+			if (!name || seen.has(name)) continue;
+			seen.add(name);
+			assets.push({ name, browser_download_url: `https://github.com${href}` });
+		}
+		return assets;
+	} catch (error) {
+		console.error(`GitHub pages could not be read: ${String(error)}`);
+		return undefined;
+	}
+}
+
+/**
  * The files of the newest release. An empty list means no release exists yet (GitHub answers
  * 404); `undefined` means GitHub failed, which is never cached.
  */
@@ -104,6 +140,11 @@ async function latestAssets(
 			name,
 			browser_download_url,
 		}));
+	} else if (response.status === 403 || response.status === 429) {
+		console.error(`GitHub did not give the newest release (${response.status}); reading its pages.`);
+		const fromPages = await pageAssets(repo, send);
+		if (!fromPages) return undefined;
+		assets = fromPages;
 	} else {
 		console.error(`GitHub did not give the newest release (${response.status}).`);
 		return undefined;

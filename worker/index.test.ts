@@ -161,3 +161,52 @@ describe('routing', () => {
 		expect(res.status).toBe(404);
 	});
 });
+
+describe('/api/download when the API is rate limited', () => {
+	const LATEST = 'https://github.com/planckdotgg/planck/releases/latest';
+	const PAGE = 'https://github.com/planckdotgg/planck/releases/expanded_assets/v0.1.0';
+	const D = '/planckdotgg/planck/releases/download/v0.1.0';
+	const html = `<a href="${D}/planck-0.1.0-macos-arm64.dmg">a</a>
+		<a href="${D}/planck-0.1.0-macos-arm64.dmg">dup</a>
+		<a href="${D}/planck-0.1.0-windows-x64-setup.exe">b</a>
+		<a href="/other/repo/releases/download/v0.1.0/planck-0.1.0-macos-x64.dmg">x</a>`;
+
+	function fake(page: () => Response) {
+		const calls: string[] = [];
+		const send = (async (input: string | URL | Request) => {
+			const url = String(input);
+			calls.push(url);
+			if (url === API) return new Response('rate limited', { status: 403 });
+			if (url === LATEST) {
+				return new Response(null, {
+					status: 302,
+					headers: { Location: 'https://github.com/planckdotgg/planck/releases/tag/v0.1.0' },
+				});
+			}
+			if (url === PAGE) return page();
+			return new Response('?', { status: 500 });
+		}) as typeof fetch;
+		return { calls, send };
+	}
+
+	test('a 403 falls back to the release pages and caches the files', async () => {
+		const gh = fake(() => new Response(html));
+		const cache = memoryCache();
+		const mac = await handle(get('?platform=macos'), env, gh.send, cache);
+		expect(mac.headers.get('Location')).toBe(`https://github.com${D}/planck-0.1.0-macos-arm64.dmg`);
+		const win = await handle(get('?platform=windows'), env, gh.send, cache);
+		expect(win.headers.get('Location')).toBe(
+			`https://github.com${D}/planck-0.1.0-windows-x64-setup.exe`,
+		);
+		expect(cache.keys()).toEqual([API]);
+		expect(gh.calls).toEqual([API, LATEST, PAGE]);
+	});
+
+	test('a failing fallback goes to the releases page and is not cached', async () => {
+		const gh = fake(() => new Response('nope', { status: 500 }));
+		const cache = memoryCache();
+		const res = await handle(get('?platform=macos'), env, gh.send, cache);
+		expect(res.headers.get('Location')).toBe(RELEASES);
+		expect(cache.keys()).toEqual([]);
+	});
+});
