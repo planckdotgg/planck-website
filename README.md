@@ -15,11 +15,22 @@ Astro builds static pages. Cloudflare Workers Static Assets serves them, and a s
 | `/gaming`   | `src/pages/gaming.astro`   |
 | `/work`     | `src/pages/work.astro`     |
 | `/roadmap`  | `src/pages/roadmap.astro`  |
+| `/docs`     | `src/pages/docs/index.astro` |
+| `/docs/*`   | `src/pages/docs/*.astro`   |
 | 404         | `src/pages/404.astro`      |
 
 Shared parts live in `src/components/`, `src/layouts/Base.astro`, and `src/styles/global.css`.
 Client scripts are in `src/scripts/`. Colors, type, and motion values come from the Planck brand
 tokens (`tokens.json` in the design kit).
+
+The docs use `src/layouts/Docs.astro`, `src/styles/docs.css` and `src/components/docs/`. Their
+navigation, titles, descriptions and social card text live in `src/lib/docs.ts`. Every number on
+a docs page is checked against a file in `planckdotgg/planck` at the release named in
+`src/lib/site.ts` (`VERSION`, `COMMIT`); the source footer of each page cites that file.
+
+Head tags (canonical, Open Graph, Twitter, JSON-LD) come from `Base.astro` and `src/lib/seo.ts`.
+Only a build whose `SITE_URL` is `https://planck.gg` is indexable; any other build, such as
+`deploy:preview`, emits `noindex, nofollow`. `public/_headers` sets cache and security headers.
 
 ## Commands
 
@@ -35,8 +46,11 @@ bun run build     # static site in dist/
 bun run preview   # build, then serve dist/ and the Worker with wrangler on :8787
 ```
 
-`bun run og` re-renders the 1200×630 social images in `public/og/` from the hero art. Run it
-after changing `src/assets/hero-*.png` or the lockup.
+`bun run og` re-renders the twelve 1200×630 PNG social cards in `public/og/`. Docs cards (and
+`/download`) are drawn from the text in `src/lib/docs.ts`; the other marketing cards keep their
+hero art from `src/assets/og/*.png`. Text is converted to paths with fontkit from the site's own
+WOFF2 fonts, so no system font is involved. Run it after changing card text, a hero export, or
+the wordmark, and commit the output.
 
 ## `/api/download`
 

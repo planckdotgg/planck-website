@@ -1,0 +1,109 @@
+---
+/** Chart 1: GPU encoder latency at 1080p120 HEVC, p50 needle, p50 to p99 range, p95 and p99 caps. */
+const x = (ms: number) => 160 + 48.5 * ms;
+const MAX = 8;
+type Row = { part: string; mode: string; p?: [number, number, number] };
+const rows: Row[] = [
+	{ part: 'RTX 4080', mode: 'NVENC · back-to-back', p: [1.41, 1.51, 1.69] },
+	{ part: 'RTX 4080', mode: 'NVENC · paced (P8)', p: [2.95, 7.36, 70.6] },
+	{ part: 'RX 6700 XT', mode: 'AMF · paced', p: [2.78, 3.2, 5.61] },
+	{ part: 'UHD 770', mode: 'oneVPL · no measurement' },
+	{ part: 'M5 Pro', mode: 'VideoToolbox · paced', p: [5.05, 5.35, 5.58] },
+];
+const centres = [60, 102, 144, 186, 228];
+const fmt = (v: number) => (v >= 10 ? v.toFixed(1) : v.toFixed(2));
+const label =
+	'GPU encoder latency at 1080p120 HEVC: RTX 4080 NVENC 1.41 ms p50 back-to-back and 2.95 ms paced, RX 6700 XT AMF 2.78 ms, UHD 770 oneVPL not measured, M5 Pro VideoToolbox 5.05 ms.';
+---
+
+<figure class="chart">
+	<div class="diagram" style="--min: 640px" role="region" tabindex="0" aria-label="Encoder latency chart, scrolls sideways">
+		<svg viewBox="0 0 696 278" width="696" height="278" role="img" aria-label={label} class="svg-mono">
+			<text x="0" y="30" font-size="10" letter-spacing="0.6" fill="#8C919B">1080p120 · HEVC · NV12 FROM BGRA</text>
+			<text x="696" y="30" font-size="10" letter-spacing="0.6" fill="#6E7480" text-anchor="end">p50 / p95 / p99 · ms</text>
+			<g class="grid" shape-rendering="crispEdges">
+				{
+					Array.from({ length: MAX + 1 }, (_, i) => (
+						<path
+							d={`M${x(i)} 42 V250`}
+							stroke={i === 0 ? '#2C3038' : i % 2 === 0 ? '#F2EFEA1A' : '#F2EFEA10'}
+							stroke-width="1"
+						/>
+					))
+				}
+				<path d="M160 250 H548" stroke="#2C3038" stroke-width="1"></path>
+			</g>
+			{
+				[0, 2, 4, 6, 8].map((t) => (
+					<text x={x(t)} y="264" font-size="10" fill="#6E7480" text-anchor="middle">
+						{t}
+					</text>
+				))
+			}
+			{
+				rows.map((r, i) => {
+					const c = centres[i] ?? 0;
+					const p = r.p;
+					const clipped = p ? p[2] > MAX : false;
+					const end = p ? (clipped ? 540 : x(p[2])) : 0;
+					return (
+						<g>
+							<text x="0" y={c - 3} font-size="11" font-weight="600" fill="#F2EFEA">
+								{r.part}
+							</text>
+							<text x="0" y={c + 11} font-size="9.5" fill="#8C919B">
+								{r.mode}
+							</text>
+							{p ? (
+								<>
+									<rect x="160.5" y={c - 6.5} width="387" height="13" rx="2" fill="#13151B" stroke="#222630" />
+									<rect x={x(p[0])} y={c - 7} width={end - x(p[0])} height="14" rx="2" fill="#FF7A1F29" />
+									<path d={`M${x(p[1])} ${c - 9} V${c + 9}`} stroke="#FFB46B" stroke-width="1.5" />
+									{clipped ? (
+										<>
+											<path d={`M540 ${c - 9} V${c + 9}`} stroke="#FFD1A3" stroke-width="1.5" stroke-dasharray="2 2" />
+											<path d={`M544 ${c - 5} l5 5 l-5 5`} fill="none" stroke="#FFD1A3" stroke-width="1.5" />
+										</>
+									) : (
+										<path d={`M${x(p[2])} ${c - 9} V${c + 9}`} stroke="#FFD1A3" stroke-width="1.5" stroke-dasharray="2 2" />
+									)}
+									<rect x={x(p[0]) - 1.5} y={c - 11} width="3" height="22" rx="1" fill="#FF7A1F" />
+									<text x="696" y={c} font-size="10.5" text-anchor="end" dominant-baseline="central">
+										<tspan fill="#F2EFEA" font-weight="600">{fmt(p[0])}</tspan>
+										<tspan fill="#5A606C"> / </tspan>
+										<tspan fill="#B6B8BE">{fmt(p[1])}</tspan>
+										<tspan fill="#5A606C"> / </tspan>
+										<tspan fill="#8C919B">{fmt(p[2])}</tspan>
+									</text>
+								</>
+							) : (
+								<>
+									<rect x="160.5" y={c - 6.5} width="387" height="13" rx="2" fill="none" stroke="#222630" stroke-dasharray="3 4" />
+									<text x="354" y={c} font-size="10" fill="#5A606C" text-anchor="middle" dominant-baseline="central">
+										NO REPO MEASUREMENT
+									</text>
+									<text x="696" y={c} font-size="10.5" fill="#5A606C" text-anchor="end" dominant-baseline="central">
+										— / — / —
+									</text>
+								</>
+							)}
+						</g>
+					);
+				})
+			}
+		</svg>
+	</div>
+	<figcaption>
+		NVENC runs 1.41 ms p50 only when the GPU is boosted. Paced submission leaves the RTX 4080 in P8, where
+		the same encode runs 2.95 ms at p50 and 70.6 ms at p99, which is why Planck sets an NVIDIA power profile.
+	</figcaption>
+	<p class="chart__method">
+		<b>Rig</b> bigboi: i9-13900K, RTX 4080 (no display, PCIe x4), RX 6700 XT (driving the only monitor,
+		1080p60), UHD 770 · <b>Client</b> M5 Pro, macOS 27.0 · <b>Mode</b> 1,200 frames on NVENC, 600 on VideoToolbox; <i>back-to-back</i> =
+		submit as fast as frames finish (GPU boosts), <i>paced</i> = submit at frame rate (GPU stays in P8) ·
+		<b>Driver</b> NVIDIA 616.92 / NVENC API 13.1, AMF 1.4.37 · <b>Source</b>
+		<code>docs/spikes/phase0-spike2.md</code> lines 71–89, 163–169, 184–194 · <b>Commit</b>
+		<code>v0.1.0</code> (<code>8a3c732</code>). Intel oneVPL encode latency is <b>not measured anywhere in
+		the repo</b>; the UHD 770 row is intentionally empty.
+	</p>
+</figure>

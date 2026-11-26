@@ -1,0 +1,136 @@
+---
+import ArchitectureDiagram from '../../components/docs/ArchitectureDiagram.astro';
+import Callout from '../../components/docs/Callout.astro';
+import Table from '../../components/docs/Table.astro';
+import Docs from '../../layouts/Docs.astro';
+---
+
+<Docs slug="architecture">
+	<h2 id="pure-go">Pure Go, no cgo</h2>
+	<p>
+		Planck is written in Go and built with <code>CGO_ENABLED=0</code>: no Rust, no C compiler, and no
+		Swift or Objective-C shim. On Windows, COM, DXGI, D3D11 and Media Foundation are called through
+		<code>syscall</code> vtables. On macOS, ScreenCaptureKit, VideoToolbox and CoreGraphics are called
+		through <code>purego</code>, which loads system frameworks without cgo.
+	</p>
+	<Table label="Direct dependencies">
+		<table>
+			<thead>
+				<tr><th scope="col">Module</th><th scope="col">Version</th><th scope="col">Used for</th></tr>
+			</thead>
+			<tbody>
+				<tr><td><code>quic-go/quic-go</code></td><td class="num">0.65.0</td><td>Control connection and pairing</td></tr>
+				<tr><td><code>klauspost/reedsolomon</code></td><td class="num">1.14.2</td><td>Forward error correction</td></tr>
+				<tr><td><code>thesyncim/gopus</code></td><td class="num">0.2.4</td><td>Opus audio, pure Go</td></tr>
+				<tr><td><code>ebitengine/oto/v3</code></td><td class="num">3.5.1</td><td>Audio playback</td></tr>
+				<tr><td><code>ebitengine/purego</code></td><td class="num">0.11.3</td><td>cgo-free calls into macOS frameworks</td></tr>
+				<tr><td><code>egoist/mygo</code></td><td class="num">0.10.0</td><td>Desktop UI, vendored in <code>third_party/mygo</code></td></tr>
+			</tbody>
+		</table>
+	</Table>
+	<p>
+		MyGo is vendored with a <code>replace</code> directive, so Planck can extend it in place.
+		The extension that matters is <code>third_party/mygo/gpusurface</code>: a surface that takes a
+		decoded GPU texture and presents it under the MyGo window, through DirectComposition on Windows
+		and a <code>CAMetalLayer</code> on macOS.
+	</p>
+
+	<h2 id="pipeline">The pipeline</h2>
+	<p>
+		A frame moves through five stages. The host captures, encodes, seals and shards it; the client
+		decodes and presents it. QUIC carries control and derives the keys; the media itself rides raw UDP.
+	</p>
+	<ArchitectureDiagram />
+	<Callout kind="warning">
+		The README and CHANGELOG list H.264 as a codec. NVENC can encode H.264, but no H.264 decoder
+		exists on either client: the implemented decoders are HEVC, AV1 and PyroWave. A client that asks for
+		<code>h264</code> cannot decode the stream. Use HEVC or AV1.
+	</Callout>
+	<Callout kind="caveat">
+		HDR10 presentation is flagged only on the macOS client. The Windows client decodes 10-bit HEVC and
+		AV1 but presents 8-bit.
+	</Callout>
+
+	<h2 id="per-platform">Per platform</h2>
+	<h3 id="windows-host">Windows host</h3>
+	<ul>
+		<li><strong>Capture:</strong> DXGI Desktop Duplication on the adapter that drives the display (<code>pkg/capture/dxgi</code>), with the cursor captured separately.</li>
+		<li><strong>Encode:</strong> NVENC, AMF (HEVC only) or oneVPL (HEVC only). Planck hands NVENC a D3D11 texture; NVENC converts BGRA and RGB10 to YUV itself.</li>
+		<li><strong>Virtual display:</strong> SudoVDA, a separate optional driver. When it is installed, Planck can create a monitor at the client's size on the encoding GPU.</li>
+		<li><strong>GPU power:</strong> an NVIDIA driver profile that prefers maximum performance (<code>pkg/gpu</code>), and D3D11 GPU thread priority.</li>
+		<li><strong>Audio:</strong> WASAPI loopback. <strong>Input:</strong> <code>SendInput</code> with US-layout scan codes. <strong>Gamepads:</strong> virtual pads through the ViGEmBus device interface.</li>
+	</ul>
+	<h3 id="windows-client">Windows client</h3>
+	<ul>
+		<li><strong>Decode:</strong> the Media Foundation HEVC and AV1 transforms through D3D11 (<code>pkg/decode/d3d11</code>).</li>
+		<li><strong>Present:</strong> a DXGI swap chain in DirectComposition, under the MyGo window's surface.</li>
+	</ul>
+	<h3 id="macos-host">macOS host</h3>
+	<ul>
+		<li><strong>Capture:</strong> ScreenCaptureKit for video and system audio (<code>pkg/capture/sck</code>, <code>pkg/audio</code>).</li>
+		<li><strong>Encode:</strong> VideoToolbox HEVC, from NV12 or P010. VideoToolbox has no HEVC 4:4:4 encoder on Apple silicon, so 4:4:4 is refused.</li>
+		<li><strong>Input:</strong> CGEvent injection, which needs Accessibility permission.</li>
+	</ul>
+	<h3 id="macos-client">macOS client</h3>
+	<ul>
+		<li><strong>Decode:</strong> VideoToolbox HEVC and AV1, decoded synchronously.</li>
+		<li><strong>Present:</strong> a <code>CAMetalLayer</code> through gpusurface. A full-screen direct-to-display path exists behind <code>-direct-display</code>.</li>
+	</ul>
+	<h3 id="linux">Linux</h3>
+	<p>
+		Linux builds and runs headless only. There is no capture backend, no encoder and no desktop window,
+		so a Linux machine can neither host nor show a stream yet.
+	</p>
+
+	<h2 id="host-and-client">Host and client</h2>
+	<p>
+		<code>planck-host</code> and <code>planck-client</code> share one session package
+		(<code>internal/session</code>). The host side owns pairing and negotiation; the client side owns the
+		decode loop and presentation. Both Hellos carry their feature capabilities. The host resolves the
+		stream with its own policy over the client's overrides, then answers with a <code>SessionReady</code>
+		that names the media port and the resolved profile.
+	</p>
+
+	<h2 id="zero-copy">Zero copy, few allocations</h2>
+	<p>
+		Surfaces stay on the GPU. DXGI Desktop Duplication copies into Planck's own texture on the same GPU;
+		NVENC and AMF take D3D11 textures; VideoToolbox takes IOSurface-backed pixel buffers. The hot path
+		avoids Go allocations where it can, and the repo records where it cannot:
+	</p>
+	<Table label="Allocations per frame or packet, as measured in the repo">
+		<table>
+			<thead>
+				<tr><th scope="col">Path</th><th scope="col" class="num">Go allocs</th><th scope="col">Unit</th></tr>
+			</thead>
+			<tbody>
+				<tr><td>NVENC encode</td><td class="num">0</td><td>per frame</td></tr>
+				<tr><td>AES-GCM seal and UDP send</td><td class="num">0</td><td>per datagram</td></tr>
+				<tr><td>Present, timing callbacks off</td><td class="num">0</td><td>per frame</td></tr>
+				<tr><td>AMF encode</td><td class="num">4</td><td>per frame</td></tr>
+				<tr><td>DXGI capture (Phase 0 spike)</td><td class="num">6</td><td>per frame</td></tr>
+				<tr><td>Reed-Solomon, inside the library</td><td class="num">≈2</td><td>per encoded slice</td></tr>
+			</tbody>
+		</table>
+	</Table>
+	<p>
+		With a 1080p240 stream and 4,000 input events, the host ran 20 s with no garbage collection after
+		setup (bigboi, <code>docs/perf/phase1-latency-audit.md</code>).
+	</p>
+
+	<h2 id="multi-gpu">Multi-GPU</h2>
+	<p>
+		Rendering on one GPU and encoding on another loses on the test host. D3D11 cross-adapter shared
+		handles fail with <code>E_INVALIDARG</code>, and a staging copy costs 2 to 15 ms per frame: same-GPU
+		AMF measured 3.6 ms p50 against 9.4 ms p50 for AMD to NVIDIA. Planck encodes on the GPU that owns
+		the surface. To encode on a GPU with no monitor, give it one with a virtual display
+		(<code>-vdd</code>, <code>-vdd-gpu</code>).
+	</p>
+
+	<h2 id="known-gaps">Known gaps</h2>
+	<ul>
+		<li>Direct-to-display presentation on macOS (the P1b work item) is not done; windowed present is the largest single stage.</li>
+		<li>VideoToolbox decodes whole frames, so sub-frame slices only overlap transfer on a Mac client.</li>
+		<li>Multi-GPU offload is not built; D3D12 cross-adapter heaps were not tried.</li>
+		<li>H.264 has no decoder (see the warning above).</li>
+	</ul>
+</Docs>

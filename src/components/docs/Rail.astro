@@ -1,0 +1,42 @@
+---
+import { DOC_GROUPS, DOC_PAGES, type DocSlug, type Heading } from '../../lib/docs';
+import { VERSION } from '../../lib/site';
+
+interface Props {
+	current: DocSlug;
+	/** The current page's h2s, nested under its item where the TOC column is hidden. */
+	anchors?: Heading[];
+}
+const { current, anchors = [] } = Astro.props;
+const h2s = anchors.filter((h) => h.depth === 2);
+---
+
+<div class="rail__head">
+	<span class="rail__label">Documentation</span>
+	<span class="rail__chip">v{VERSION}</span>
+</div>
+{
+	DOC_GROUPS.map((group) => (
+		<div class="rail__group">
+			<p class="rail__group-label">{group}</p>
+			<ul>
+				{DOC_PAGES.filter((p) => p.group === group).map((p) => (
+					<li>
+						<a class="rail__item" href={p.path} aria-current={p.slug === current ? 'page' : undefined}>
+							{p.label}
+						</a>
+						{p.slug === current && h2s.length > 0 && (
+							<ul class="rail__anchors">
+								{h2s.map((h) => (
+									<li>
+										<a href={`#${h.id}`}>{h.text}</a>
+									</li>
+								))}
+							</ul>
+						)}
+					</li>
+				))}
+			</ul>
+		</div>
+	))
+}

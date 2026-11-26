@@ -1,0 +1,29 @@
+---
+import { Code } from 'astro:components';
+import { planckShiki } from '../../lib/shiki-theme';
+import CopyButton from '../CopyButton.astro';
+
+interface Props {
+	code: string;
+	lang: 'sh' | 'powershell' | 'go' | 'json' | 'text';
+	caption?: string;
+	/** What the copy button copies, for screen readers. */
+	what: string;
+}
+const { code, lang, caption, what } = Astro.props;
+const badges = { sh: 'SH', powershell: 'PS', go: 'GO', json: 'JSON', text: 'TEXT' } as const;
+let hash = 5381;
+for (const ch of `${caption ?? ''}${code}`) hash = ((hash * 33) ^ ch.charCodeAt(0)) >>> 0;
+const id = `code-${hash.toString(36)}`;
+---
+
+<div class="code">
+	<div class="code__bar">
+		<span class="code__lang">{badges[lang]}</span>
+		{caption && <span class="code__caption">{caption}</span>}
+		<CopyButton target={id} what={what} />
+	</div>
+	<div id={id}>
+		<Code code={code.trim()} lang={lang === 'text' ? 'plaintext' : lang} theme={planckShiki} />
+	</div>
+</div>

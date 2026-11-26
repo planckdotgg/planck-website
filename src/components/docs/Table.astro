@@ -1,0 +1,11 @@
+---
+/** A horizontally scrollable, keyboard-reachable wrapper for a data table. */
+interface Props {
+	label: string;
+}
+const { label } = Astro.props;
+---
+
+<div class="table-wrap" role="region" tabindex="0" aria-label={label}>
+	<slot />
+</div>

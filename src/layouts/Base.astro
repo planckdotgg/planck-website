@@ -1,21 +1,41 @@
 ---
 import Footer from '../components/Footer.astro';
 import Nav from '../components/Nav.astro';
+import { isProduction } from '../lib/seo';
 import '../styles/global.css';
 
 interface Props {
 	title: string;
 	description: string;
-	active?: 'gaming' | 'work' | 'roadmap' | 'download';
-	/** A file in public/og/, 1200×630. */
+	active?: 'gaming' | 'work' | 'roadmap' | 'download' | 'docs';
+	/** A file in public/og/, 1200×630 PNG. */
 	og?: string;
+	/** Describes the social card itself, not the page. */
+	ogAlt: string;
+	ogType?: 'website' | 'article';
 	noindex?: boolean;
+	/** Schema.org nodes, emitted as one JSON-LD graph. */
+	jsonLd?: Record<string, unknown>[];
 }
-const { title, description, active, og = 'home.jpg', noindex = false } = Astro.props;
+const {
+	title,
+	description,
+	active,
+	og = 'home.png',
+	ogAlt,
+	ogType = 'website',
+	noindex = false,
+	jsonLd = [],
+} = Astro.props;
 // Pages build to files (work.html); the public address has no extension.
-const path = Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '/');
+const path = Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '') || '/';
 const canonical = new URL(path, Astro.site);
 const image = new URL(`/og/${og}`, Astro.site);
+// Only the production host is indexed; preview deploys (workers.dev) never are.
+const robots = noindex ? 'noindex' : isProduction(Astro.site) ? undefined : 'noindex, nofollow';
+const graph = jsonLd.length
+	? JSON.stringify({ '@context': 'https://schema.org', '@graph': jsonLd }).replace(/</g, '\\u003c')
+	: undefined;
 ---
 
 <!doctype html>
@@ -25,7 +45,8 @@ const image = new URL(`/og/${og}`, Astro.site);
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>{title}</title>
 		<meta name="description" content={description} />
-		{noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+		{robots && <meta name="robots" content={robots} />}
+		{!noindex && <link rel="canonical" href={canonical} />}
 		<meta name="theme-color" content="#0E0F12" />
 		<link rel="icon" href="/favicon.ico" sizes="16x16 32x32" />
 		<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
@@ -35,19 +56,23 @@ const image = new URL(`/og/${og}`, Astro.site);
 		<link rel="preload" href="/fonts/Archivo.woff2" as="font" type="font/woff2" crossorigin />
 		<link rel="preload" href="/fonts/MartianMono.woff2" as="font" type="font/woff2" crossorigin />
 
-		<meta property="og:type" content="website" />
+		<meta property="og:type" content={ogType} />
 		<meta property="og:site_name" content="Planck" />
+		<meta property="og:locale" content="en_US" />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta property="og:url" content={canonical} />
 		<meta property="og:image" content={image} />
+		<meta property="og:image:type" content="image/png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
-		<meta property="og:image:alt" content="Planck: open-source game streaming in pure Go" />
+		<meta property="og:image:alt" content={ogAlt} />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
 		<meta name="twitter:image" content={image} />
+		<meta name="twitter:image:alt" content={ogAlt} />
+		{graph && <script type="application/ld+json" set:html={graph} />}
 	</head>
 	<body>
 		<a class="skip" href="#main">Skip to content</a>

@@ -1,0 +1,147 @@
+---
+import Callout from '../../components/docs/Callout.astro';
+import CodeBlock from '../../components/docs/CodeBlock.astro';
+import Table from '../../components/docs/Table.astro';
+import Docs from '../../layouts/Docs.astro';
+
+const fields = [
+	['appID', 'Planck’s TelemetryDeck app ID', 'Same for every install'],
+	['clientUser', '64 hex characters', 'SHA-256 of the random install ID'],
+	['sessionID', 'random UUID v4', 'New for each run'],
+	['type', 'one of the four signal names', ''],
+	['isTestMode', 'true or false', 'Always true outside official release builds'],
+	['payload.os', 'Go GOOS, e.g. windows, darwin', ''],
+	['payload.arch', 'Go GOARCH, e.g. amd64, arm64', ''],
+	['payload.appVersion', 'e.g. 0.1.0', ''],
+	['payload.buildChannel', 'release or dev', ''],
+	['payload.platform', 'desktop', 'Always'],
+	['payload.mode', 'client or host', 'Anything else is sent as unknown'],
+] as const;
+
+const example = `{
+  "appID": "<Planck's TelemetryDeck app ID>",
+  "clientUser": "<64 hex characters>",
+  "sessionID": "<random UUID v4>",
+  "type": "session.started",
+  "isTestMode": false,
+  "payload": {
+    "os": "darwin",
+    "arch": "arm64",
+    "appVersion": "0.1.0",
+    "buildChannel": "release",
+    "platform": "desktop",
+    "mode": "client",
+    "codec": "hevc",
+    "transportKind": "lan"
+  }
+}`;
+---
+
+<Docs slug="privacy">
+	<h2 id="signals">Signals</h2>
+	<p>
+		Planck sends anonymous usage signals to <a href="https://telemetrydeck.com">TelemetryDeck</a>, so its
+		developers can count installs and see which codecs and kinds of route streams use. It is on by
+		default. There are exactly four signals:
+	</p>
+	<Table label="Telemetry signals">
+		<table>
+			<thead><tr><th scope="col">Signal</th><th scope="col">Sent when</th></tr></thead>
+			<tbody>
+				<tr><td><code>app.installed</code></td><td>Once per install, on first launch</td></tr>
+				<tr><td><code>app.launched</code></td><td>Once per run of the app or <code>planck-host</code></td></tr>
+				<tr><td><code>session.started</code></td><td>A stream begins</td></tr>
+				<tr><td><code>session.ended</code></td><td>A stream ends</td></tr>
+			</tbody>
+		</table>
+	</Table>
+
+	<h2 id="fields">Every field</h2>
+	<p>Every signal carries these 11 fields and nothing else:</p>
+	<Table label="Fields on every signal">
+		<table>
+			<thead><tr><th scope="col">Field</th><th scope="col">Value</th><th scope="col">Notes</th></tr></thead>
+			<tbody>
+				{fields.map(([k, v, n]) => <tr><td><code>{k}</code></td><td>{v}</td><td>{n}</td></tr>)}
+			</tbody>
+		</table>
+	</Table>
+	<p>The two <code>session.*</code> signals add two more:</p>
+	<Table label="Fields on session signals">
+		<table>
+			<thead><tr><th scope="col">Field</th><th scope="col">Values</th></tr></thead>
+			<tbody>
+				<tr><td><code>payload.codec</code></td><td><code>h264</code>, <code>hevc</code>, <code>av1</code>, <code>pyrowave</code> or <code>unknown</code></td></tr>
+				<tr><td><code>payload.transportKind</code></td><td><code>lan</code>, <code>tailscale_direct</code>, <code>tailscale_relay</code> or <code>unknown</code></td></tr>
+			</tbody>
+		</table>
+	</Table>
+	<p>
+		Both are normalised against a fixed list, so any other internal value leaves as
+		<code>unknown</code>. A full <code>session.started</code> signal looks like this:
+	</p>
+	<CodeBlock code={example} lang="json" caption="one signal" what="example telemetry signal" />
+
+	<h2 id="never-collected">Never collected</h2>
+	<p>
+		No field carries any of these, and the payload has no free-form field that could:
+	</p>
+	<ul>
+		<li>Host names, device names, or Tailscale names, users or addresses</li>
+		<li>IP addresses</li>
+		<li>Window titles, screen content, audio, input or clipboard</li>
+		<li>Pairing PINs or keys</li>
+	</ul>
+	<Callout kind="note">
+		The request still reaches TelemetryDeck's servers from your address, as any HTTPS request does.
+		TelemetryDeck says it does not store IP addresses and salts <code>clientUser</code> again on its
+		side; those are TelemetryDeck's statements, described in its
+		<a href="https://telemetrydeck.com/docs/guides/privacy-faq/">privacy FAQ</a>, and Planck's code
+		cannot verify them.
+	</Callout>
+
+	<h2 id="local-state">Stored on your machine</h2>
+	<p>
+		<code>telemetry.json</code> in the <a href="/docs/configuration#files">config directory</a> holds the
+		random install ID (a UUID v4) and whether <code>app.installed</code> was already sent. The file is
+		written with mode <code>0600</code>. The install ID itself never leaves the device; only its SHA-256,
+		as <code>clientUser</code>, does.
+	</p>
+
+	<h2 id="delivery">Delivery</h2>
+	<ul>
+		<li>Endpoint: <code>https://nom.telemetrydeck.com/v2/</code>, TelemetryDeck's Ingest API v2.</li>
+		<li>Queued signals go in one JSON POST with a 15 s timeout. While offline the queue holds 50 signals and drops the oldest first.</li>
+		<li>After a failure, the next attempt waits a minute.</li>
+		<li><code>app.installed</code> is marked sent in <code>telemetry.json</code> before it leaves, so two processes never count one install twice.</li>
+		<li>On exit, Planck makes one last flush with a time limit.</li>
+	</ul>
+
+	<h2 id="opt-out">Turn it off</h2>
+	<Table label="Ways to turn telemetry off">
+		<table>
+			<thead><tr><th scope="col">Where</th><th scope="col">Scope</th></tr></thead>
+			<tbody>
+				<tr><td>Settings › General › Privacy › <strong>Anonymous usage telemetry</strong></td><td>The app and <code>planck-host</code> on the same machine, from now on</td></tr>
+				<tr><td><code>"telemetryEnabled": false</code> in <code>client.json</code></td><td>The same switch, written by hand; useful on a host-only machine</td></tr>
+				<tr><td><code>planck-host -no-telemetry</code></td><td>One host run</td></tr>
+				<tr><td><code>planck-client -headless</code></td><td>Never sends; headless mode has no telemetry</td></tr>
+			</tbody>
+		</table>
+	</Table>
+	<p>
+		In the app, turning it off takes effect at once: queued signals are dropped and a send in flight from
+		the app is cancelled. A <code>planck-host</code> that is already running reads the switch from
+		<code>client.json</code> again before its next flush or session event, so it stops from then on.
+		Editing <code>client.json</code> does not cancel a request that is already in flight; that request may
+		finish before the host rechecks the file on its next flush or session event. A host-only machine with no <code>client.json</code>
+		sends telemetry until you pass <code>-no-telemetry</code> or write the file:
+	</p>
+	<CodeBlock code={'{\n  "telemetryEnabled": false\n}'} lang="json" caption="client.json" what="telemetry off setting" />
+	<Callout kind="tip">
+		There is no environment variable that turns telemetry off. A build from source sends nothing unless
+		you give it an app ID: the ID is empty in the source, and only release builds set it (or
+		<code>PLANCK_TELEMETRY_APP_ID</code>). Any build that is not an official release also marks every
+		signal as test mode.
+	</Callout>
+</Docs>

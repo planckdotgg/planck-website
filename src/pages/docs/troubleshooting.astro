@@ -1,0 +1,199 @@
+---
+import Callout from '../../components/docs/Callout.astro';
+import CodeBlock from '../../components/docs/CodeBlock.astro';
+import Table from '../../components/docs/Table.astro';
+import Docs from '../../layouts/Docs.astro';
+import type { Faq } from '../../lib/seo';
+
+/** Shown on the page and emitted as FAQPage JSON-LD, from this one list. */
+const faq: (Faq & { id: string })[] = [
+	{
+		id: 'faq-admin',
+		q: 'Does Planck need administrator rights on Windows?',
+		a: 'No. The installer is per-user and installs no drivers, so it runs without administrator rights. Its first dialog can offer an install for all users instead.',
+	},
+	{
+		id: 'faq-tailscale-pin',
+		q: 'Do I need a PIN between my own devices on Tailscale?',
+		a: 'No, when both devices belong to the same Tailscale user and the client connects over the tailnet. A client on a LAN address still pairs with the PIN while requirePINForLAN is on, which is the default.',
+	},
+	{
+		id: 'faq-ports',
+		q: 'Which ports does Planck use?',
+		a: 'UDP 47700 for discovery, UDP 47701 for the QUIC control connection, and UDP 47702 for media, all on the host.',
+	},
+	{
+		id: 'faq-linux',
+		q: 'Can I host or stream on Linux?',
+		a: 'Not yet. Linux builds run planck-host and planck-client -headless from the command line, but there is no capture backend, encoder or desktop window, so a Linux machine can neither host nor show a stream.',
+	},
+	{
+		id: 'faq-h264',
+		q: 'Can I stream H.264?',
+		a: 'No. NVENC can encode H.264, but neither client has an H.264 decoder. Use HEVC, the default, or AV1.',
+	},
+	{
+		id: 'faq-444',
+		q: 'Does Planck support 4:4:4 chroma?',
+		a: 'Yes, on encoders that report it: NVIDIA NVENC and Intel oneVPL. AMD AMF and Apple VideoToolbox encode 4:2:0 only.',
+	},
+	{
+		id: 'faq-hdr',
+		q: 'Does Planck support HDR10?',
+		a: 'On a macOS client, where both ends and the host desktop have HDR. The Windows client decodes 10-bit HEVC and AV1 but presents 8-bit.',
+	},
+	{
+		id: 'faq-telemetry',
+		q: 'Is telemetry on by default?',
+		a: 'Yes. Planck sends four anonymous signals to TelemetryDeck. Turn them off in Settings › General › Anonymous usage telemetry, with "telemetryEnabled": false in client.json, or with planck-host -no-telemetry.',
+	},
+	{
+		id: 'faq-collect',
+		q: 'Does Planck collect my screen, audio or input?',
+		a: 'No. The telemetry payload has no field for screen content, audio, input, clipboard, names, addresses or PINs.',
+	},
+];
+
+const firewall = `New-NetFirewallRule -DisplayName "Planck host" -Direction Inbound -Protocol UDP -LocalPort 47700-47702 -Action Allow`;
+const excluded = `netsh int ipv4 show excludedportrange protocol=udp`;
+const moved = `planck-host -listen :41000 -media-port 41001 -discovery-port 41002
+# on the client, connect to the moved control port
+planck-client -headless -connect host:41000 -pin 123456`;
+---
+
+<Docs slug="troubleshooting" faq={faq.map(({ q, a }) => ({ q, a }))}>
+	<h2 id="firewall">Firewall and ports</h2>
+	<p>
+		A host listens on three UDP ports. Allow all three through the host's firewall; QUIC runs over UDP,
+		so a TCP rule does not help.
+	</p>
+	<Table label="Ports to allow on the host">
+		<table>
+			<thead><tr><th scope="col">Port</th><th scope="col">Carries</th><th scope="col">Change with</th></tr></thead>
+			<tbody>
+				<tr><td class="num">UDP 47700</td><td>Discovery</td><td><code>-discovery-port</code>, <code>discoveryPort</code></td></tr>
+				<tr><td class="num">UDP 47701</td><td>QUIC control</td><td><code>-listen</code>, <code>controlPort</code></td></tr>
+				<tr><td class="num">UDP 47702</td><td>Media</td><td><code>-media-port</code>, <code>mediaPort</code></td></tr>
+			</tbody>
+		</table>
+	</Table>
+	<CodeBlock code={firewall} lang="powershell" caption="Windows, elevated PowerShell" what="Windows firewall rule" />
+	<p>
+		<code>-media-port 0</code> picks any free port, which a fixed firewall rule will not cover. Discovery
+		beacons stay on the local network: across a router, pass <code>-discovery-addrs ip:port</code> on the
+		client or connect to the host's address.
+	</p>
+
+	<h3 id="reserved-ports">Windows reserved port ranges</h3>
+	<p>
+		Hyper-V, WSL and WinNAT can reserve blocks of UDP ports. Inside a reserved block, a bind fails with
+		<code>WSAEACCES</code> even though no program owns the port. List the reserved ranges:
+	</p>
+	<CodeBlock code={excluded} lang="powershell" caption="Windows" what="excluded port range command" />
+	<p>
+		If 47700 to 47702 fall inside a range, move all three of the host's ports out of it, and point the
+		client at the new control port. <code>-discovery-port 0</code> turns discovery off instead.
+	</p>
+	<CodeBlock code={moved} lang="sh" caption="ports outside the reserved block" what="moved port commands" />
+	<p>
+		The standalone <code>planck-host</code> ignores the ports in <code>host.json</code>: it uses 47701,
+		47702 and 47700 unless you pass the flags, so keep the flags in whatever starts it. Hosting from the
+		desktop app reads <code>controlPort</code>, <code>mediaPort</code> and <code>discoveryPort</code>
+		from <code>host.json</code>, so set them there to make the move permanent for the app.
+	</p>
+
+	<h2 id="macos-permissions">macOS permissions</h2>
+	<p>
+		A Mac that hosts needs two permissions before a stream works. Grant them in System Settings › Privacy
+		&amp; Security.
+	</p>
+	<Table label="macOS permissions">
+		<table>
+			<thead><tr><th scope="col">Permission</th><th scope="col">Side</th><th scope="col">Without it</th></tr></thead>
+			<tbody>
+				<tr><td>Screen Recording</td><td>Host</td><td>ScreenCaptureKit cannot capture the display</td></tr>
+				<tr><td>Accessibility</td><td>Host</td><td>Keyboard and mouse from the client are refused (<code>ErrNotTrusted</code>)</td></tr>
+				<tr><td>System audio recording</td><td>Host</td><td>The stream has no sound</td></tr>
+				<tr><td>Microphone</td><td>Client</td><td>Your microphone is not sent to the host</td></tr>
+				<tr><td>Local Network</td><td>Both</td><td>LAN discovery cannot find hosts</td></tr>
+			</tbody>
+		</table>
+	</Table>
+	<p>
+		Planck's own wording for Screen Recording is that it "captures this Mac's screen only while it hosts a
+		stream for a device you paired." After changing a permission, quit and reopen Planck.
+	</p>
+
+	<h2 id="smartscreen">Windows SmartScreen</h2>
+	<p>
+		Windows builds are unsigned for now, so SmartScreen will prompt before the first run. Choose
+		<strong>More info</strong>, check that the file came from the planck.gg download or the GitHub
+		release, then <strong>Run anyway</strong>. Compare the file against <code>SHA256SUMS.txt</code> on
+		the release page if you want to be sure:
+	</p>
+	<CodeBlock
+		code="Get-FileHash .\planck-0.1.0-windows-x64-setup.exe -Algorithm SHA256"
+		lang="powershell"
+		caption="Windows"
+		what="file hash command"
+	/>
+
+	<h2 id="tailscale">Tailscale: direct or relayed</h2>
+	<p>
+		Over Tailscale, a stream is only as good as the tailnet path. A direct WireGuard path costs about
+		0.15 ms of minimum RTT and 60 bytes per packet over the LAN, and Planck caps it at 100 Mbps. A
+		relayed (DERP) path is capped at 20 Mbps.
+	</p>
+	<CodeBlock code="tailscale ping <host>" lang="sh" caption="direct or via DERP" what="tailscale ping command" />
+	<ul>
+		<li>When both machines share a LAN, connect over the LAN: it is the fastest path, and Planck prefers it.</li>
+		<li>If the ping reports DERP, open UDP for Tailscale on both ends' routers or firewalls so it can find a direct path.</li>
+	</ul>
+	<Callout kind="caveat">
+		Streaming over a DERP relay has never been measured in the repo. Expect it to be the slowest path.
+	</Callout>
+
+	<h2 id="gpu-topology">Multi-GPU and displays</h2>
+	<p>
+		DXGI Desktop Duplication can only capture on the GPU that drives the display. On a machine with two
+		GPUs, Planck captures and encodes on the one with the monitor, even when the other is faster.
+	</p>
+	<ul>
+		<li>To encode on a GPU with no monitor, give it one: <code>-vdd on -vdd-gpu 4080</code> creates a SudoVDA virtual display on that GPU, at the client's size. SudoVDA is a separate driver.</li>
+		<li>Planck removes the virtual display when the session ends. After a hard kill, SudoVDA's watchdog removes it about 2.3 s later.</li>
+		<li>Encoding on a different GPU than the one that captured does not pay off: D3D11 cross-adapter sharing fails, and staging copies cost 2 to 15 ms per frame.</li>
+		<li>Capture above the display's refresh rate is not possible; a 60 Hz monitor caps real capture at 60 fps.</li>
+	</ul>
+
+	<h2 id="gpu-power">GPU power policy</h2>
+	<p>
+		Fed one frame at a time, an NVIDIA GPU can stay in its idle P8 state. On the test host that made NVENC
+		take 2.95 ms p50 and 70.6 ms p99 at 1080p120, against 1.41 ms p50 when boosted. Planck sets an NVIDIA
+		driver profile for <code>planck-host.exe</code> and <code>planck-client.exe</code> with power
+		management mode "Prefer maximum performance", through NVAPI.
+	</p>
+	<ul>
+		<li>If encode latency is high on NVIDIA, check the NVIDIA Control Panel's program settings for those two executables.</li>
+		<li>AMD AMF on the RX 6700 XT showed encode p99 of 4.3 to 23.5 ms and spikes up to 219 ms, all inside the driver's output call. Raising GPU priority did not fix it.</li>
+	</ul>
+
+	<h2 id="known-issues">Known rough edges</h2>
+	<ul>
+		<li>H.264 has no decoder on either client.</li>
+		<li>The Windows client presents 8-bit; HDR10 output is macOS only.</li>
+		<li>PIN pairing has no PAKE, so a recorded exchange could be brute-forced offline.</li>
+		<li>Direct-to-display presentation on macOS is not finished; windowed present adds 8 to 10 ms.</li>
+		<li>Virtual audio and virtual display drivers are experimental and not part of any release.</li>
+		<li>Linux has no capture, encode or desktop window.</li>
+	</ul>
+
+	<h2 id="faq">FAQ</h2>
+	{
+		faq.map((f) => (
+			<>
+				<h3 id={f.id}>{f.q}</h3>
+				<p>{f.a}</p>
+			</>
+		))
+	}
+</Docs>

@@ -1,0 +1,111 @@
+---
+/** Chart 2: sub-frame slices (first bytes out sooner) and NVENC split encode (whole frame faster). */
+const x = (ms: number) => 156 + 160 * ms;
+const ticks = [0, 0.5, 1, 1.5, 2, 2.5];
+const sliced = [
+	{ c: 112, l1: '4 slices', l2: 'sub-frame poll', first: 0.78, whole: 1.44 },
+	{ c: 154, l1: '8 slices', l2: 'sub-frame · split off', first: 0.7, whole: 1.51 },
+];
+const split = [
+	{ c: 244, l1: '1080p240', base: 1.36, split: 1.04 },
+	{ c: 300, l1: '1440p120', base: 2.2, split: 1.51 },
+];
+const pct = (base: number, s: number) => `−${Math.round(((base - s) / base) * 100)}%`;
+const label =
+	'Sub-frame slices and split encode. At 1080p240, one slice finishes in 1.41 ms; with 4 sub-frame slices the first slice is ready at 0.78 ms and with 8 at 0.70 ms. NVENC split encode cuts host encode p50 from 1.36 to 1.04 ms at 1080p240 and from 2.20 to 1.51 ms at 1440p120.';
+---
+
+<figure class="chart">
+	<div class="diagram" style="--min: 640px" role="region" tabindex="0" aria-label="Slice and split encode chart, scrolls sideways">
+		<svg viewBox="0 0 696 348" width="696" height="348" role="img" aria-label={label} class="svg-mono">
+			<g class="grid" shape-rendering="crispEdges">
+				{
+					ticks.map((t) => (
+						<path
+							d={`M${x(t)} 40 V184 M${x(t)} 212 V324`}
+							stroke={t === 0 ? '#2C3038' : Number.isInteger(t) ? '#F2EFEA1A' : '#F2EFEA10'}
+							stroke-width="1"
+						/>
+					))
+				}
+				<path d="M156 324 H604" stroke="#2C3038" stroke-width="1"></path>
+				<path d="M0 36 H696 M0 206 H696" stroke="#F2EFEA14" stroke-width="1"></path>
+			</g>
+			<text x="0" y="26" font-size="10" letter-spacing="0.6" fill="#8C919B">A · SUB-FRAME SLICING · 1080p240 HEVC · BACK-TO-BACK</text>
+			<text x="696" y="26" font-size="10" letter-spacing="0.6" fill="#6E7480" text-anchor="end">encode p50 · ms</text>
+			<text x="0" y="196" font-size="10" letter-spacing="0.6" fill="#8C919B">B · NVENC SPLIT ENCODE · PHASE 2 HOST ENCODE p50</text>
+			{
+				ticks.map((t) => (
+					<text x={x(t)} y="338" font-size="10" fill="#6E7480" text-anchor="middle">
+						{t === 0 ? '0' : t.toFixed(1)}
+					</text>
+				))
+			}
+
+			<g>
+				<text x="0" y="67" font-size="11" font-weight="600" fill="#F2EFEA">1 slice</text>
+				<text x="0" y="81" font-size="9.5" fill="#8C919B">async event</text>
+				<rect x="156.5" y="62.5" width={x(1.41) - 157} height="15" rx="2" fill="#F2EFEA14" stroke="#2C3038"></rect>
+				<text x={x(1.41) + 10} y="73" font-size="9.5" fill="#6E7480">whole frame</text>
+				<path d="M462 70 H604" stroke="#FFD1A3" stroke-width="1" stroke-dasharray="3 4"></path>
+				<path d="M604 65 l5 5 l-5 5" fill="none" stroke="#FFD1A3" stroke-width="1.5"></path>
+				<text x="696" y="70" font-size="10.5" font-weight="600" fill="#F2EFEA" text-anchor="end" dominant-baseline="central">1.41</text>
+			</g>
+			{
+				sliced.map((r) => (
+					<g>
+						<text x="0" y={r.c - 3} font-size="11" font-weight="600" fill="#F2EFEA">
+							{r.l1}
+						</text>
+						<text x="0" y={r.c + 11} font-size="9.5" fill="#8C919B">
+							{r.l2}
+						</text>
+						<rect x={x(r.first)} y={r.c - 8} width={x(r.whole) - x(r.first)} height="16" rx="2" fill="#FFB46B59" />
+						<rect x="156" y={r.c - 8} width={x(r.first) - 156} height="16" rx="2" fill="#FF7A1F" />
+						<text x="162" y={r.c + 3} font-size="9" font-weight="600" fill="#1A0B02">
+							1ST SLICE {r.first.toFixed(2)}
+						</text>
+						<text x="696" y={r.c} font-size="10.5" font-weight="600" fill="#F2EFEA" text-anchor="end" dominant-baseline="central">
+							{r.whole.toFixed(2)}
+						</text>
+					</g>
+				))
+			}
+			{
+				split.map((r) => (
+					<g>
+						<text x="0" y={r.c - 3} font-size="11" font-weight="600" fill="#F2EFEA">
+							{r.l1}
+						</text>
+						<text x="0" y={r.c + 11} font-size="9.5" fill="#8C919B">
+							1 slice · base → split
+						</text>
+						<rect x="156.5" y={r.c - 15.5} width={x(r.base) - 157} height="13" rx="2" fill="#F2EFEA14" stroke="#2C3038" />
+						<rect x="156" y={r.c + 2} width={x(r.split) - 156} height="14" rx="2" fill="#FF7A1F" />
+						<text x={x(r.base) + 10} y={r.c - 6} font-size="10" font-weight="600" fill="#4CD69B">
+							{pct(r.base, r.split)}
+						</text>
+						<text x="696" y={r.c} font-size="10.5" font-weight="600" fill="#F2EFEA" text-anchor="end" dominant-baseline="central">
+							{r.split.toFixed(2)}
+						</text>
+					</g>
+				))
+			}
+		</svg>
+	</div>
+	<figcaption>
+		Slicing does not make the frame encode faster; it makes the first bytes leave sooner. Eight sub-frame
+		slices put the first slice on the wire at 0.70 ms while the whole frame still takes 1.51 ms. Split
+		encode is the separate win: it cuts the whole-frame p50 by about a quarter to a third, at the cost of
+		roughly a third more bits.
+	</figcaption>
+	<p class="chart__method">
+		<b>Block A</b> Phase 0 spike 2, bigboi RTX 4080, 1080p240 HEVC NV12 from BGRA, <i>back-to-back</i>
+		(GPU boosted) · <b>Source</b> <code>docs/spikes/phase0-spike2.md</code> lines 94–103. <b>Block B</b>
+		Phase 2 host encode, synthetic LAN · <b>Source</b> <code>docs/perf/phase2-results.md</code> lines
+		22–27. <b>These are two different harnesses</b>: A's 1-slice p50 (1.41 ms) and B's 1-slice base p50
+		(1.36 ms) are not the same test and must not be compared directly. Split encode costs about a third
+		larger frames at p50 and up to 75% at p95 (<code>docs/perf/phase2-results.md:50</code>).
+		<b>Commit</b> <code>v0.1.0</code> (<code>8a3c732</code>).
+	</p>
+</figure>

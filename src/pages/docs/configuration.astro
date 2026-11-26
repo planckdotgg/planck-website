@@ -1,0 +1,332 @@
+---
+import Callout from '../../components/docs/Callout.astro';
+import CodeBlock from '../../components/docs/CodeBlock.astro';
+import Table from '../../components/docs/Table.astro';
+import Docs from '../../layouts/Docs.astro';
+
+const hostKeys = [
+	['hostID', 'random 16 bytes, hex', 'Stable identity of this host'],
+	['name', 'machine name', 'What clients list the host as'],
+	['controlPort', '47701', 'QUIC control; must differ from mediaPort'],
+	['mediaPort', '47702', 'UDP media'],
+	['discoveryPort', '47700', '0 turns discovery off'],
+	['display', 'primary display', 'Display ID to capture'],
+	['adapter', 'the display’s GPU', 'Encoding GPU, by name or vendor'],
+	['vddPrimary', 'false', 'Make the virtual display primary'],
+	['fixedPIN', 'unset', 'A fixed 6-digit PIN instead of a rotating one'],
+	['noInput', 'false', 'Ignore client keyboard, mouse and gamepad'],
+	['clipboard', 'both', 'both, host-to-client, client-to-host, off'],
+	['codec', 'hevc', 'h264, hevc, av1'],
+	['chroma', 'nv12', 'nv12, p010, yuv444, yuv444p10'],
+	['fps', '120', ''],
+	['maxBitrateKbps', '100000', ''],
+	['requirePINForLAN', 'true', 'LAN clients always pair with the PIN'],
+	['allowTailscaleSameUser', 'true', 'Same Tailscale user pairs without a PIN'],
+	['certPath, keyPath', 'host-cert.pem, host-key.pem', 'In the config directory'],
+	['policy', '{}', 'Per-policy overrides of the stream resolver'],
+	['audioDevice', 'unset', ''],
+	['audioExcludeApps', 'none', 'Apps left out of streamed audio'],
+	['virtualMic', 'unset', 'Virtual input device for the client’s microphone'],
+	['stayAwake', 'false', ''],
+	['lockOnDisconnect', 'false', ''],
+	['muteSpeakers', 'false', ''],
+	['privacyMode', 'false', ''],
+	['idleTimeoutMinutes', '0', '0 to 1440'],
+] as const;
+
+const clientKeys = [
+	['preferredCodec, preferredChroma', 'hevc, nv12', ''],
+	['targetFPS', '120', 'Must be positive'],
+	['maxBitrateKbps', '100000', 'Must be positive'],
+	['audioEnabled', 'true', ''],
+	['clipboardSend, clipboardReceive', '', 'Clipboard sharing in each direction'],
+	['systemKeysCapture', '', 'Immersive mode takes system keys'],
+	['themeName', 'default', ''],
+	[
+		'pinnedHosts',
+		'{}',
+		'Paired hosts: fingerprint, name, pairing time, last LAN and Tailscale address',
+	],
+	['deviceName', '', 'What hosts list this client as'],
+	['hostAliases', '', ''],
+	['overrides, hostOverrides', '', 'Global and per-host stream overrides'],
+	['audioVolume, audioMuted', '', ''],
+	['overlay', '', 'Stream HUD layout'],
+	['openFullscreen', 'true', ''],
+	['openEveryHostDisplay', '', ''],
+	['maxStreamWindows', '2', '2 to 4'],
+	['hotkeys', 'see below', 'Action to chord'],
+	['neverSend', '', 'Clipboard and input targets that are never sent'],
+	['swapCmdCtrl', '', ''],
+	['audioOutputDevice, micDevice', '', ''],
+	['telemetryEnabled', 'absent (on)', 'false turns telemetry off for the app and planck-host'],
+] as const;
+
+const hostFlags = [
+	['-listen', ':47701', 'QUIC control address'],
+	['-media-port', '47702', 'UDP media port; 0 picks any free port'],
+	['-discovery-port', '47700', 'LAN discovery; 0 turns it off'],
+	['-codec', 'hevc', 'auto, pyrowave, hevc, av1, h264'],
+	['-chroma', 'nv12', 'auto, nv12, p010, yuv444, yuv444p10 (or 420, 444)'],
+	['-bit-depth', 'auto', 'auto, 8, 10'],
+	['-res', 'auto', 'auto, 1080p, 1440p, 4k, or WxH (needs a virtual display)'],
+	['-fps', 'display refresh', 'Frame rate (60 with -synth)'],
+	['-bitrate', 'from host.json', 'Maximum video bitrate in kbps'],
+	['-bitrate-mbps', '0 (auto)', 'Bitrate policy in Mbps'],
+	[
+		'-split',
+		'auto',
+		'NVENC split encode: auto (1440p+, or 1080p from 200 fps, LAN, no slices), on, off',
+	],
+	['-slices', '', 'FEC slices per frame, 1 to 16'],
+	['-subframe', 'false', 'Send slices as the encoder finishes them; needs -slices 2 or more'],
+	['-subframe-slices', 'auto', 'Policy: auto, 1, 4, 8'],
+	['-vdd', 'auto', 'SudoVDA virtual display at the client’s size: auto, on, off'],
+	['-vdd-gpu', '', 'GPU that renders the virtual display and encodes (4080, Radeon)'],
+	['-vdd-primary', 'false', 'Make the virtual display primary'],
+	['-display', 'primary', 'Display ID to capture'],
+	['-adapter', 'display’s GPU', 'Encoding GPU by name or vendor (NVIDIA, AMD, Intel)'],
+	['-pin', 'random', 'Fixed 6-digit pairing PIN'],
+	['-name', 'host.json name', 'Host name for this run'],
+	['-set-name', '', 'Rename the host and keep it in host.json'],
+	['-no-input', 'false', 'Ignore client keyboard, mouse and gamepad'],
+	['-no-audio', 'false', 'Do not capture or stream audio'],
+	[
+		'-audio-exclude-pids',
+		'',
+		'Processes left out of streamed audio (macOS; Windows leaves out only Planck)',
+	],
+	['-mic-device', 'auto', 'Virtual input device; off refuses the microphone'],
+	['-clipboard', 'both', 'both, host-to-client, client-to-host, off'],
+	['-synth', 'false', 'Stream a generated test pattern'],
+	['-width, -height', '', 'Synthetic frame size'],
+	['-stats', '2s', 'Print stats while a client is connected; 0 turns it off'],
+	['-no-telemetry', 'false', 'Send no telemetry this run'],
+	['-config', 'config directory', ''],
+	['-version', '', 'Print the version and exit'],
+] as const;
+
+const clientFlags = [
+	['-config', 'config directory', ''],
+	['-name', 'Settings name', 'Device name hosts pair this client under, for this run'],
+	['-codec', 'auto', 'auto, pyrowave, hevc, av1, h264 (h264 has no decoder)'],
+	['-chroma', 'auto', 'auto, 420, 444 (or nv12, p010, yuv444, yuv444p10)'],
+	['-bit-depth', 'auto', 'auto, 8, 10'],
+	['-res', 'auto', 'auto (this screen), 1080p, 1440p, 4k, WxH'],
+	['-fps', 'auto', 'auto, 60, 120, 144, 240'],
+	['-bitrate', '0', 'Maximum kbps, for hosts that do not resolve the stream'],
+	['-bitrate-mbps', '0 (auto)', 'Video bitrate in Mbps'],
+	['-slices', 'auto', 'auto, 1, 4, 8'],
+	['-vdd', 'auto', 'Host virtual display at this screen’s size'],
+	['-vdd-gpu', '', 'Host GPU that renders the virtual display and encodes'],
+	['-nvenc-split', 'auto', 'NVENC two-engine split: auto, on, off'],
+	['-direct-display', 'auto', 'macOS full-screen direct-to-display: auto, on, off'],
+	['-vsync', 'auto', 'Present in step with the display: auto (off), on, off'],
+	['-display', '', 'Host display ID to stream'],
+	['-hdr10', 'auto', 'auto (where both ends and the host desktop have HDR) or off'],
+	['-discovery-port', '47700', 'Discovery port to listen on and probe'],
+	['-version', '', 'Print the version and exit'],
+] as const;
+
+const headlessFlags = [
+	['-headless', 'false', 'Connect without a window, decode for -duration, print a summary'],
+	['-connect', '', 'host[:port]'],
+	['-discover', '', 'Find the host by name or ID on the LAN and tailnet; race its paths'],
+	['-discovery-addrs', '', 'Comma-separated ip:port to probe instead of listening'],
+	['-pin', '', 'The host’s 6-digit PIN, the first time'],
+	['-duration', '10s', 'How long to stream'],
+	['-timeout', '15s', 'How long discovery and the handshake may take'],
+	['-path-mode', 'auto', 'auto, lan, tailscale; fails on any other path'],
+	['-no-audio', 'false', 'Do not ask for audio'],
+	['-silent-audio', 'false', 'Receive and decode audio, play none'],
+	['-input-probe', 'false', 'Send a zero mouse move every -input-probe-every'],
+	['-input-probe-every', '1s', ''],
+	['-mic-tone', 'false', 'Send a 440 Hz tone into the host’s virtual microphone'],
+	['-json', 'false', 'Print the summary as JSON'],
+] as const;
+
+const hotkeys = [
+	['Stream menu', 'Ctrl+Alt+O', 'Stream window'],
+	['Hide button', 'Ctrl+Alt+P', 'Stream window'],
+	['Metrics', 'Ctrl+Alt+M', 'Stream window'],
+	['Cycle HUD', 'Ctrl+Alt+H', 'Stream window'],
+	['Microphone', 'Ctrl+Alt+U', 'Stream window'],
+	['Fullscreen', 'Ctrl+Alt+F', 'Stream window'],
+	['Immersive mode', 'Ctrl+Alt+I', 'Takes system keys while on'],
+	['Cursor lock', 'Ctrl+Alt+G', 'Stream window'],
+	['Switch display', 'Ctrl+Alt+]', 'Stream window'],
+	['Ctrl+Alt+Del on host', 'Ctrl+Alt+Backspace', 'Stream window'],
+	['Keyframe', 'Ctrl+Alt+K', 'Stream window'],
+	['Disconnect', 'Ctrl+Alt+Shift+D', 'Stream window'],
+	['Stop hosting', 'Ctrl+F3', 'Global, on the host'],
+	['Kick client', 'none', 'Global, on the host'],
+] as const;
+
+const hostJson = `{
+  "controlPort": 47701,
+  "mediaPort": 47702,
+  "discoveryPort": 47700,
+  "codec": "hevc",
+  "chroma": "nv12",
+  "fps": 120,
+  "maxBitrateKbps": 100000,
+  "clipboard": "both",
+  "requirePINForLAN": true,
+  "allowTailscaleSameUser": true
+}`;
+---
+
+<Docs slug="configuration">
+	<h2 id="files">Config files</h2>
+	<p>
+		Both binaries read one directory: <code>planck</code> inside the operating system's user config
+		directory. <code>-config &lt;dir&gt;</code> points either binary somewhere else.
+	</p>
+	<Table label="Config directory by platform">
+		<table>
+			<thead><tr><th scope="col">Platform</th><th scope="col">Directory</th></tr></thead>
+			<tbody>
+				<tr><td>Windows</td><td><code>%APPDATA%\planck</code></td></tr>
+				<tr><td>macOS</td><td><code>~/Library/Application Support/planck</code></td></tr>
+				<tr><td>Linux</td><td><code>$XDG_CONFIG_HOME/planck</code>, or <code>~/.config/planck</code></td></tr>
+			</tbody>
+		</table>
+	</Table>
+	<Table label="Files in the config directory">
+		<table>
+			<thead><tr><th scope="col">File</th><th scope="col">Holds</th></tr></thead>
+			<tbody>
+				<tr><td><code>host.json</code></td><td>Host settings</td></tr>
+				<tr><td><code>client.json</code></td><td>App settings, paired hosts, hotkeys, the telemetry switch</td></tr>
+				<tr><td><code>host-cert.pem</code>, <code>host-key.pem</code></td><td>The host's self-signed certificate and key</td></tr>
+				<tr><td><code>paired-clients.json</code></td><td>Client fingerprints this host has paired</td></tr>
+				<tr><td><code>telemetry.json</code></td><td>The random install ID and whether the first launch was counted</td></tr>
+			</tbody>
+		</table>
+	</Table>
+	<p>Uninstalling on Windows keeps this directory, so a reinstall keeps its pairings.</p>
+
+	<h2 id="host-json">Host settings</h2>
+	<p>A <code>host.json</code> with the defaults written out:</p>
+	<CodeBlock code={hostJson} lang="json" caption="host.json" what="host.json defaults" />
+	<Table label="host.json keys">
+		<table>
+			<thead><tr><th scope="col">Key</th><th scope="col">Default</th><th scope="col">Notes</th></tr></thead>
+			<tbody>
+				{hostKeys.map(([k, d, n]) => <tr><td><code>{k}</code></td><td>{d}</td><td>{n}</td></tr>)}
+			</tbody>
+		</table>
+	</Table>
+	<p>
+		The host validates <code>codec</code> and <code>chroma</code> against the lists above, rejects a PIN
+		that is not 6 digits, and refuses a config whose control and media ports match.
+	</p>
+
+	<h2 id="client-json">Client settings</h2>
+	<p>
+		The app writes <code>client.json</code> from Settings; editing it by hand works too. Missing keys take
+		their defaults.
+	</p>
+	<Table label="client.json keys">
+		<table>
+			<thead><tr><th scope="col">Key</th><th scope="col">Default</th><th scope="col">Notes</th></tr></thead>
+			<tbody>
+				{clientKeys.map(([k, d, n]) => <tr><td><code>{k}</code></td><td>{d}</td><td>{n}</td></tr>)}
+			</tbody>
+		</table>
+	</Table>
+
+	<h2 id="host-flags">planck-host flags</h2>
+	<p>Flags apply to one run. <code>-set-name</code> is the one that writes back to <code>host.json</code>.</p>
+	<Table label="planck-host flags">
+		<table>
+			<thead><tr><th scope="col">Flag</th><th scope="col">Default</th><th scope="col">Meaning</th></tr></thead>
+			<tbody>
+				{hostFlags.map(([k, d, n]) => <tr><td><code>{k}</code></td><td>{d}</td><td>{n}</td></tr>)}
+			</tbody>
+		</table>
+	</Table>
+	<Callout kind="caveat">
+		The help text of <code>-codec</code> mentions <code>auto</code>, but the default is
+		<code>hevc</code>. Pass <code>-codec auto</code> to let the host choose.
+	</Callout>
+
+	<h2 id="client-flags">planck-client flags</h2>
+	<Table label="planck-client flags">
+		<table>
+			<thead><tr><th scope="col">Flag</th><th scope="col">Default</th><th scope="col">Meaning</th></tr></thead>
+			<tbody>
+				{clientFlags.map(([k, d, n]) => <tr><td><code>{k}</code></td><td>{d}</td><td>{n}</td></tr>)}
+			</tbody>
+		</table>
+	</Table>
+
+	<h3 id="headless">Headless mode</h3>
+	<p>
+		<code>-headless</code> streams without a window and prints a summary, for benchmarks and scripted
+		checks. It never sends telemetry.
+	</p>
+	<Table label="Headless flags">
+		<table>
+			<thead><tr><th scope="col">Flag</th><th scope="col">Default</th><th scope="col">Meaning</th></tr></thead>
+			<tbody>
+				{headlessFlags.map(([k, d, n]) => <tr><td><code>{k}</code></td><td>{d}</td><td>{n}</td></tr>)}
+			</tbody>
+		</table>
+	</Table>
+	<CodeBlock
+		code={`planck-client -headless -discover my-host -pin 123456 -duration 10s -json
+planck-client -headless -connect 192.0.2.10:47701 -path-mode lan -silent-audio`}
+		lang="sh"
+		caption="headless examples"
+		what="headless client examples"
+	/>
+
+	<h2 id="hotkeys">Hotkeys</h2>
+	<p>
+		In-stream chords use Ctrl+Alt so that Cmd and the Windows key reach the host. Change them in
+		Settings or in <code>client.json</code> under <code>hotkeys</code>; reserved and conflicting chords are
+		refused.
+	</p>
+	<Table label="Default hotkeys">
+		<table>
+			<thead><tr><th scope="col">Action</th><th scope="col">Default</th><th scope="col">Scope</th></tr></thead>
+			<tbody>
+				{hotkeys.map(([a, k, s]) => <tr><td>{a}</td><td><span class="kbd">{k}</span></td><td>{s}</td></tr>)}
+			</tbody>
+		</table>
+	</Table>
+
+	<h2 id="codecs">Codecs and chroma</h2>
+	<h3 id="encoders">Encoders</h3>
+	<Table label="Encoder capabilities">
+		<table>
+			<thead><tr><th scope="col">Encoder</th><th scope="col">Codecs Planck drives</th><th scope="col">Chroma</th></tr></thead>
+			<tbody>
+				<tr><td>NVENC (NVIDIA, Windows)</td><td>H.264, HEVC, AV1, as the GPU reports</td><td>NV12; P010 for 10-bit; YUV444 and YUV444P10 where the GPU supports them</td></tr>
+				<tr><td>AMF (AMD, Windows)</td><td>HEVC</td><td>NV12, P010</td></tr>
+				<tr><td>oneVPL (Intel, Windows)</td><td>HEVC</td><td>NV12, P010, YUV444, YUV444P10</td></tr>
+				<tr><td>VideoToolbox (Apple)</td><td>HEVC (Main10 for 10-bit)</td><td>NV12, P010; 4:4:4 refused</td></tr>
+			</tbody>
+		</table>
+	</Table>
+	<h3 id="decoders">Decoders</h3>
+	<Table label="Decoder capabilities">
+		<table>
+			<thead><tr><th scope="col">Client</th><th scope="col">HEVC</th><th scope="col">AV1</th><th scope="col">H.264</th><th scope="col">HDR10 present</th></tr></thead>
+			<tbody>
+				<tr><td>macOS (VideoToolbox)</td><td>Yes, 10-bit</td><td>Yes, 10-bit</td><td class="is-none">No</td><td>Yes</td></tr>
+				<tr><td>Windows (Media Foundation)</td><td>Yes, 10-bit</td><td>Yes, 10-bit</td><td class="is-none">No</td><td>No, presents 8-bit</td></tr>
+			</tbody>
+		</table>
+	</Table>
+	<Callout kind="warning">
+		H.264 encodes on NVENC only, and no client can decode it. Choosing <code>h264</code> on either binary
+		produces a stream the client cannot show. Use HEVC (the default) or AV1.
+	</Callout>
+	<p>
+		4:4:4 needs an encoder that reports it: NVENC (HEVC, and H.264 per its probe) or oneVPL (HEVC). AMF
+		and VideoToolbox stay at 4:2:0. The client's <code>-hdr10 auto</code> turns HDR10 on where both ends
+		and the host desktop have HDR, which today means a macOS client.
+	</p>
+</Docs>

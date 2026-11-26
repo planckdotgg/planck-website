@@ -1,0 +1,168 @@
+---
+import Callout from '../../components/docs/Callout.astro';
+import CodeBlock from '../../components/docs/CodeBlock.astro';
+import Table from '../../components/docs/Table.astro';
+import Docs from '../../layouts/Docs.astro';
+import { DOC_PAGES } from '../../lib/docs';
+import { RELEASES } from '../../lib/site';
+
+const contents = DOC_PAGES.filter((p) => p.slug !== 'index');
+const rowDesc: Record<string, string> = {
+	architecture: 'The five stages from capture to glass, per OS, and what each package does.',
+	protocol: 'QUIC control, sealed UDP media, the 36-byte video header, FEC and rate control.',
+	benchmarks: 'Encoder, slice, pipeline and transport latency, with the rig behind every number.',
+	configuration: 'host.json, client.json, both binaries’ flags, hotkeys and the codec matrix.',
+	privacy: 'The four telemetry signals, every field they carry, and how to turn them off.',
+	troubleshooting: 'Firewalls, reserved ports, macOS permissions, GPU topology and power.',
+};
+const rowSpec: Record<string, string> = {
+	architecture: '5 STAGES · 4 VENDORS',
+	protocol: 'WIRE v1 · 1152 B',
+	benchmarks: '4 CHARTS · 1 RIG',
+	configuration: '2 FILES · 2 BINARIES',
+	privacy: '4 SIGNALS · 11 FIELDS',
+	troubleshooting: 'PORTS · PERMISSIONS',
+};
+
+const build = `CGO_ENABLED=0 go build ./cmd/planck-client ./cmd/planck-host
+CGO_ENABLED=0 go vet ./...
+CGO_ENABLED=0 go test ./cmd/... ./internal/... ./pkg/...`;
+---
+
+<Docs slug="index">
+	<h2 id="contents">Contents</h2>
+	<ol class="index-list">
+		{
+			contents.map((p, i) => (
+				<li>
+					<a class="index-row" href={p.path}>
+						<span class="index-row__n">{String(i + 1).padStart(2, '0')}</span>
+						<span>
+							<span class="index-row__title">{p.label}</span>
+							<span class="index-row__desc">{rowDesc[p.slug]}</span>
+						</span>
+						<span class="index-row__spec">{rowSpec[p.slug]}</span>
+					</a>
+				</li>
+			))
+		}
+	</ol>
+
+	<h2 id="install">Install</h2>
+	<p>
+		Planck ships two binaries: <code>planck-client</code>, the desktop app, and <code>planck-host</code>,
+		a command-line host for headless machines. Any client can also host from its <strong>Hosting</strong>
+		switch. Every file is on the <a href={RELEASES}>GitHub Releases</a> page, next to
+		<code>SHA256SUMS.txt</code>.
+	</p>
+	<Table label="Release files by platform">
+		<table>
+			<thead>
+				<tr><th scope="col">Platform</th><th scope="col">Minimum</th><th scope="col">File</th></tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>macOS</td>
+					<td>14.0, Apple silicon or Intel</td>
+					<td><code>planck-&lt;v&gt;-macos-arm64.dmg</code>, <code>planck-&lt;v&gt;-macos-amd64.dmg</code></td>
+				</tr>
+				<tr>
+					<td>Windows</td>
+					<td>10 build 2004 (<code>10.0.19041</code>) or 11, x64</td>
+					<td><code>planck-&lt;v&gt;-windows-x64-setup.exe</code>, <code>planck-&lt;v&gt;-windows-x64.zip</code></td>
+				</tr>
+				<tr>
+					<td>Linux</td>
+					<td>x86_64 or aarch64</td>
+					<td><code>planck-&lt;v&gt;-linux-&lt;arch&gt;.tar.gz</code> (command-line preview)</td>
+				</tr>
+			</tbody>
+		</table>
+	</Table>
+
+	<h3 id="install-macos">macOS</h3>
+	<p>
+		Open the DMG and drag <code>Planck.app</code> to Applications. The app bundle holds both binaries in
+		<code>Planck.app/Contents/MacOS/</code>. The macOS download is a signed and notarized Developer ID
+		DMG. A Mac that hosts needs Screen Recording and Accessibility permission; see
+		<a href="/docs/troubleshooting#macos-permissions">macOS permissions</a>.
+	</p>
+
+	<h3 id="install-windows">Windows</h3>
+	<p>
+		The installer is per-user and needs no administrator rights. It installs
+		<code>planck-client.exe</code> and <code>planck-host.exe</code> to
+		<code>%LOCALAPPDATA%\Programs\Planck</code> and installs no drivers. The portable ZIP holds the same
+		app folder without the installer. Uninstalling keeps settings, paired devices and keys in
+		<code>%APPDATA%\planck</code>, so a reinstall keeps its pairings.
+	</p>
+	<Callout kind="caveat">
+		Windows builds are unsigned for now, so SmartScreen will prompt before the first run.
+	</Callout>
+
+	<h3 id="install-linux">Linux</h3>
+	<p>
+		The Linux tarball holds <code>bin/planck-client</code>, <code>bin/planck-host</code> and a desktop entry
+		with icons. It is a command-line build: there is no desktop window, no capture and no streaming on
+		Linux yet. <code>planck-client -headless</code> and <code>planck-host</code> build and run.
+	</p>
+
+	<h2 id="build-from-source">Build from source</h2>
+	<p>
+		Planck needs only the Go toolchain (<code>go 1.27.4</code>): no C compiler, no Rust, no Swift or
+		Objective-C shim. Every build runs with <code>CGO_ENABLED=0</code>.
+	</p>
+	<CodeBlock code={build} lang="sh" caption="build, vet and test" what="build from source commands" />
+	<p>
+		Check a build with <code>planck-client -version</code> or <code>planck-host -version</code>. The
+		spike programs (<code>cmd/spike-*</code>, <code>cmd/planck-spike2</code>) and developer tools
+		(<code>cmd/planck-trace</code>, <code>cmd/planck-vdd</code>) are never part of a release.
+	</p>
+
+	<h2 id="pairing">Pair a device</h2>
+	<p>
+		A client must pair with a host once. The host decides in this order, and stops at the first match:
+	</p>
+	<ol>
+		<li>The client's certificate fingerprint is already paired.</li>
+		<li>The client proves the host's current 6-digit PIN. The host stores the fingerprint and, unless a fixed PIN is set, picks a new PIN.</li>
+		<li>Both devices belong to the same Tailscale user (checked with Tailscale's WhoIs), and the client is not on a LAN address while <code>requirePINForLAN</code> is on.</li>
+		<li>Otherwise the host answers that the device is not paired and asks for the PIN.</li>
+	</ol>
+
+	<h3 id="pairing-lan">On the LAN</h3>
+	<p>
+		Hosts answer discovery probes and broadcast beacons on UDP <code>47700</code>, so clients on the same
+		network list them without typing an address. <code>requirePINForLAN</code> is on by default: a LAN
+		client always pairs with the PIN, even when both devices share a Tailscale user.
+	</p>
+
+	<h3 id="pairing-tailscale">Over Tailscale</h3>
+	<p>
+		Clients also probe tailnet addresses. Two devices of one Tailscale user pair with no PIN
+		(<code>allowTailscaleSameUser</code>, on by default). Across a router where beacons do not reach,
+		pass the host's address with <code>-discovery-addrs ip:port</code> or connect to it directly.
+	</p>
+	<Callout kind="note">
+		The PIN proof is an HMAC keyed by the 6-digit PIN and bound to the TLS session. There is no PAKE,
+		so someone who records a full pairing exchange could test PINs offline. Pair on a network you trust.
+	</Callout>
+
+	<h2 id="quick-start">Quick start</h2>
+	<ol>
+		<li>Install Planck on the machine you stream from (the host) and the one you play on (the client).</li>
+		<li>On the host, turn on <strong>Hosting</strong> in the app, or run <code>planck-host</code>. The command-line host prints its <code>pairing PIN</code>.</li>
+		<li>On the client, open Planck. Hosts on your LAN and tailnet appear in the list.</li>
+		<li>Pick the host and enter its PIN the first time. Same-user Tailscale devices skip this step.</li>
+		<li>In the stream, <span class="kbd">Ctrl+Alt+H</span> cycles the HUD and <span class="kbd">Ctrl+Alt+Shift+D</span> disconnects. All hotkeys are in <a href="/docs/configuration#hotkeys">Configuration</a>.</li>
+	</ol>
+	<p>
+		To measure a link without a window, use the headless client:
+	</p>
+	<CodeBlock
+		code="planck-client -headless -connect host:47701 -pin 123456 -duration 10s -json"
+		lang="sh"
+		caption="headless benchmark"
+		what="headless client command"
+	/>
+</Docs>

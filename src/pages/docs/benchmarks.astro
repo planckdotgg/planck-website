@@ -1,0 +1,430 @@
+---
+import Callout from '../../components/docs/Callout.astro';
+import CodeBlock from '../../components/docs/CodeBlock.astro';
+import EncoderLatency from '../../components/docs/charts/EncoderLatency.astro';
+import PipelineStages from '../../components/docs/charts/PipelineStages.astro';
+import SliceSplit from '../../components/docs/charts/SliceSplit.astro';
+import TransportPaths from '../../components/docs/charts/TransportPaths.astro';
+import StatRail from '../../components/docs/StatRail.astro';
+import Table from '../../components/docs/Table.astro';
+import Docs from '../../layouts/Docs.astro';
+
+type P = [number, number, number] | null;
+const encoders: {
+	enc: string;
+	part: string;
+	format: string;
+	mode: string;
+	p: P;
+	best?: boolean;
+}[] = [
+	{
+		enc: 'NVENC',
+		part: 'RTX 4080',
+		format: 'NV12 from BGRA',
+		mode: 'back-to-back',
+		p: [1.41, 1.51, 1.69],
+	},
+	{
+		enc: 'NVENC',
+		part: 'RTX 4080',
+		format: 'NV12 from BGRA',
+		mode: 'paced',
+		p: [2.95, 7.36, 70.6],
+	},
+	{
+		enc: 'NVENC',
+		part: 'RTX 4080',
+		format: 'P010 (10-bit)',
+		mode: 'back-to-back',
+		p: [1.34, 1.46, 1.58],
+		best: true,
+	},
+	{ enc: 'NVENC', part: 'RTX 4080', format: 'P010 (10-bit)', mode: 'paced', p: [2.95, 6.98, 12.1] },
+	{
+		enc: 'NVENC',
+		part: 'RTX 4080',
+		format: '4:4:4 from BGRA',
+		mode: 'paced',
+		p: [4.26, 6.24, 15.5],
+	},
+	{ enc: 'AMF', part: 'RX 6700 XT', format: 'NV12 from BGRA', mode: 'paced', p: [2.78, 3.2, 5.61] },
+	{ enc: 'AMF', part: 'RX 6700 XT', format: 'P010 (10-bit)', mode: 'paced', p: [2.64, 4.86, 11.4] },
+	{ enc: 'oneVPL', part: 'UHD 770', format: 'any', mode: 'not measured', p: null },
+	{
+		enc: 'VideoToolbox',
+		part: 'M5 Pro',
+		format: 'NV12 from BGRA',
+		mode: 'paced',
+		p: [5.05, 5.35, 5.58],
+	},
+	{
+		enc: 'VideoToolbox',
+		part: 'M5 Pro',
+		format: 'P010 from x420',
+		mode: 'paced',
+		p: [5.27, 5.52, 5.71],
+	},
+];
+const f = (v: number) => (v >= 10 ? v.toFixed(1) : v.toFixed(2));
+
+const spike = [
+	{ cfg: '1 slice', mode: 'async event', enc: '1.41 / 5.45 / 7.98', first: '—' },
+	{ cfg: '4 slices', mode: 'async event', enc: '1.45 / 2.01 / 3.95', first: '—' },
+	{ cfg: '4 slices', mode: 'sub-frame poll', enc: '1.44 / 1.64 / 1.91', first: '0.78 / 1.13' },
+	{
+		cfg: '8 slices',
+		mode: 'sub-frame poll, split off',
+		enc: '1.51 / 1.76 / 1.96',
+		first: '0.70 / 1.14',
+	},
+];
+const phase2 = [
+	{ cfg: '1080p120, 1 slice', base: '1.44 / 1.75 / 1.83', next: '1.44 / 1.75 / 1.82' },
+	{ cfg: '1440p120, 1 slice, split', base: '2.20 / 2.56 / 2.65', next: '1.51 / 1.67 / 1.76' },
+	{ cfg: '1080p240, 1 slice, split', base: '1.36 / 1.55 / 1.61', next: '1.04 / 1.11 / 1.16' },
+	{ cfg: '1080p120, 4 slices sub-frame', base: '1.43 / 1.73 / 1.79', next: '1.47 / 1.80 / 1.90' },
+];
+const stages = [
+	{
+		stage: 'Capture → encode',
+		where: 'Host, NVENC · Phase 2, 4 slices sub-frame',
+		p50: '1.47',
+		src: 'docs/perf/phase2-results.md:22–27',
+	},
+	{
+		stage: 'First slice ready',
+		where: 'Host, NVENC · Phase 1, 4 slices sub-frame',
+		p50: '0.80',
+		src: 'docs/perf/phase1-latency-audit.md:34–46',
+	},
+	{
+		stage: 'Seal + RS FEC + send',
+		where: 'Host · loopback session benchmark, synthetic 78 KB frames; mean per frame, not p50',
+		p50: '0.74 (mean)',
+		src: 'docs/perf/phase1-latency-audit.md:121–132',
+	},
+	{
+		stage: 'Network',
+		where: '2.5GbE LAN · spike 3, median across 12 transport configs',
+		p50: '1.28',
+		src: 'docs/spikes/spike3-transport/RESULTS.md:10',
+	},
+	{
+		stage: 'Decode, in session',
+		where: 'Client, M5 Pro · Phase 1, 4 slices sub-frame',
+		p50: '1.11',
+		src: 'docs/perf/phase1-latency-audit.md:38',
+	},
+	{
+		stage: 'Decode, standalone',
+		where: 'Client, M5 Pro · Phase 0 spike 2',
+		p50: '0.87',
+		src: 'docs/spikes/phase0-spike2.md:184–194',
+	},
+	{
+		stage: 'E2E, present → decoded',
+		where: 'Host to client · Phase 2, 4 slices sub-frame',
+		p50: '3.08',
+		src: 'docs/perf/phase2-results.md:22–27',
+	},
+	{
+		stage: 'Submit → on screen',
+		where: 'Client, 120 Hz window',
+		p50: '8 – 10.3',
+		src: 'docs/perf/phase1-latency-audit.md:104–107',
+	},
+];
+const paths = [
+	{ path: 'Wired 2.5GbE', rate: 50, p50: '0.69', p99: '11.7', rtt: '0.18–0.25', bytes: '1173' },
+	{ path: 'Wired 2.5GbE', rate: 100, p50: '0.99', p99: '7.3', rtt: '0.18–0.25', bytes: '1173' },
+	{ path: 'Wired 2.5GbE', rate: 150, p50: '1.30', p99: '5.3', rtt: '0.18–0.25', bytes: '1173' },
+	{ path: 'Tailscale direct', rate: 50, p50: '0.97', p99: '11.1', rtt: '0.33–0.40', bytes: '1233' },
+	{
+		path: 'Tailscale direct',
+		rate: 100,
+		p50: '3.15',
+		p99: '23.4',
+		rtt: '0.33–0.40',
+		bytes: '1233',
+	},
+	{
+		path: 'Tailscale direct',
+		rate: 150,
+		p50: '1.53',
+		p99: '20.8',
+		rtt: '0.33–0.40',
+		bytes: '1233',
+	},
+];
+
+const spike2 = `CGO_ENABLED=0 go build -o planck-spike2 ./cmd/planck-spike2
+# Windows
+planck-spike2 vendors
+planck-spike2 nvenc -matrix -frames 1200              # paced
+planck-spike2 nvenc -matrix -frames 1200 -pace=false  # back-to-back
+planck-spike2 amf -frames 600
+# macOS
+planck-spike2 vt -frames 600
+planck-spike2 sck -soak 60s`;
+const spike3 = `# client (Mac)
+CGO_ENABLED=0 go build -o spike-transport ./cmd/spike-transport
+./spike-transport recv -listen 0.0.0.0:47998 -media-port 47999
+# host (Windows)
+CGO_ENABLED=0 go build -o spike-transport.exe ./cmd/spike-transport
+./spike-transport.exe send -server <client-ip>:47998 -ts-server <tailnet-ip>:47998 -matrix cc,ts,fec -out wired.json`;
+const live = `# stream the synthetic pattern through this machine's encoder and decoder
+PLANCK_LIVE_VIDEO_TEST=1 PLANCK_LIVE_ADAPTER=NVIDIA PLANCK_LIVE_FPS=120 PLANCK_LIVE_SECONDS=4 \\
+  go test -run TestLiveSynthHardware -v ./internal/session
+
+# per-frame stage traces, summarised by cmd/planck-trace
+PLANCK_TRACE_HOST=host.csv planck-host -synth
+PLANCK_TRACE_CLIENT=client.csv planck-client -headless -connect host:47701 -duration 20s`;
+---
+
+<Docs slug="benchmarks">
+	<StatRail
+		stats={[
+			{ value: '1.04', unit: 'ms', label: 'NVENC p50 · 1080p240 split' },
+			{ value: '0.70', unit: 'ms', label: 'First slice p50 · 8 slices' },
+			{ value: '3.08', unit: 'ms', label: 'E2E p50 · present → decoded' },
+			{ value: '0', label: 'Go allocs per datagram · raw AEAD UDP bench' },
+		]}
+	/>
+	<Callout kind="caveat">
+		One rig, one commit: bigboi (Windows 11) streaming to an M5 Pro, measured on the way to
+		<code>v0.1.0</code> (<code>8a3c732</code>). Synthetic content compresses well (frames of 18 to 79 KB,
+		24 to 32 Mbps); realistic 50 to 150 Mbps game streams are not measured. Real capture is capped at
+		60 Hz because bigboi's only display is 60 Hz, so every 120 and 240 fps figure is synthetic or
+		GPU-resident.
+	</Callout>
+
+	<h2 id="rig">Test rig</h2>
+	<Table label="Test hardware">
+		<table>
+			<thead>
+				<tr><th scope="col">Role</th><th scope="col">Hardware</th></tr>
+			</thead>
+			<tbody>
+				<tr><td>Host, bigboi</td><td>Windows 11, Intel i9-13900K. RTX 4080 with no display, in a PCIe x4 slot. RX 6700 XT driving the only monitor (1920×1080 at 60 Hz). Intel UHD 770.</td></tr>
+				<tr><td>Client, M5 Pro</td><td>macOS 27.0, Apple M5 Pro. 5120×1440 display at 120 Hz.</td></tr>
+				<tr><td>Network</td><td>Wired 2.5GbE between the two. The Mac's Wi-Fi 6 and a direct Tailscale path were also measured.</td></tr>
+				<tr><td>Drivers</td><td>NVIDIA 616.92 with NVENC API 13.1, AMF 1.4.37, oneVPL API 2.8.</td></tr>
+			</tbody>
+		</table>
+	</Table>
+	<p>
+		The Mac was busy while it measured (load average 11 to 13 in Phase 1, 6 to 15 in Phase 2), which
+		inflates client p95 and p99.
+	</p>
+
+	<h2 id="encoders">Encoder latency</h2>
+	<EncoderLatency />
+	<Table label="Encoder latency at 1080p120 HEVC, all verified rows">
+		<table>
+			<thead>
+				<tr>
+					<th scope="col">Encoder</th><th scope="col">Part</th><th scope="col">Format</th><th scope="col">Mode</th>
+					<th scope="col" class="num">p50<span class="u">ms</span></th><th scope="col" class="num">p95</th><th scope="col" class="num">p99</th>
+				</tr>
+			</thead>
+			<tbody>
+				{
+					encoders.map((r) => (
+						<tr>
+							<td>{r.enc}</td>
+							<td>{r.part}</td>
+							<td>{r.format}</td>
+							<td>{r.mode}</td>
+							{r.p ? (
+								<>
+									<td class:list={['num', { 'is-best': r.best }]}>{f(r.p[0])}</td>
+									<td class="num">{f(r.p[1])}</td>
+									<td class="num">{f(r.p[2])}</td>
+								</>
+							) : (
+								<>
+									<td class="num is-none">—</td>
+									<td class="num is-none">—</td>
+									<td class="num is-none">—</td>
+								</>
+							)}
+						</tr>
+					))
+				}
+			</tbody>
+		</table>
+	</Table>
+	<Callout kind="caveat">
+		Intel oneVPL encode latency is not measured in the repo. The UHD 770 loads the oneVPL runtime
+		(API 2.8) and opens a session; no encode timing has been written down, so this page shows none.
+	</Callout>
+
+	<h2 id="slices">Slices and split encode</h2>
+	<SliceSplit />
+	<Table label="Block A, sub-frame slicing at 1080p240, Phase 0 spike 2">
+		<table>
+			<thead>
+				<tr>
+					<th scope="col">Config</th><th scope="col">Mode</th>
+					<th scope="col" class="num">Encode p50 / p95 / p99<span class="u">ms</span></th>
+					<th scope="col" class="num">First slice p50 / p99</th>
+				</tr>
+			</thead>
+			<tbody>
+				{
+					spike.map((r) => (
+						<tr>
+							<td>{r.cfg}</td>
+							<td>{r.mode}</td>
+							<td class="num">{r.enc}</td>
+							<td class:list={['num', { 'is-none': r.first === '—' }]}>{r.first}</td>
+						</tr>
+					))
+				}
+			</tbody>
+		</table>
+	</Table>
+	<Table label="Block B, Phase 2 host encode, base and new">
+		<table>
+			<thead>
+				<tr>
+					<th scope="col">Config</th>
+					<th scope="col" class="num">Base p50 / p95 / p99<span class="u">ms</span></th>
+					<th scope="col" class="num">New p50 / p95 / p99</th>
+				</tr>
+			</thead>
+			<tbody>
+				{
+					phase2.map((r) => (
+						<tr>
+							<td>{r.cfg}</td>
+							<td class="num">{r.base}</td>
+							<td class="num">{r.next}</td>
+						</tr>
+					))
+				}
+			</tbody>
+		</table>
+	</Table>
+	<Callout kind="note">
+		Split encode costs bits: frames are about a third larger at p50 and up to 75% larger at p95. The
+		host turns it on by default only at 1440p and above, or at 1080p from 200 fps, on the LAN, without
+		slices (<code>-split auto</code>).
+	</Callout>
+
+	<h2 id="pipeline">Pipeline stages</h2>
+	<PipelineStages />
+	<Table label="Pipeline stage costs">
+		<table>
+			<thead>
+				<tr>
+					<th scope="col">Stage</th><th scope="col">Where</th>
+					<th scope="col" class="num">Latency<span class="u">ms · p50 unless noted</span></th><th scope="col">Source</th>
+				</tr>
+			</thead>
+			<tbody>
+				{
+					stages.map((r) => (
+						<tr>
+							<td>{r.stage}</td>
+							<td>{r.where}</td>
+							<td class="num">{r.p50}</td>
+							<td><code>{r.src}</code></td>
+						</tr>
+					))
+				}
+			</tbody>
+		</table>
+	</Table>
+	<Callout kind="warning">
+		Nothing on this page is a glass-to-glass measurement. The 3.08 ms end-to-end figure runs from the
+		host compositor's present to the client's decoded picture. Getting that picture onto a screen is
+		measured separately, at 8 to 10.3 ms p50 in a composited 120 Hz window, and glass-to-glass with the
+		GUI client presenting a live stream has never been measured.
+	</Callout>
+
+	<h2 id="transport">Transport paths</h2>
+	<TransportPaths />
+	<StatRail
+		stats={[
+			{ value: '1.28', unit: 'ms', label: 'Raw AEAD UDP · median net p50' },
+			{ value: '1.75', unit: 'ms', label: 'quic-go datagrams · median net p50' },
+		]}
+	/>
+	<Table label="Network latency by path and bitrate">
+		<table>
+			<thead>
+				<tr>
+					<th scope="col">Path</th><th scope="col" class="num">Bitrate<span class="u">Mbps</span></th>
+					<th scope="col" class="num">Net p50<span class="u">ms</span></th><th scope="col" class="num">Net p99</th>
+					<th scope="col" class="num">Min RTT</th><th scope="col" class="num">Bytes/packet</th>
+				</tr>
+			</thead>
+			<tbody>
+				{
+					paths.map((r) => (
+						<tr>
+							<td>{r.path}</td>
+							<td class="num">{r.rate}</td>
+							<td class="num">{r.p50}</td>
+							<td class="num">{r.p99}</td>
+							<td class="num">{r.rtt}</td>
+							<td class="num">{r.bytes}</td>
+						</tr>
+					))
+				}
+				<tr>
+					<td>Wi-Fi 6</td>
+					<td class="num is-none">—</td>
+					<td class="num">4.4–8.4</td>
+					<td class="num is-none">—</td>
+					<td class="num is-none">—</td>
+					<td class="num is-none">—</td>
+				</tr>
+			</tbody>
+		</table>
+	</Table>
+	<h3 id="fec-results">Forward error correction</h3>
+	<Table label="FEC results at 240 fps, 100 Mbps, wired LAN">
+		<table>
+			<thead>
+				<tr><th scope="col">Condition</th><th scope="col">Parity</th><th scope="col" class="num">Frames delivered</th></tr>
+			</thead>
+			<tbody>
+				<tr><td>1% loss</td><td>none</td><td class="num">64–70%</td></tr>
+				<tr><td>1% loss</td><td>20%</td><td class="num">100%</td></tr>
+				<tr><td>5% loss, per-slice blocks</td><td>adaptive, chose 39.6%</td><td class="num">99.8–99.9%</td></tr>
+				<tr><td>Clean link</td><td>adaptive, 2.6–10%</td><td class="num is-none">—</td></tr>
+			</tbody>
+		</table>
+	</Table>
+	<Callout kind="caveat">
+		Tailscale DERP relay was never measured: every Tailscale number here is a direct WireGuard path.
+		<code>ratectl</code> carries an 8 Mbps relay cap, but no code path classifies a link as a relay, so
+		it is unreachable; the relay ceiling in use is 20 Mbps.
+	</Callout>
+
+	<h2 id="input-latency">Input latency</h2>
+	<p>
+		Input travels one way, from the client's timestamp to the host's handler. At 1080p120 on the LAN,
+		Phase 2 measured 174 µs p50, 357 µs p95 and 815 µs p99; with real AMF capture at 60 Hz, 227 µs p50
+		and 406 µs p99 (bigboi to M5 Pro, <code>docs/perf/phase2-results.md:33–39</code>).
+	</p>
+
+	<h2 id="reproduce">Reproduce</h2>
+	<p>Encoder numbers come from the Phase 0 spike, built from the repo:</p>
+	<CodeBlock code={spike2} lang="sh" caption="cmd/planck-spike2" what="encoder spike commands" />
+	<p>Transport numbers come from the spike 3 sender and receiver:</p>
+	<CodeBlock code={spike3} lang="sh" caption="cmd/spike-transport" what="transport spike commands" />
+	<p>
+		Live tests are skipped unless their variable is set. They need a GPU, and never capture the
+		screen or inject input:
+	</p>
+	<CodeBlock code={live} lang="sh" caption="live tests and traces" what="live test and trace commands" />
+	<p>
+		On Windows, <code>PLANCK_TIMER_REPORT=1 go test -run TimerJitterReport -v ./pkg/transport</code>
+		reports wait accuracy. The headless client prints a JSON summary of any session with
+		<code>-headless -json</code>; see <a href="/docs/configuration#client-flags">client flags</a>.
+	</p>
+</Docs>

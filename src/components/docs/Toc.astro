@@ -1,0 +1,48 @@
+---
+import type { Heading } from '../../lib/docs';
+
+interface Props {
+	headings: Heading[];
+}
+const { headings } = Astro.props;
+---
+
+<nav class="docs__toc" aria-labelledby="toc-label" data-toc>
+	<p class="toc__label" id="toc-label">On this page</p>
+	<ol class="toc__list">
+		{
+			headings.map((h) => (
+				<li>
+					<a class:list={{ toc__h3: h.depth === 3 }} href={`#${h.id}`}>
+						{h.text}
+					</a>
+				</li>
+			))
+		}
+	</ol>
+	<a class="toc__top" href="#main">↑ Top</a>
+</nav>
+
+<script>
+	// Marks the TOC entry of the section in view. Without it the TOC still works, unmarked.
+	const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-toc] a[href^="#"]')];
+	const map = new Map(links.filter((a) => a.hash.length > 1 && a.hash !== '#main').map((a) => [a.hash.slice(1), a]));
+	const seen = new Set<string>();
+	const io = new IntersectionObserver(
+		(entries) => {
+			for (const e of entries) e.isIntersecting ? seen.add(e.target.id) : seen.delete(e.target.id);
+			let active = '';
+			for (const [id] of map)
+				if (seen.has(id)) {
+					active = id;
+					break;
+				}
+			for (const [id, a] of map) a.toggleAttribute('aria-current', id === active);
+		},
+		{ rootMargin: '-88px 0px -68% 0px' },
+	);
+	for (const id of map.keys()) {
+		const el = document.getElementById(id);
+		if (el) io.observe(el);
+	}
+</script>

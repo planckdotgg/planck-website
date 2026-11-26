@@ -3,7 +3,7 @@ import { DOCS, REPO } from '../lib/site';
 import Wordmark from './Wordmark.astro';
 
 interface Props {
-	active?: 'gaming' | 'work' | 'roadmap' | 'download';
+	active?: 'gaming' | 'work' | 'roadmap' | 'download' | 'docs';
 }
 const { active } = Astro.props;
 const pages = [
@@ -29,7 +29,7 @@ const pages = [
 				</a>
 			))
 		}
-		<a class="nav__link" href={DOCS}>Docs</a>
+		<a class="nav__link" href={DOCS} aria-current={active === 'docs' ? 'page' : undefined}>Docs</a>
 		<a class="nav__link" href={REPO}>GitHub</a>
 		<span class="nav__cta" data-active={active === 'download' ? '' : undefined}>
 			<a

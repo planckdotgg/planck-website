@@ -1,0 +1,34 @@
+---
+import { type DocSlug, neighbours } from '../../lib/docs';
+import Chevron from './Chevron.astro';
+
+interface Props {
+	current: DocSlug;
+}
+const { prev, next } = neighbours(Astro.props.current);
+---
+
+<nav class="pager" aria-label="Previous and next page">
+	{
+		prev && (
+			<a class="pager__cell" href={prev.path} rel="prev">
+				<span class="pager__kicker">
+					<Chevron dir="left" />
+					Previous
+				</span>
+				<span class="pager__title">{prev.label}</span>
+			</a>
+		)
+	}
+	{
+		next && (
+			<a class="pager__cell pager__cell--next" href={next.path} rel="next">
+				<span class="pager__kicker">
+					Next
+					<Chevron dir="right" />
+				</span>
+				<span class="pager__title">{next.label}</span>
+			</a>
+		)
+	}
+</nav>

@@ -1,0 +1,235 @@
+---
+/** Planck's pipeline at 1:1 with the 696px prose column. */
+type Row = { title: string; note: string; titleY: number; noteY?: number };
+type Card = {
+	x: number;
+	y: number;
+	h: number;
+	label: string;
+	labelY: number;
+	dividers: number[];
+	rows: Row[];
+};
+
+const right = (c: Card) => c.x + 254;
+const host: Card[] = [
+	{
+		x: 0,
+		y: 44,
+		h: 96,
+		label: '01 · CAPTURE',
+		labelY: 62,
+		dividers: [70, 104],
+		rows: [
+			{
+				title: 'DXGI Desktop Duplication',
+				note: 'Windows · display adapter',
+				titleY: 86,
+				noteY: 98,
+			},
+			{ title: 'ScreenCaptureKit', note: 'macOS', titleY: 120, noteY: 132 },
+		],
+	},
+	{
+		x: 0,
+		y: 160,
+		h: 130,
+		label: '02 · ENCODE',
+		labelY: 178,
+		dividers: [186],
+		rows: [
+			{ title: 'NVENC', note: 'H.264 · HEVC · AV1', titleY: 202 },
+			{ title: 'AMF', note: 'HEVC', titleY: 227 },
+			{ title: 'oneVPL', note: 'HEVC', titleY: 252 },
+			{ title: 'VideoToolbox', note: 'HEVC', titleY: 277 },
+		],
+	},
+	{
+		x: 0,
+		y: 310,
+		h: 96,
+		label: '03 · SEAL + SHARD',
+		labelY: 328,
+		dividers: [336, 370],
+		rows: [
+			{ title: 'AES-128-GCM', note: '25 B overhead', titleY: 352, noteY: 364 },
+			{ title: 'Reed-Solomon FEC', note: 'adaptive parity', titleY: 386, noteY: 398 },
+		],
+	},
+];
+const client: Card[] = [
+	{
+		x: 428,
+		y: 119,
+		h: 96,
+		label: '04 · DECODE',
+		labelY: 137,
+		dividers: [145, 179],
+		rows: [
+			{ title: 'Media Foundation', note: 'D3D11 · HEVC/AV1', titleY: 161, noteY: 173 },
+			{ title: 'VideoToolbox', note: 'HEVC/AV1', titleY: 195, noteY: 207 },
+		],
+	},
+	{
+		x: 428,
+		y: 235,
+		h: 96,
+		label: '05 · PRESENT',
+		labelY: 253,
+		dividers: [261, 295],
+		rows: [
+			{ title: 'MyGo gpusurface · DComp', note: 'Windows', titleY: 277, noteY: 289 },
+			{ title: 'MyGo gpusurface · CAMetalLayer', note: 'macOS', titleY: 311, noteY: 323 },
+		],
+	},
+];
+/** Zero-copy hand-offs: x of the dashed drop, its top and bottom, and the label side. */
+const zeroCopy = [
+	{ x: 34, a: 140, b: 160, labelX: 46, anchor: 'start' },
+	{ x: 34, a: 290, b: 310, labelX: 46, anchor: 'start' },
+	{ x: 662, a: 215, b: 235, labelX: 650, anchor: 'end' },
+] as const;
+const pills = [
+	{ y: 64, tone: '#C9D9FF', lines: ['QUIC', 'control', 'ALPN planck-v1', 'TLS 1.3'] },
+	{ y: 164, tone: '#FF7A1F', lines: ['AEAD UDP', 'media', 'AES-128-GCM', '1152 B default'] },
+	{ y: 264, tone: '#FFB46B', lines: ['RS FEC', 'adaptive', '128 shards/blk', '≤32 blocks'] },
+];
+const pillOffsets = [20, 32, 46, 58];
+const chips = [
+	{ tone: '#FFD1A3', title: 'Opus audio', sub: '48 kHz · 10 ms' },
+	{ tone: '#FF8912', title: 'Input', sub: 'scan code · 0x13' },
+	{ tone: '#FFB46B', title: 'Gamepad', sub: 'ViGEmBus virtual' },
+	{ tone: '#C9D9FF', title: 'Clipboard', sub: 'own QUIC stream' },
+	{ tone: '#4CD69B', title: 'Tailscale', sub: 'LocalAPI · metadata' },
+];
+const label =
+	"Planck's pipeline: a host captures with DXGI Desktop Duplication on Windows or ScreenCaptureKit on macOS, encodes with NVENC, AMF, oneVPL or VideoToolbox, seals frames with AES-128-GCM and shards them with Reed-Solomon, sends them over raw UDP alongside a QUIC control connection that also carries the clipboard on its own stream, uses Tailscale LocalAPI only for discovery, identity and path metadata, and the client decodes with Media Foundation or VideoToolbox and presents zero-copy through MyGo's gpusurface.";
+---
+
+<figure class="chart">
+	<div class="diagram" style="--min: 696px" role="region" tabindex="0" aria-label="Architecture diagram, scrolls sideways">
+		<svg viewBox="0 0 696 516" width="696" height="516" role="img" aria-label={label}>
+			<g class="svg-mono" font-size="10" letter-spacing="0.6" fill="#8C919B">
+				<text x="0" y="20">HOST · planck-host</text>
+				<text x="348" y="20" text-anchor="middle">TRANSPORT</text>
+				<text x="696" y="20" text-anchor="end">CLIENT · planck-client</text>
+			</g>
+			<path d="M0 28 H696" stroke="#F2EFEA14" fill="none"></path>
+
+			{
+				[...host, ...client].map((c) => (
+					<g class="svg-mono">
+						<rect x={c.x + 0.5} y={c.y + 0.5} width="267" height={c.h - 1} rx="8" fill="#13151B" stroke="#242833"></rect>
+						<text x={c.x + 14} y={c.labelY} font-size="9" letter-spacing="0.6" fill="#6E7480">
+							{c.label}
+						</text>
+						{c.dividers.map((y) => (
+							<path d={`M${c.x + 14} ${y + 0.5} H${right(c)}`} stroke="#F2EFEA0D" fill="none"></path>
+						))}
+						{c.rows.map((r) => (
+							<>
+								<text x={c.x + 14} y={r.titleY} font-size="10.5" font-weight="600" fill="#F2EFEA">
+									{r.title}
+								</text>
+								{r.noteY ? (
+									<text x={c.x + 14} y={r.noteY} font-size="9" fill="#8C919B">
+										{r.note}
+									</text>
+								) : (
+									<text x={right(c)} y={r.titleY} font-size="9" fill="#8C919B" text-anchor="end">
+										{r.note}
+									</text>
+								)}
+							</>
+						))}
+					</g>
+				))
+			}
+
+			{
+				zeroCopy.map((z) => (
+					<g>
+						<path d={`M${z.x} ${z.a} V${z.b}`} stroke="#FF7A1F" stroke-width="1.25" stroke-dasharray="3 3" fill="none"></path>
+						<path d={`M${z.x - 4} ${z.b - 5} L${z.x} ${z.b} L${z.x + 4} ${z.b - 5}`} stroke="#FF7A1F" stroke-width="1.25" fill="none"></path>
+						<text
+							x={z.labelX}
+							y={(z.a + z.b) / 2 + 3}
+							class="svg-mono"
+							font-size="9"
+							fill="#FFB27A"
+							text-anchor={z.anchor}
+						>
+							ZERO COPY · GPU TEXTURE
+						</text>
+					</g>
+				))
+			}
+
+			<rect x="288.5" y="44.5" width="119" height="361" rx="8" fill="#101218" stroke="#242833"></rect>
+			{
+				pills.map((p) => (
+					<g class="svg-mono">
+						<rect x="298.5" y={p.y + 0.5} width="99" height="71" rx="6" fill="#14161A" stroke="#242833"></rect>
+						<rect x="298" y={p.y} width="2" height="72" rx="1" fill={p.tone}></rect>
+						{p.lines.map((line, i) => (
+							<text
+								x="307"
+								y={p.y + (pillOffsets[i] ?? 0)}
+								font-size={i === 0 ? 11 : 9}
+								font-weight={i === 0 ? 600 : 400}
+								fill={i === 0 ? '#F2EFEA' : '#8C919B'}
+							>
+								{line}
+							</text>
+						))}
+					</g>
+				))
+			}
+			<path d="M348 406 V411 M348 427 V448" stroke="#F2EFEA24" stroke-dasharray="3 3" fill="none"></path>
+			<text x="348" y="420" class="svg-mono" font-size="9" fill="#8C919B" text-anchor="middle">EXPORTER-planck-media-v1</text>
+
+			<path d="M268 352 H288" stroke="#FF7A1F99" stroke-width="1.5" fill="none"></path>
+			<path d="M283 348 L288 352 L283 356" stroke="#FF7A1F99" stroke-width="1.5" fill="none"></path>
+			<path d="M408 225 H428" stroke="#FF7A1F99" stroke-width="1.5" fill="none"></path>
+			<path d="M423 221 L428 225 L423 229" stroke="#FF7A1F99" stroke-width="1.5" fill="none"></path>
+
+			<text x="0" y="446" class="svg-mono" font-size="10" letter-spacing="0.6" fill="#8C919B">SIDE CHANNELS · AEAD UDP UNLESS NOTED</text>
+			{
+				chips.map((c, i) => {
+					const x = i * 141;
+					return (
+						<g class="svg-mono">
+							<rect x={x + 0.5} y="456.5" width="131" height="43" rx="6" fill="#14161A" stroke="#242833"></rect>
+							<rect x={x} y="456" width="2" height="44" rx="1" fill={c.tone}></rect>
+							<text x={x + 12} y="474" font-size="10" font-weight="600" fill="#F2EFEA">
+								{c.title}
+							</text>
+							<text x={x + 12} y="488" font-size="8.5" fill="#8C919B">
+								{c.sub}
+							</text>
+						</g>
+					);
+				})
+			}
+		</svg>
+	</div>
+	<figcaption>
+		Every stage is pure Go, built with <code>CGO_ENABLED=0</code>. Windows COM, DXGI and Media Foundation
+		go through <code>syscall</code> vtables; ScreenCaptureKit, VideoToolbox and CoreGraphics go through
+		<code>purego</code>. Surfaces stay GPU-resident from capture to encode and from decode to present:
+		nothing crosses the CPU.
+	</figcaption>
+	<p class="chart__method">
+		<b>Packages</b> <code>pkg/capture/dxgi</code>, <code>pkg/capture/sck</code>,
+		<code>pkg/encode/&#123;nvenc,amf,vpl,vt&#125;</code>, <code>pkg/transport</code>, <code>pkg/fec</code>,
+		<code>pkg/wire</code>, <code>pkg/decode/&#123;d3d11,vt&#125;</code>, <code>pkg/pyrowave</code>, <code>pkg/player</code>,
+		<code>third_party/mygo/gpusurface</code>, <code>pkg/tailscale</code>, <code>pkg/audio</code>,
+		<code>pkg/input</code>, <code>pkg/gamepad</code>, <code>pkg/clipboard</code> · <b>Deps</b>
+		<code>quic-go</code> (control), <code>klauspost/reedsolomon</code> (FEC), <code>thesyncim/gopus</code>
+		(Opus), <code>ebitengine/oto</code> (playback), <code>ebitengine/purego</code>, vendored
+		<code>egoist/mygo</code> · <b>Linux</b> build and headless only: no capture, no encode, no window ·
+		<b>Not shipped</b> multi-GPU offload (D3D11 cross-adapter shared handles fail with
+		<code>E_INVALIDARG</code>; staging costs 2–15 ms per frame) · <b>H.264 encodes on NVENC but has no
+		decoder on either platform</b> · <b>Commit</b> <code>v0.1.0</code> (<code>8a3c732</code>).
+	</p>
+</figure>

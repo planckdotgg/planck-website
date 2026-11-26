@@ -3,6 +3,7 @@ import ChromaLens from '../components/ChromaLens.astro';
 import ClientShot from '../components/ClientShot.astro';
 import HeroFlux from '../components/HeroFlux.astro';
 import Base from '../layouts/Base.astro';
+import { organization, softwareApplication, website } from '../lib/seo';
 import { REPO } from '../lib/site';
 
 const features = [
@@ -20,11 +21,17 @@ const vendors = [
 	{ api: 'Apple VideoToolbox', part: 'M5 Pro', ms: 5.01 },
 ];
 const slowest = Math.max(...vendors.map((v) => v.ms));
+
+const description =
+	'Open-source game streaming in pure Go for Windows and macOS: zero-copy capture, 4:4:4 chroma, 10-bit HDR10, and native Tailscale.';
+const site = Astro.site ?? new URL('https://planck.gg');
 ---
 
 <Base
 	title="Planck · Play like it’s local"
-	description="Open-source game streaming in pure Go for Windows and macOS: zero-copy capture, 4:4:4 chroma, 10-bit HDR10, and native Tailscale."
+	description={description}
+	ogAlt="Planck card: Play like it’s local. Pure Go, 4:4:4, 10-bit HDR10, Tailscale, Apache-2.0."
+	jsonLd={[organization(site), website(site), softwareApplication(site, description)]}
 >
 	<section class="hero" aria-labelledby="hero-title">
 		<HeroFlux />

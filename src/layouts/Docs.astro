@@ -1,0 +1,128 @@
+---
+import Chevron from '../components/docs/Chevron.astro';
+import Pager from '../components/docs/Pager.astro';
+import Rail from '../components/docs/Rail.astro';
+import Toc from '../components/docs/Toc.astro';
+import { codeSpans, type DocSlug, docPage, headings } from '../lib/docs';
+import { breadcrumbs, type Faq, faqPage, techArticle } from '../lib/seo';
+import { BLOB, COMMIT, ISSUES, VERSION } from '../lib/site';
+import '../styles/docs.css';
+import Base from './Base.astro';
+
+interface Props {
+	slug: DocSlug;
+	/** Rendered as FAQPage JSON-LD; the page must show the same questions and answers. */
+	faq?: Faq[];
+}
+const { slug, faq } = Astro.props;
+const page = docPage(slug);
+const site = Astro.site ?? new URL('https://planck.gg');
+
+// The TOC comes from the page's own headings, so it can never list a section that is not there.
+const body = await Astro.slots.render('default');
+const toc = headings(body, page.tocDepth);
+const longToc = page.tocDepth === 3;
+
+const crumbs = [
+	{ label: 'Docs', href: slug === 'index' ? undefined : '/docs' },
+	{ label: page.group },
+	{ label: page.label, current: true },
+];
+const jsonLd = [
+	techArticle(site, {
+		path: page.path,
+		title: page.h1,
+		description: page.description,
+		og: page.og,
+	}),
+	breadcrumbs(site, [
+		{ name: 'Planck', path: '/' },
+		{ name: 'Docs', path: '/docs' },
+		...(slug === 'index' ? [] : [{ name: page.label, path: page.path }]),
+	]),
+	...(faq ? [faqPage(site, page.path, faq)] : []),
+];
+---
+
+<Base
+	title={page.title}
+	description={page.description}
+	active="docs"
+	og={page.og}
+	ogAlt={page.ogAlt}
+	ogType="article"
+	jsonLd={jsonLd}
+>
+	<div class="docs">
+		<details class="docs-bar">
+			<summary>
+				<span>Docs / {page.label}</span>
+				<Chevron dir="down" />
+			</summary>
+			<nav class="docs-bar__panel" aria-label="Docs">
+				<Rail current={slug} />
+			</nav>
+		</details>
+		<div class="docs__grid">
+			<nav class="docs__rail" aria-label="Docs">
+				<Rail current={slug} anchors={toc} />
+			</nav>
+			<article class="docs__article">
+				<header class="doc-head">
+					<nav class="crumbs" aria-label="Breadcrumb">
+						<ol>
+							{
+								crumbs.map((c) => (
+									<li>
+										{c.href ? (
+											<a href={c.href}>{c.label}</a>
+										) : (
+											<span aria-current={c.current ? 'page' : undefined}>{c.label}</span>
+										)}
+									</li>
+								))
+							}
+						</ol>
+					</nav>
+					<h1 class="display">{page.h1}</h1>
+					<p class="doc-head__lead">
+						{codeSpans(page.lead).map((s) => (s.code ? <code>{s.text}</code> : s.text))}
+					</p>
+					<p class="spec-strip">{page.strip.join(' · ')}</p>
+				</header>
+				{
+					toc.length > 0 && (
+						<details class="toc-inline">
+							<summary>
+								<span>On this page</span>
+								<Chevron dir="down" />
+							</summary>
+							<ol>
+								{toc
+									.filter((h) => longToc || h.depth === 2)
+									.map((h) => (
+										<li>
+											<a class:list={{ toc__h3: h.depth === 3 }} href={`#${h.id}`}>
+												{h.text}
+											</a>
+										</li>
+									))}
+							</ol>
+						</details>
+					)
+				}
+				<div class="prose">
+					<Fragment set:html={body} />
+				</div>
+				<Pager current={slug} />
+				<footer class="docs-source">
+					<p class="docs-source__links">
+						Source: <a href={BLOB(page.source)}>{page.source}</a> · <a href={ISSUES}>Report an issue</a>
+					</p>
+					<p class="docs-source__stamp">Verified at v{VERSION} · {COMMIT}</p>
+				</footer>
+			</article>
+			<Toc headings={toc} />
+		</div>
+	</div>
+</Base>

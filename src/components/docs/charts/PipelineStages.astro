@@ -1,0 +1,103 @@
+---
+/** Chart 3: each pipeline stage's own cost (p50, except one loopback mean), drawn from a common zero. Never a stack: the stages
+    overlap in flight, so they do not sum to the end-to-end figure. */
+const x = (ms: number) => 160 + 42.286 * ms;
+const halo = {
+	stroke: '#0E0F12',
+	'stroke-width': 4,
+	'paint-order': 'stroke',
+	'stroke-linejoin': 'round',
+} as const;
+const stages = [
+	{ c: 66, l1: 'Capture → encode', l2: 'Phase 2 · 4-slice SF', ms: 1.47, fill: '#FF8912' },
+	{ c: 102, l1: 'Seal + FEC + send', l2: 'loopback bench · mean', ms: 0.74, fill: '#FFB46B' },
+	{ c: 138, l1: '2.5GbE LAN', l2: 'spike 3 · median', ms: 1.28, fill: '#FFD1A3' },
+	{ c: 174, l1: 'Decode', l2: 'Phase 1 · 4-slice SF', ms: 1.11, fill: '#C9D9FF' },
+];
+const label =
+	'Pipeline stage costs, each from its own benchmark: capture to encode 1.47 ms p50 (Phase 2, 1080p120 HEVC, 4 sub-frame slices), seal, FEC and send 0.74 ms per frame, a mean from the loopback session benchmark with synthetic 78 KB frames (not wired, not HEVC, not p50), network 1.28 ms p50 (spike 3, median across 12 wired 2.5GbE transport configs), decode 1.11 ms p50 (Phase 1, 1080p120 HEVC, 4 sub-frame slices). Measured end to end in the Phase 2 run, present to decoded picture, 3.08 ms. Submit to on screen, measured separately on the client, 8 to 10.3 ms.';
+---
+
+<figure class="chart">
+	<div class="diagram" style="--min: 640px" role="region" tabindex="0" aria-label="Pipeline stage chart, scrolls sideways">
+		<svg viewBox="0 0 696 290" width="696" height="290" role="img" aria-label={label} class="svg-mono">
+			<g class="grid" shape-rendering="crispEdges">
+				{
+					Array.from({ length: 11 }, (_, i) => (
+						<path
+							d={`M${x(i)} 42 V196 M${x(i)} 226 V266`}
+							stroke={i === 0 ? '#2C3038' : i % 2 === 0 ? '#F2EFEA1A' : '#F2EFEA10'}
+							stroke-width="1"
+						/>
+					))
+				}
+				<path d="M160 266 H604" stroke="#2C3038" stroke-width="1"></path>
+				<path d="M0 36 H696 M0 200 H696" stroke="#F2EFEA14" stroke-width="1"></path>
+			</g>
+			<text x="0" y="26" font-size="10" letter-spacing="0.6" fill="#8C919B">PER-STAGE COST · EACH FROM ITS OWN BENCHMARK</text>
+			<text x="696" y="26" font-size="10" letter-spacing="0.6" fill="#6E7480" text-anchor="end">ms · p50, loopback row is a mean</text>
+			{
+				[0, 2, 4, 6, 8, 10].map((t) => (
+					<text x={x(t)} y="280" font-size="10" fill="#6E7480" text-anchor="middle">
+						{t}
+					</text>
+				))
+			}
+
+			<path d={`M${x(3.08)} 42 V196`} stroke="#FF7A1F" stroke-width="1.25" stroke-dasharray="4 4"></path>
+			{
+				stages.map((s) => (
+					<g>
+						<text x="0" y={s.c - 3} font-size="11" font-weight="600" fill="#F2EFEA">
+							{s.l1}
+						</text>
+						<text x="0" y={s.c + 11} font-size="9.5" fill="#8C919B">
+							{s.l2}
+						</text>
+						<rect x="160" y={s.c - 8} width={x(s.ms) - 160} height="16" rx="2" fill={s.fill} />
+						<text x="696" y={s.c} font-size="10.5" font-weight="600" fill="#F2EFEA" text-anchor="end" dominant-baseline="central">
+							{s.ms.toFixed(2)}
+						</text>
+					</g>
+				))
+			}
+			<rect x={x(0.8) - 1.5} y="55" width="3" height="22" rx="1" fill="#FF7A1F"></rect>
+			<text x="232" y="69" font-size="9.5" fill="#FFB27A" {...halo}>1st slice 0.80</text>
+			<path d={`M${x(0.87)} 165 V183`} stroke="#F2EFEA3D" stroke-width="1.25"></path>
+			<text x="222" y="177" font-size="9.5" fill="#8C919B" {...halo}>0.87 standalone</text>
+			<text x={x(3.08) + 8} y="88" font-size="10" font-weight="600" fill="#FFB27A" {...halo}>Phase 2 E2E p50 3.08 ms</text>
+			<text x={x(3.08) + 8} y="101" font-size="9" fill="#6E7480" {...halo}>present → decoded picture</text>
+			<text x={x(3.08) + 8} y="113" font-size="9" fill="#6E7480" {...halo}>stages overlap, so they do not sum</text>
+
+			<text x="0" y="216" font-size="10" letter-spacing="0.5" fill="#8C919B">NOT PART OF THE 3.08 ms MEASUREMENT · CLIENT, MEASURED SEPARATELY</text>
+			<text x="0" y="241" font-size="11" font-weight="600" fill="#F2EFEA">Submit → on screen</text>
+			<text x="0" y="255" font-size="9.5" fill="#8C919B">composited 120 Hz</text>
+			<rect x="160" y="236" width={x(10.3) - 160} height="16" rx="2" fill="#4CD69B29"></rect>
+			<rect x={x(8)} y="236" width={x(10.3) - x(8)} height="16" rx="2" fill="#4CD69B"></rect>
+			<rect x={x(10.3) - 1.5} y="233" width="3" height="22" rx="1" fill="#4CD69B"></rect>
+			<text x="696" y="244" font-size="10.5" font-weight="600" fill="#F2EFEA" text-anchor="end" dominant-baseline="central">8 – 10.3</text>
+		</svg>
+	</div>
+	<figcaption>
+		Each bar is that stage's own measured cost, drawn from zero, and the benchmarks differ (the label under each stage names its run; SF is sub-frame slices). Capture → encode and decode are p50 at 1080p120 HEVC; the network bar is the median of network p50s across 12 wired 2.5GbE configurations sending synthetic random bytes (not HEVC). The seal + FEC + send bar is the mean of 0.74 ms per frame from the loopback session benchmark, which sends synthetic 78 KB frames and involves no wire, HEVC encode or p50. The stages overlap in flight (sub-frame slices
+		are sealed and sent while the frame is still encoding), so the measured end-to-end p50 of 3.08 ms is
+		less than the sum of the bars. The colours run down Planck's blackbody ramp: the frame leaves the encoder at
+		2000 K and arrives cool at the display.
+	</figcaption>
+	<p class="chart__method">
+		<b>Encode / E2E</b> Phase 2 host encode, synthetic LAN, 1080p120 HEVC, 4 sub-frame slices
+		(<code>docs/perf/phase2-results.md:22–27</code>) · <b>First slice</b> Phase 1 audit, 1080p120 4 slices
+		sub-frame, 796 µs p50 (<code>docs/perf/phase1-latency-audit.md:34–46</code>) · <b>Seal + FEC + send</b>
+		loopback session benchmark, synthetic 78 KB frames, 72 datagrams, 0% loss, mean 0.74 ms/frame, bigboi (<code>pkg/transport/session_test.go:517</code>, <code>phase1-latency-audit.md:121–132</code>)
+		· <b>Network</b> spike 3, median net p50 across 12 wired transport configs, 1100–1360 B shards
+		(<code>docs/spikes/spike3-transport/RESULTS.md:10</code>) · <b>Decode</b> Phase 1 audit, in-session VideoToolbox
+		decode p50 on the M5 Pro, 1080p120 4 slices sub-frame, 1110 µs (<code>phase1-latency-audit.md:38</code>);
+		standalone VideoToolbox HEVC decode 0.87 ms
+		(<code>phase0-spike2.md:184–194</code>) · <b>Present</b> submit-to-on-screen p50 in a composited 120 Hz
+		CAMetalLayer window, 10.296 ms at 120 fps submit (<code>phase1-latency-audit.md:104–107</code>); Phase 2
+		re-states 8–10 ms and did not change it. <b>Glass-to-glass with the GUI client presenting a live
+		stream has never been measured</b> (<code>phase1-latency-audit.md:200</code>,
+		<code>phase2-results.md:41</code>). Mac load average 6–15 during Phase 2, which inflates client p95/p99.
+		macOS direct-to-display (P1b) is not done. <b>Commit</b> <code>v0.1.0</code> (<code>8a3c732</code>).
+	</p>
+</figure>
