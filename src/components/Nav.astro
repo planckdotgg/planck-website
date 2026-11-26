@@ -42,9 +42,10 @@ const pages = [
 </header>
 
 <style>
+	/* No stacking context on .nav: its background sits under the hero's beam canvas (z-index 11)
+	   while the brand and links stay above it, so the beam never paints over nav text. */
 	.nav {
 		position: relative;
-		z-index: 10;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -53,6 +54,11 @@ const pages = [
 		padding-inline: var(--nav-pad);
 		background: linear-gradient(in oklab 180deg, #101218 0%, #0b0c0f 100%);
 		border-bottom: 1px solid #f2efea14;
+	}
+	.nav__brand,
+	.nav__links {
+		position: relative;
+		z-index: 12;
 	}
 	.nav__brand {
 		display: flex;

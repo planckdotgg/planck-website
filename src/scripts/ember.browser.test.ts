@@ -373,12 +373,16 @@ describe.skipIf(!RUN)('Ember Beam in Chrome', () => {
 			const cx = fr.right - rad * 0.2929, cy = fr.top + rad * 0.2929;
 			r.corner = at(cx, cy);
 			r.outCorner = at(cx + 4.24, cy - 4.24);
-			r.side = at(fr.right, fr.top + 60);
-			r.outSide = at(fr.right + 6, fr.top + 60);
-			return r;
+		r.side = at(fr.right, fr.top + 60);
+		r.outSide = at(fr.right + 6, fr.top + 60);
+		r.landing = Math.max(at(beam - 1, fr.top), at(beam, fr.top), at(beam + 1, fr.top));
+		r.landingGlass = at(beam, fr.top + 3);
+		return r;
 		})()`);
 		console.log('t=0.545', JSON.stringify(v));
 		expect(await p.evaluate<number>(draws)).toBe(1);
+		expect(v.landing).toBe(0);
+		expect(v.landingGlass).toBe(0);
 		// A lit bezel shows as a line brighter than the wash 6 px above it.
 		for (const off of [-160, -60, 30, 130, 220]) {
 			expect(v[`on${off}`] as number).toBeLessThanOrEqual((v[`above${off}`] as number) + 4);
@@ -386,6 +390,65 @@ describe.skipIf(!RUN)('Ember Beam in Chrome', () => {
 		expect(v.corner as number).toBeLessThanOrEqual((v.outCorner as number) + 4);
 		expect(v.side as number).toBeLessThanOrEqual((v.outSide as number) + 4);
 		await p.shot('pour-0.545');
+		expect(p.errors).toEqual([]);
+		await p.close();
+	}, 30000);
+
+	test('where the beam crosses the nav, every link keeps 7:1 against what is rendered', async () => {
+		const p = await open({ width: 1440, height: 900, dpr: 1, query: '?beamt=1.8' });
+		await sleep(700);
+		const links = await p.evaluate<
+			{ name: string; x: number; y: number; w: number; h: number; lit: number; y0: number }[]
+		>(`(() => {
+			${AT}
+			const lin = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+			return [...document.querySelectorAll('.nav__link')].map((a) => {
+				const range = document.createRange();
+				range.selectNodeContents(a);
+				const r = range.getBoundingClientRect();
+				const [cr, cg, cb] = getComputedStyle(a).color.match(/\\d+/g).map(Number);
+				return { name: a.textContent.trim(), x: Math.floor(r.left), y: Math.floor(r.top), w: Math.ceil(r.width) + 1,
+					h: Math.ceil(r.height) + 1, lit: at(r.left + r.width / 2, r.top + r.height / 2),
+					y0: 0.2126 * lin(cr) + 0.7152 * lin(cg) + 0.0722 * lin(cb) };
+			});
+		})()`);
+		// Worst luminance in the rendered pixels of a box, decoded in the page from a screenshot.
+		const worst = async (b: { x: number; y: number; w: number; h: number }) => {
+			const { data } = await p.s('Page.captureScreenshot', {
+				format: 'png',
+				clip: { x: b.x, y: b.y, width: b.w, height: b.h, scale: 1 },
+			});
+			return p.evaluate<number>(`(async () => {
+				const img = await createImageBitmap(await (await fetch('data:image/png;base64,${data}')).blob());
+				const c = new OffscreenCanvas(img.width, img.height), x = c.getContext('2d');
+				x.drawImage(img, 0, 0);
+				const px = x.getImageData(0, 0, img.width, img.height).data;
+				const lin = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+				let max = 0;
+				for (let i = 0; i < px.length; i += 4) max = Math.max(max, 0.2126 * lin(px[i]) + 0.7152 * lin(px[i + 1]) + 0.0722 * lin(px[i + 2]));
+				return max;
+			})()`);
+		};
+		const docs = links.find((l) => l.name === 'Docs');
+		// The frozen frame has the stream crossing Docs, so this measures the beam, not a dark header.
+		expect(docs?.lit as number).toBeGreaterThan(0);
+		const rows: Record<string, number>[] = [];
+		for (const l of links) {
+			const glyphs = await worst(l);
+			await p.evaluate(
+				`document.querySelectorAll('.nav__link').forEach((a) => (a.style.transition = 'none', a.style.color = 'transparent'))`,
+			);
+			const ground = await worst(l);
+			await p.evaluate(
+				`document.querySelectorAll('.nav__link').forEach((a) => (a.style.color = ''))`,
+			);
+			rows.push({ glyphs, ground, text: l.y0, ratio: (l.y0 + 0.05) / (ground + 0.05) });
+			// The beam paints under the text: no glyph pixel is brighter than the link's own colour.
+			expect(glyphs).toBeLessThanOrEqual(l.y0 * 1.04 + 0.002);
+			expect((l.y0 + 0.05) / (ground + 0.05)).toBeGreaterThanOrEqual(7);
+		}
+		console.log('nav contrast', JSON.stringify(rows));
+		await p.shot('nav-1.8');
 		expect(p.errors).toEqual([]);
 		await p.close();
 	}, 30000);

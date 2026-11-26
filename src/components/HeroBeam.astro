@@ -15,8 +15,8 @@
 </script>
 
 <style>
-	/* Reaches up behind the header (z-index 10) so the stream enters from the top of the viewport;
-	   the shader dims it there so the nav stays legible. */
+	/* Reaches up over the header's background, under its text (z-index 12), so the stream enters
+	   from the top of the viewport; the shader caps its luminance there so the nav stays legible. */
 	.hero__beam {
 		position: absolute;
 		top: calc(-1 * var(--nav-h));

@@ -190,11 +190,15 @@ void main() {
 	col += mix(EMBER, AMBER, plasma) * sheath * 0.5 * nearing * beamOn * breathe;
 	col += DEEP * mid * 0.16 * beamOn * bloom * breathe;
 
-	// The leading edge of the head burns hottest, with a thin cool fringe ahead of it.
+	// The leading edge of the head burns hottest, with a thin cool fringe ahead of it. Both pull in
+	// as the head nears the bezel so neither runs ahead onto it.
 	float hy = p.y - uFront;
+	float gap = max(T - uFront, 0.0);
 	float headOn = falling * step(src - 10.0, uFront);
-	col += (BONE * 6.0 * exp(-abs(cdx) / 3.0) + AMBER * 1.4 * exp(-wdx / 13.0)) * exp(-sq(hy / 22.0)) * headOn;
-	col += COOL * 0.9 * exp(-abs(cdx) / 6.0) * exp(-sq((hy - 12.0) / 9.0)) * headOn;
+	float lead = hy > 0.0 ? min(22.0, 0.3 * gap + 0.5) : 22.0;
+	col += (BONE * 6.0 * exp(-abs(cdx) / 3.0) + AMBER * 1.4 * exp(-wdx / 13.0)) * exp(-sq(hy / lead)) * headOn;
+	float fringe = min(12.0, 0.35 * gap);
+	col += COOL * 0.9 * exp(-abs(cdx) / 6.0) * exp(-sq((hy - fringe) / min(9.0, 0.2 * gap + 0.5))) * headOn;
 
 	// --- Atmosphere: a soft 350-450 px wash that turns with the stream -------------------
 	float smoke = soft(vec2(dx / 150.0, (p.y - t * 16.0) / 150.0) + 1.2 * w);
@@ -212,7 +216,8 @@ void main() {
 	// Nothing here lights before the head touches the bezel.
 	float landed = step(T - 0.01, uFront) * smoothstep(-1.0, 24.0, uRun.x);
 	vec2 kw = k + vec2(w.x - 0.5, (w.y - 0.5) * 0.5) * 34.0 * smoothstep(6.0, 60.0, length(k));
-	float knee = exp(-length(kw * vec2(0.4, 1.0)) / 13.0);
+	// Taller at the strike point than at its flanks, so the knee rises as a bell, not a flat bar.
+	float knee = exp(-length(kw * vec2(0.4, mix(1.0, 0.5, exp(-sq(kw.x / 42.0))))) / 13.0);
 	// Splashed light rises off the strike point as a turbulent plume.
 	float shelf = mix(step(k.y, 1.0), exp(-max(k.y, 0.0) / 60.0), clear);
 	float plume = exp(-length(vec2(kw.x * 0.42, min(k.y, 0.0))) / 46.0) * shelf
@@ -251,6 +256,14 @@ void main() {
 	vec3 bezel = BONE * line * 1.7 + mix(AMBER, EMBER, 0.45) * lip * 1.0 + EMBER * pourOut + mix(EMBER, AMBER, 0.3) * bleed;
 	col += bezel * edge * energy * breathe;
 	col *= mix(0.4, 1.0, navLit);
+	// Before contact no light reaches the bezel line.
+	col *= max(1.0 - smoothstep(T - 8.0, T - 1.0, p.y), step(T - 0.01, uFront));
+	// Behind the header the light is compressed under a luminance ceiling, so nav text keeps 7:1.
+	if (uNav > 0.5) {
+		float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
+		float squash = lum > 1e-5 ? 0.007 * (1.0 - exp(-lum / 0.007)) / lum : 1.0;
+		col *= mix(squash, 1.0, navLit);
+	}
 
 	// The copy stays clean whatever the layout.
 	vec2 cc = (uCopy.xy + uCopy.zw) * 0.5;
