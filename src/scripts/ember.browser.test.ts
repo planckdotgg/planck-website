@@ -191,7 +191,7 @@ const draws = `window.__beam.draws`;
 // Worst added luminance of the canvas inside the .hero__copy rect, decoded from sRGB.
 const COPY_MAX_Y = `(() => {
 	const f = window.__beam, gl = f.gl, cv = document.querySelector('canvas.hero__beam');
-	const h = cv.closest('.hero').getBoundingClientRect();
+	const h = cv.getBoundingClientRect();
 	const c = document.querySelector('.hero__copy').getBoundingClientRect();
 	const sx = cv.width / h.width, sy = cv.height / h.height;
 	const x0 = Math.floor((c.left - h.left) * sx), x1 = Math.ceil((c.right - h.left) * sx);
@@ -207,11 +207,12 @@ const COPY_MAX_Y = `(() => {
 	return max;
 })()`;
 
-// The uniforms the shader actually holds, against a fresh DOM measure.
+// The uniforms the shader actually holds, against a fresh DOM measure of the canvas, which
+// reaches up behind the header.
 const GEOMETRY = `(() => {
 	const f = window.__beam, gl = f.gl, p = f.prog, cv = document.querySelector('canvas.hero__beam');
 	const u = (n) => gl.getUniform(p, gl.getUniformLocation(p, n));
-	const h = cv.closest('.hero').getBoundingClientRect();
+	const h = cv.getBoundingClientRect();
 	const fr = document.querySelector('[data-shot-frame]').getBoundingClientRect();
 	const frame = u('uFrame');
 	return { top: frame[1], want: fr.top - h.top, left: frame[0], wantL: fr.left - h.left,
@@ -221,10 +222,18 @@ const GEOMETRY = `(() => {
 		overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth };
 })()`;
 
+// Reads the light the canvas adds at a viewport point, in CSS px: the brightest channel.
+const AT = `const at = (x, y) => {
+		const f = window.__beam, gl = f.gl, cv = document.querySelector('canvas.hero__beam');
+		const h = cv.getBoundingClientRect(), s = cv.width / h.width, px = new Uint8Array(4);
+		gl.readPixels(Math.round((x - h.left) * s), cv.height - 1 - Math.round((y - h.top) * s), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+		return Math.max(px[0], px[1], px[2]);
+	};`;
+
 // Light the canvas adds at points measured in from the frame's top-right corner, in CSS px.
 const SPILL = `(() => {
 	const f = window.__beam, gl = f.gl, cv = document.querySelector('canvas.hero__beam');
-	const h = cv.closest('.hero').getBoundingClientRect();
+	const h = cv.getBoundingClientRect();
 	const fr = document.querySelector('[data-shot-frame]').getBoundingClientRect();
 	const s = cv.width / h.width;
 	const at = (x, y) => {
@@ -345,6 +354,71 @@ describe.skipIf(!RUN)('Ember Beam in Chrome', () => {
 			expect(p.errors).toEqual([]);
 			await p.close();
 		}
+	}, 30000);
+
+	test('just before contact the bezel carries no highlight', async () => {
+		const p = await open({ width: 1440, height: 900, dpr: 1, query: '?beamt=0.545' });
+		await sleep(700);
+		const v = await p.evaluate<Record<string, number>>(`(() => {
+			${AT}
+			const hero = document.querySelector('.hero');
+			const fr = document.querySelector('[data-shot-frame]').getBoundingClientRect();
+			const beam = Number.parseFloat(getComputedStyle(hero).getPropertyValue('--beam-x')) + hero.getBoundingClientRect().left;
+			const r = {};
+			for (const off of [-160, -60, 30, 130, 220]) {
+				r['on' + off] = at(beam + off, fr.top);
+				r['above' + off] = at(beam + off, fr.top - 6);
+			}
+			const rad = Number.parseFloat(getComputedStyle(document.querySelector('[data-shot-frame]')).borderTopRightRadius);
+			const cx = fr.right - rad * 0.2929, cy = fr.top + rad * 0.2929;
+			r.corner = at(cx, cy);
+			r.outCorner = at(cx + 4.24, cy - 4.24);
+			r.side = at(fr.right, fr.top + 60);
+			r.outSide = at(fr.right + 6, fr.top + 60);
+			return r;
+		})()`);
+		console.log('t=0.545', JSON.stringify(v));
+		expect(await p.evaluate<number>(draws)).toBe(1);
+		// A lit bezel shows as a line brighter than the wash 6 px above it.
+		for (const off of [-160, -60, 30, 130, 220]) {
+			expect(v[`on${off}`] as number).toBeLessThanOrEqual((v[`above${off}`] as number) + 4);
+		}
+		expect(v.corner as number).toBeLessThanOrEqual((v.outCorner as number) + 4);
+		expect(v.side as number).toBeLessThanOrEqual((v.outSide as number) + 4);
+		await p.shot('pour-0.545');
+		expect(p.errors).toEqual([]);
+		await p.close();
+	}, 30000);
+
+	test('the inner bleed fades without a seam across the top, the corner and the side', async () => {
+		const p = await open({ width: 1440, height: 900, dpr: 1, reduce: true });
+		await sleep(1200);
+		const v = await p.evaluate<Record<string, number[]>>(`(() => {
+			${AT}
+			const fr = document.querySelector('[data-shot-frame]').getBoundingClientRect();
+			const r = Number.parseFloat(getComputedStyle(document.querySelector('[data-shot-frame]')).borderTopRightRadius);
+			const side = [], top = [], diag = [];
+			for (let i = 1; i <= 48; i++) {
+				side.push(at(fr.right - i, fr.top + 110));
+				top.push(at(fr.right - 140, fr.top + i));
+				diag.push(at(fr.right - r * 0.2929 - i * 0.7071, fr.top + r * 0.2929 + i * 0.7071));
+			}
+			return { side, top, diag };
+		})()`);
+		console.log('bleed', JSON.stringify(v));
+		for (const run of [v.side, v.top, v.diag] as number[][]) {
+			expect(run[1] as number).toBeGreaterThan(25);
+			// From 4 px in, past the crisp bezel line, the bleed only falls, and gently.
+			for (let i = 4; i < run.length; i++) {
+				expect((run[i - 1] as number) - (run[i] as number)).toBeLessThanOrEqual(16);
+			}
+			expect(run[run.length - 1]).toBe(0);
+		}
+		// The light reaches 24 px in down the side, as it does under the top edge.
+		expect(v.side?.[23] as number).toBeGreaterThan(2);
+		expect(v.top?.[23] as number).toBeGreaterThan(2);
+		expect(p.errors).toEqual([]);
+		await p.close();
 	}, 30000);
 
 	test('WebGL1 renders the same beam when WebGL2 is missing', async () => {

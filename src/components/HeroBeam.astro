@@ -1,7 +1,7 @@
 ---
 /**
  * Ember Beam: a stream of light pours onto the client window's top bezel and spills down its
- * right side. One WebGL canvas covers the hero above the copy and the window and is screen-blended,
+ * right side. One WebGL canvas covers the header and the hero and is screen-blended,
  * so the spill can bleed into the glass; a static CSS twin shows when WebGL is missing or lost.
  */
 ---
@@ -15,15 +15,24 @@
 </script>
 
 <style>
+	/* Reaches up behind the header (z-index 10) so the stream enters from the top of the viewport;
+	   the shader dims it there so the nav stays legible. */
 	.hero__beam {
 		position: absolute;
-		inset: 0;
-		z-index: 3;
+		top: calc(-1 * var(--nav-h));
+		right: 0;
+		bottom: 0;
+		left: 0;
+		z-index: 11;
 		display: block;
 		width: 100%;
-		height: 100%;
 		pointer-events: none;
 		mix-blend-mode: screen;
+	}
+	@media (max-width: 767px) {
+		.hero__beam {
+			top: -62px;
+		}
 	}
 	/* Gradients only: the twin follows --beam-x and --glass-y without moving a box, so it never
 	   counts as a layout shift. */

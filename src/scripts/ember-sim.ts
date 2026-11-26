@@ -1,7 +1,8 @@
 /**
  * Ember Beam: the timeline and geometry behind the hero shader. Plain math over the measured
  * ClientShot frame, so it runs and tests without a DOM or a GL context. Lengths are CSS px with
- * the origin at the hero's top-left.
+ * the origin at the canvas's top-left, which sits `nav` px above the hero so the stream can enter
+ * from the top of the viewport through the header.
  */
 
 export const PIXEL_CEILING = 3.2e6;
@@ -29,8 +30,10 @@ export interface Layout {
 	radius: number;
 	copy: [number, number, number, number];
 	beamX: number;
-	/** Where the stream becomes visible: the hero top, or just under the copy when it would cross it. */
+	/** Where the stream becomes visible: the canvas top, or just under the copy when it would cross it. */
 	source: number;
+	/** The hero's top: above it the header sits, and the stream dims so the nav stays legible. */
+	nav: number;
 	/** Path length from the landing point along the top edge to the start of the right side. */
 	corner: number;
 	side: number;
@@ -41,15 +44,15 @@ export interface Layout {
  * The beam lands right of the copy and left of the frame's top-right corner, so the light that
  * runs along the top has room to reach the corner and pour down the side.
  */
-export function measure(hero: Box, frame: Box, copy: Box, radius: number): Layout {
+export function measure(origin: Box, frame: Box, copy: Box, radius: number, nav = 0): Layout {
 	const rel = (r: Box): [number, number, number, number] => [
-		r.left - hero.left,
-		r.top - hero.top,
-		r.right - hero.left,
-		r.bottom - hero.top,
+		r.left - origin.left,
+		r.top - origin.top,
+		r.right - origin.left,
+		r.bottom - origin.top,
 	];
-	const w = Math.max(1, hero.right - hero.left);
-	const h = Math.max(1, hero.bottom - hero.top);
+	const w = Math.max(1, origin.right - origin.left);
+	const h = Math.max(1, origin.bottom - origin.top);
 	const f = rel(frame);
 	const c = rel(copy);
 	const r = Math.max(0, Math.min(radius, (f[2] - f[0]) / 2, (f[3] - f[1]) / 2));
@@ -69,6 +72,7 @@ export function measure(hero: Box, frame: Box, copy: Box, radius: number): Layou
 		copy: c,
 		beamX,
 		source,
+		nav,
 		corner: f[2] - r - beamX + (Math.PI / 2) * r,
 		side: Math.max(0, f[3] - f[1] - r),
 		left: Math.max(0, Math.min(beamX - (f[0] + r), narrow ? 220 : 460)),
@@ -84,6 +88,7 @@ export function sameLayout(a: Layout | null, b: Layout): boolean {
 		near(a.radius, b.radius) &&
 		near(a.beamX, b.beamX) &&
 		near(a.source, b.source) &&
+		near(a.nav, b.nav) &&
 		a.frame.every((v, i) => near(v, b.frame[i] as number)) &&
 		a.copy.every((v, i) => near(v, b.copy[i] as number))
 	);

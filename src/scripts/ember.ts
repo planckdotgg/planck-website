@@ -115,6 +115,7 @@ function mount(canvas: HTMLCanvasElement) {
 		gl.uniform1f(loc.uTime, time);
 		gl.uniform4f(loc.uFrame, ...L.frame);
 		gl.uniform1f(loc.uRadius, L.radius);
+		gl.uniform1f(loc.uNav, L.nav);
 		gl.uniform4f(loc.uCopy, ...L.copy);
 		gl.uniform3f(loc.uBeam, L.beamX, lean, L.source);
 		gl.uniform1f(loc.uFront, Math.min(state.front, L.frame[1]));
@@ -154,8 +155,11 @@ function mount(canvas: HTMLCanvasElement) {
 		const h = hero.getBoundingClientRect();
 		const f = frame.getBoundingClientRect();
 		const radius = Number.parseFloat(getComputedStyle(frame).borderTopRightRadius) || 0;
-		const next = measure(h, f, copy.getBoundingClientRect(), radius);
-		const glass = `${next.frame[1].toFixed(1)}px`;
+		// The canvas reaches up behind the header; offsetTop is 0 once it is removed or hidden.
+		const lift = canvas.isConnected ? Math.max(0, -canvas.offsetTop) : 0;
+		const origin = { left: h.left, top: h.top - lift, right: h.right, bottom: h.bottom };
+		const next = measure(origin, f, copy.getBoundingClientRect(), radius, lift);
+		const glass = `${(next.frame[1] - lift).toFixed(1)}px`;
 		if (glass !== glassCss) {
 			glassCss = glass;
 			hero.style.setProperty('--glass-y', glass);
