@@ -10,6 +10,15 @@ const features = [
 	{ name: 'Multi-monitor', spec: 'Independent streams', short: 'Independent' },
 	{ name: 'Virtual Displays', spec: 'Headless host ready', short: 'Headless ready' },
 ];
+
+/** Encode p50 at 1080p120, measured per vendor on the host that carries that silicon. */
+const vendors = [
+	{ api: 'NVIDIA NVENC', part: 'RTX 4080', ms: 1.41 },
+	{ api: 'Intel oneVPL', part: 'UHD 770', ms: 2.31 },
+	{ api: 'AMD AMF', part: 'RX 6700 XT', ms: 3.04 },
+	{ api: 'Apple VideoToolbox', part: 'M5 Pro', ms: 5.01 },
+];
+const slowest = Math.max(...vendors.map((v) => v.ms));
 ---
 
 <Base
@@ -59,104 +68,154 @@ const features = [
 		<p class="band__foot engine__foot">NVIDIA NVENC · AMD AMF · Intel oneVPL · Apple VideoToolbox</p>
 	</section>
 
-	<div class="story">
-		<section class="beat beat--split crisp" aria-labelledby="crisp-title">
-			<div class="wash crisp__glow" aria-hidden="true"></div>
-			<div class="crisp__copy">
-				<div class="beat__head crisp__head">
-					<h2 id="crisp-title" class="display story__title">Crisp text, never paywalled</h2>
-					<p class="beat-lead">Every display and color mode ships free in the open-source core.</p>
+	<div class="saga" data-saga>
+		<div class="saga__stage" data-stage>
+			<p class="scrub mono" aria-hidden="true">
+				<span class="scrub__n" data-scrub-n>01</span>
+				<span class="scrub__bars">
+					<span class="scrub__bar"><i class="scrub__fill"></i></span>
+					<span class="scrub__bar"><i class="scrub__fill"></i></span>
+					<span class="scrub__bar"><i class="scrub__fill"></i></span>
+				</span>
+				<span class="scrub__label" data-scrub-label>Chroma</span>
+			</p>
+
+			<section class="act act--chroma" aria-labelledby="crisp-title">
+				<div class="wash chroma__glow" aria-hidden="true"></div>
+				<div class="chroma__art" data-lens-art><ChromaLens /></div>
+				<div class="chroma__copy">
+					<div class="act__head">
+						<h2 id="crisp-title" class="display story__title">Crisp text, never paywalled</h2>
+						<p class="beat-lead">Every display and color mode ships free in the open-source core.</p>
+					</div>
+					<dl class="specs">
+						{
+							features.map((f, i) => (
+								<div class="specs__row" style={`--i:${i}`}>
+									<dt>{f.name}</dt>
+									<dd class="mono">
+										<span class="specs__long">{f.spec}</span>
+										<span class="specs__short">{f.short}</span>
+									</dd>
+								</div>
+							))
+						}
+					</dl>
 				</div>
-				<dl class="specs">
+			</section>
+
+			<section class="act act--net" aria-labelledby="lan-title">
+				<div class="wash net__glow" aria-hidden="true"></div>
+				<div class="act__head net__head">
+					<h2 id="lan-title" class="display story__title">LAN at home, Tailscale away</h2>
+					<p class="beat-lead">
+						Peers connect directly over your local network or Tailscale without port forwarding.
+					</p>
+				</div>
+				<figure class="net__stage">
+					<svg class="net__wide" viewBox="0 0 1152 286" role="img" aria-labelledby="lan-desc">
+						<path d="M84 216 H1068" fill="none" stroke="#F2EFEA12" stroke-dasharray="2 6"></path>
+						<g class="net__relay">
+							<path d="M84 216 Q576 -26 1068 216" fill="none" stroke="#FF944718" stroke-width="14" stroke-linecap="round"></path>
+							<path d="M84 216 Q576 -26 1068 216" fill="none" stroke="#FFB27A99" stroke-width="1.6" stroke-dasharray="6 7"></path>
+							<text x="576" y="72" class="svg-mono" font-size="12" font-weight="500" letter-spacing="0.48" fill="#FFB27A" text-anchor="middle" dominant-baseline="central">Tailscale Direct</text>
+						</g>
+						<path class="net__lan net__lan--glow" pathLength="1" d="M84 216 Q576 108 1068 216" fill="none" stroke="#4CD69B2E" stroke-width="16" stroke-linecap="round"></path>
+						<path class="net__lan" pathLength="1" d="M84 216 Q576 108 1068 216" fill="none" stroke="#4CD69B" stroke-width="2.5" stroke-linecap="round"></path>
+						<g class="net__pk" data-packet>
+							<circle r="13" fill="#4CD69B1F"></circle>
+							<circle r="6" fill="#4CD69B4D"></circle>
+							<circle r="2.6" fill="#EBFFF6"></circle>
+						</g>
+						<g class="net__host" data-host>
+							<circle cx="84" cy="216" r="40" fill="none" stroke="#FF7A1F24"></circle>
+							<circle cx="84" cy="216" r="24" fill="#FF7A1F12" stroke="#FF7A1F77" stroke-width="1.25"></circle>
+							<circle cx="84" cy="216" r="10" fill="#FF7A1F33" stroke="#FF9447" stroke-width="1.5"></circle>
+							<circle cx="84" cy="216" r="4" fill="#F2EFEA"></circle>
+						</g>
+						<g class="net__client" data-client>
+							<circle cx="1068" cy="216" r="40" fill="none" stroke="#4CD69B24"></circle>
+							<circle cx="1068" cy="216" r="24" fill="#4CD69B12" stroke="#4CD69B77" stroke-width="1.25"></circle>
+							<circle cx="1068" cy="216" r="10" fill="#4CD69B33" stroke="#4CD69B" stroke-width="1.5"></circle>
+							<circle cx="1068" cy="216" r="4" fill="#F2EFEA"></circle>
+						</g>
+						<text class="net__tag" x="576" y="194" font-size="12" font-weight="600" letter-spacing="0.48" fill="#4CD69B" text-anchor="middle" dominant-baseline="central">LAN Direct</text>
+						<text x="66" y="272" class="svg-ui" font-size="15" font-weight="600" fill="#F2EFEA" dominant-baseline="central">Host</text>
+						<text x="1090" y="272" class="svg-ui" font-size="15" font-weight="600" fill="#F2EFEA" text-anchor="end" dominant-baseline="central">Client</text>
+					</svg>
+					<svg class="net__narrow" viewBox="0 0 342 196" role="img" aria-labelledby="lan-desc">
+						<path d="M36 144 H306" fill="none" stroke="#F2EFEA14" stroke-dasharray="2 5"></path>
+						<path d="M36 144 Q171 -10 306 144" fill="none" stroke="#FF94471A" stroke-width="10" stroke-linecap="round"></path>
+						<path d="M36 144 Q171 -10 306 144" fill="none" stroke="#FFB27A99" stroke-width="1.5" stroke-dasharray="5 6"></path>
+						<path d="M36 144 Q171 76 306 144" fill="none" stroke="#4CD69B2E" stroke-width="12" stroke-linecap="round"></path>
+						<path d="M36 144 Q171 76 306 144" fill="none" stroke="#4CD69B" stroke-width="2.2" stroke-linecap="round"></path>
+						<circle cx="171" cy="110" r="2.8" fill="#C9FFE7"></circle>
+						<circle cx="36" cy="144" r="22" fill="none" stroke="#FF7A1F26"></circle>
+						<circle cx="36" cy="144" r="12" fill="#FF7A1F1A" stroke="#FF9447" stroke-width="1.3"></circle>
+						<circle cx="36" cy="144" r="3.5" fill="#F2EFEA"></circle>
+						<circle cx="306" cy="144" r="22" fill="none" stroke="#4CD69B26"></circle>
+						<circle cx="306" cy="144" r="12" fill="#4CD69B1A" stroke="#4CD69B" stroke-width="1.3"></circle>
+						<circle cx="306" cy="144" r="3.5" fill="#F2EFEA"></circle>
+						<text x="171" y="45.5" class="svg-mono" font-size="11.5" font-weight="500" letter-spacing="0.35" fill="#FFB27A" text-anchor="middle" dominant-baseline="central">Tailscale Direct</text>
+						<text x="171" y="129.5" class="svg-mono" font-size="11.5" font-weight="600" letter-spacing="0.35" fill="#4CD69B" text-anchor="middle" dominant-baseline="central">LAN Direct</text>
+						<text x="20" y="180" class="svg-ui" font-size="13" font-weight="600" fill="#F2EFEA" dominant-baseline="central">Host</text>
+						<text x="326" y="180" class="svg-ui" font-size="13" font-weight="600" fill="#F2EFEA" text-anchor="end" dominant-baseline="central">Client</text>
+					</svg>
+					<figcaption id="lan-desc" class="sr-only">
+						Host and client linked directly over the LAN, with Tailscale Direct as the path when
+						away.
+					</figcaption>
+				</figure>
+				<p class="act__foot net__foot spec-line">
+					LocalAPI discovery · WhoIs auth · 1280-byte MTU‑safe
+				</p>
+			</section>
+
+			<section class="act act--silicon" aria-labelledby="silicon-title">
+				<div class="act__head silicon__head">
+					<h2 id="silicon-title" class="display story__title">Every GPU, first class</h2>
+					<p class="silicon__lead">
+						One capture and encode path across NVENC, AMF, oneVPL and VideoToolbox. No vendor is
+						the afterthought.
+					</p>
+				</div>
+				<dl class="vendors">
 					{
-						features.map((f) => (
-							<div class="specs__row">
-								<dt>{f.name}</dt>
-								<dd class="mono">
-									<span class="specs__long">{f.spec}</span>
-									<span class="specs__short">{f.short}</span>
+						vendors.map((v, i) => (
+							<div class="vendor" style={`--i:${i}`}>
+								<dt class="vendor__head">
+									<span class="vendor__api">{v.api}</span>
+									<span class="vendor__part mono">{v.part}</span>
+								</dt>
+								<dd class="vendor__track">
+									<span class="vendor__fill" style={`--w:${((v.ms / slowest) * 100).toFixed(2)}%`} />
+									<span class="vendor__ms mono">
+										<b data-ms={v.ms}>{v.ms.toFixed(2)}</b> ms
+									</span>
 								</dd>
 							</div>
 						))
 					}
 				</dl>
-			</div>
-			<ChromaLens />
-		</section>
-
-		<section class="beat beat--stack lan" aria-labelledby="lan-title">
-			<div class="wash lan__glow" aria-hidden="true"></div>
-			<div class="beat__head lan__head">
-				<h2 id="lan-title" class="display story__title">LAN at home, Tailscale away</h2>
-				<p class="beat-lead">
-					Peers connect directly over your local network or Tailscale without port forwarding.
+				<p class="act__foot silicon__foot">
+					Encode p50, 1080p at 120 Hz · one host per vendor, same pipeline
 				</p>
-			</div>
-			<figure class="lan__stage">
-				<svg class="lan__wide" viewBox="0 0 1152 286" role="img" aria-labelledby="lan-desc">
-					<path d="M84 216 H1068" fill="none" stroke="#F2EFEA12" stroke-dasharray="2 6"></path>
-					<path d="M84 216 Q576 -26 1068 216" fill="none" stroke="#FF944718" stroke-width="14" stroke-linecap="round"></path>
-					<path d="M84 216 Q576 -26 1068 216" fill="none" stroke="#FFB27A99" stroke-width="1.6" stroke-dasharray="6 7"></path>
-					<path d="M84 216 Q576 108 1068 216" fill="none" stroke="#4CD69B2E" stroke-width="16" stroke-linecap="round"></path>
-					<path d="M84 216 Q576 108 1068 216" fill="none" stroke="#4CD69B" stroke-width="2.5" stroke-linecap="round"></path>
-					<path d="M312 174 Q576 146 840 174" fill="none" stroke="#D8FFF0CC" stroke-width="1.2" stroke-linecap="round"></path>
-					<circle cx="316" cy="174" r="3" fill="#4CD69B"></circle>
-					<circle cx="576" cy="162" r="3" fill="#C9FFE7"></circle>
-					<circle cx="836" cy="174" r="3" fill="#4CD69B"></circle>
-					<circle cx="84" cy="216" r="40" fill="none" stroke="#FF7A1F24"></circle>
-					<circle cx="84" cy="216" r="24" fill="#FF7A1F12" stroke="#FF7A1F77" stroke-width="1.25"></circle>
-					<circle cx="84" cy="216" r="10" fill="#FF7A1F33" stroke="#FF9447" stroke-width="1.5"></circle>
-					<circle cx="84" cy="216" r="4" fill="#F2EFEA"></circle>
-					<circle cx="1068" cy="216" r="40" fill="none" stroke="#4CD69B24"></circle>
-					<circle cx="1068" cy="216" r="24" fill="#4CD69B12" stroke="#4CD69B77" stroke-width="1.25"></circle>
-					<circle cx="1068" cy="216" r="10" fill="#4CD69B33" stroke="#4CD69B" stroke-width="1.5"></circle>
-					<circle cx="1068" cy="216" r="4" fill="#F2EFEA"></circle>
-					<text x="576" y="72" class="svg-mono" font-size="12" font-weight="500" letter-spacing="0.48" fill="#FFB27A" text-anchor="middle" dominant-baseline="central">Tailscale Direct</text>
-					<text x="576" y="194" class="svg-mono" font-size="12" font-weight="600" letter-spacing="0.48" fill="#4CD69B" text-anchor="middle" dominant-baseline="central">LAN Direct</text>
-					<text x="66" y="272" class="svg-ui" font-size="15" font-weight="600" fill="#F2EFEA" dominant-baseline="central">Host</text>
-					<text x="1090" y="272" class="svg-ui" font-size="15" font-weight="600" fill="#F2EFEA" text-anchor="end" dominant-baseline="central">Client</text>
-				</svg>
-				<svg class="lan__narrow" viewBox="0 0 342 196" role="img" aria-labelledby="lan-desc">
-					<path d="M36 144 H306" fill="none" stroke="#F2EFEA14" stroke-dasharray="2 5"></path>
-					<path d="M36 144 Q171 -10 306 144" fill="none" stroke="#FF94471A" stroke-width="10" stroke-linecap="round"></path>
-					<path d="M36 144 Q171 -10 306 144" fill="none" stroke="#FFB27A99" stroke-width="1.5" stroke-dasharray="5 6"></path>
-					<path d="M36 144 Q171 76 306 144" fill="none" stroke="#4CD69B2E" stroke-width="12" stroke-linecap="round"></path>
-					<path d="M36 144 Q171 76 306 144" fill="none" stroke="#4CD69B" stroke-width="2.2" stroke-linecap="round"></path>
-					<circle cx="171" cy="110" r="2.8" fill="#C9FFE7"></circle>
-					<circle cx="36" cy="144" r="22" fill="none" stroke="#FF7A1F26"></circle>
-					<circle cx="36" cy="144" r="12" fill="#FF7A1F1A" stroke="#FF9447" stroke-width="1.3"></circle>
-					<circle cx="36" cy="144" r="3.5" fill="#F2EFEA"></circle>
-					<circle cx="306" cy="144" r="22" fill="none" stroke="#4CD69B26"></circle>
-					<circle cx="306" cy="144" r="12" fill="#4CD69B1A" stroke="#4CD69B" stroke-width="1.3"></circle>
-					<circle cx="306" cy="144" r="3.5" fill="#F2EFEA"></circle>
-					<text x="171" y="45.5" class="svg-mono" font-size="11.5" font-weight="500" letter-spacing="0.35" fill="#FFB27A" text-anchor="middle" dominant-baseline="central">Tailscale Direct</text>
-					<text x="171" y="129.5" class="svg-mono" font-size="11.5" font-weight="600" letter-spacing="0.35" fill="#4CD69B" text-anchor="middle" dominant-baseline="central">LAN Direct</text>
-					<text x="20" y="180" class="svg-ui" font-size="13" font-weight="600" fill="#F2EFEA" dominant-baseline="central">Host</text>
-					<text x="326" y="180" class="svg-ui" font-size="13" font-weight="600" fill="#F2EFEA" text-anchor="end" dominant-baseline="central">Client</text>
-				</svg>
-				<figcaption id="lan-desc" class="sr-only">
-					Host and client linked directly over the LAN, with Tailscale Direct as the path when
-					away.
-				</figcaption>
-			</figure>
-			<p class="beat__foot spec-line lan__foot">
-				LocalAPI discovery · WhoIs auth · 1280-byte MTU‑safe
-			</p>
-		</section>
-
-		<section class="beat oss" aria-labelledby="oss-title">
-			<div class="wash wash--fill oss__glow" aria-hidden="true"></div>
-			<div class="oss__inner">
-				<h2 id="oss-title" class="display oss__title">Pure Go, open source</h2>
-				<p class="oss__lead">
-					Two native Apache-2.0 binaries for Windows and macOS, minus Rust and Electron.
-				</p>
-				<div class="oss__cta">
-					<a class="btn btn--ghost oss__btn" href={REPO}>GitHub</a>
-				</div>
-			</div>
-		</section>
+			</section>
+		</div>
 	</div>
+
+	<section class="beat oss" aria-labelledby="oss-title">
+		<div class="wash wash--fill oss__glow" aria-hidden="true"></div>
+		<div class="oss__inner">
+			<h2 id="oss-title" class="display oss__title">Pure Go, open source</h2>
+			<p class="oss__lead">
+				Two native Apache-2.0 binaries for Windows and macOS, minus Rust and Electron.
+			</p>
+			<div class="oss__cta">
+				<a class="btn btn--ghost oss__btn" href={REPO}>GitHub</a>
+			</div>
+		</div>
+	</section>
 </Base>
 
 <style>
@@ -196,9 +255,9 @@ const features = [
 		top: 40px;
 		bottom: -40px;
 		background: radial-gradient(
-			ellipse 72% 78% at 50% 86% in oklab,
-			#ff7a1f33 0%,
-			#e8650c16 38%,
+			ellipse 52% 56% at 50% 62% in oklab,
+			#ff7a1f1f 0%,
+			#e8650c0d 42%,
 			#00000000 74%
 		);
 	}
@@ -207,53 +266,51 @@ const features = [
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 14px;
-		max-width: 780px;
+		gap: 22px;
 		text-align: center;
 	}
 	.hero__lead {
-		max-width: 620px;
-		font-size: 18px;
-		line-height: 26px;
-		color: #c2c5ce;
+		max-width: 520px;
+		font-size: clamp(16px, 1.46vw, 21px);
+		line-height: 1.52;
+		color: var(--text-2);
 	}
 	.hero__ctas {
 		display: flex;
 		gap: 14px;
-		padding-top: 8px;
+		padding-top: 10px;
 	}
 	.hero__proof {
-		padding-top: 14px;
-		color: var(--text-3);
+		padding-top: 6px;
 	}
 	.hero__ctas .btn--primary {
-		box-shadow:
-			#ff7a1f66 0 0 34px,
-			#0000006e 0 10px 22px;
+		height: 50px;
+		padding-inline: 32px;
+		font-size: 15px;
 	}
 
 	.engine {
-		gap: 80px;
-		padding-block: 168px;
+		gap: 40px;
+		padding-block: clamp(72px, 11vh, 128px);
 	}
 	.engine__warm {
-		top: -120px;
-		right: -80px;
-		width: 760px;
-		height: 520px;
+		left: 0;
+		right: 0;
+		top: -60px;
+		height: 320px;
 		background: radial-gradient(
-			ellipse 68% 64% at 72% 34% in oklab,
-			#ff7a1f24 0%,
-			#ffb46b0f 44%,
-			#f2efea00 76%
+			ellipse 58% 70% at 76% 0% in oklab,
+			#ff7a1f1a 0%,
+			#ffb46b0a 44%,
+			#00000000 74%
 		);
 	}
 	.engine__cool {
-		bottom: -100px;
-		left: -60px;
-		width: 680px;
-		height: 420px;
-		background: radial-gradient(ellipse 65% 60% at 30% 70% in oklab, #0e0f120d 0%, #f2efea00 72%);
+		left: 0;
+		right: 0;
+		bottom: -40px;
+		height: 220px;
+		background: radial-gradient(ellipse 48% 70% at 18% 100% in oklab, #c9d9ff22 0%, #00000000 70%);
 	}
 	.engine__head {
 		gap: 18px;
@@ -275,58 +332,207 @@ const features = [
 		padding-top: 28px;
 	}
 
-	.story {
+	/* The saga: one stage, three acts, and the scroll position is the playhead. Every moving
+	   value is a 0-to-1 custom property the script writes on the stage. With no script, on a
+	   phone, or with reduced motion they stay at their settled value and the three acts read as
+	   ordinary stacked sections, so nothing here is load-bearing for the content. */
+	.saga {
+		--c-deal: 1;
+		--c-fade: 0;
+		--c-out: 0;
+		--n-on: 1;
+		--n-in: 1;
+		--n-draw: 1;
+		--n-pk: 1;
+		--n-relay: 1;
+		--n-land: 1;
+		--n-out: 0;
+		--panel: 1;
+		--s-in: 1;
+		--s-foot: 1;
+		--g1: 1;
+		--g2: 1;
+		--g3: 1;
+		--g4: 1;
+		--px: 1068;
+		--py: 216;
+		--iris-x: 84%;
+		--iris-y: 64%;
+		position: relative;
+	}
+	.saga.is-live {
+		height: 440svh;
+	}
+	.saga__stage {
+		position: relative;
 		display: flex;
 		flex-direction: column;
+		background: linear-gradient(in oklab 180deg, #0b0c0f 0%, #0e0f12 20%, #0e0f12 100%);
+	}
+	.is-live .saga__stage {
+		position: sticky;
+		top: 0;
+		height: 100svh;
 		overflow: clip;
-		background: linear-gradient(in oklab 180deg, #0b0c0f 0%, #0e0f12 22%, #0e0f12 100%);
+	}
+
+	.scrub {
+		position: absolute;
+		z-index: 6;
+		left: var(--pad);
+		top: clamp(36px, 7vh, 76px);
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin: 0;
+		font-size: 11px;
+		font-weight: 500;
+		letter-spacing: 0.04em;
+		line-height: 14px;
+		color: var(--text-3);
+		transition: color 0.35s linear;
+	}
+	.saga:not(.is-live) .scrub {
+		display: none;
+	}
+	.scrub__n {
+		color: var(--text);
+		transition: color 0.35s linear;
+	}
+	.scrub__bars {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+	}
+	.scrub__bar {
+		position: relative;
+		width: 22px;
+		height: 2px;
+		border-radius: 2px;
+		background: #2f333c;
+		overflow: clip;
+		transition: background 0.35s linear;
+	}
+	.scrub__fill {
+		position: absolute;
+		inset: 0;
+		transform-origin: left center;
+		transform: scaleX(var(--f, 0));
+		background: var(--accent);
+	}
+	.scrub__bar:nth-child(1) .scrub__fill {
+		--f: var(--p1, 0);
+	}
+	.scrub__bar:nth-child(2) .scrub__fill {
+		--f: var(--p2, 0);
+	}
+	.scrub__bar:nth-child(3) .scrub__fill {
+		--f: var(--p3, 0);
+	}
+	.scrub__label {
+		padding-left: 2px;
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+	}
+	.saga[data-light] .scrub {
+		color: var(--bone-label);
+	}
+	.saga[data-light] .scrub__n {
+		color: var(--bone-ink);
+	}
+	.saga[data-light] .scrub__bar {
+		background: #0e0f1224;
+	}
+
+	.act {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		padding: clamp(80px, 11vh, 128px) var(--pad);
+	}
+	.is-live .act {
+		position: absolute;
+		inset: 0;
+		padding-block: clamp(104px, 14vh, 152px);
+		pointer-events: none;
+	}
+	.is-live[data-act='1'] .act--chroma {
+		pointer-events: auto;
+	}
+	.act__head {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
+		max-width: 660px;
+	}
+	.act__foot {
+		position: relative;
+		padding-top: 22px;
+		border-top: 1px solid #f2efea14;
 	}
 	.story__title {
 		font-size: clamp(32px, 3.6vw, 52px);
 		line-height: 1.077;
 		letter-spacing: -0.036em;
 	}
-	.crisp {
-		gap: 64px;
-		padding: 168px 120px 112px var(--pad);
+
+	/* Act one. The split between 4:2:0 and 4:4:4 is the scroll itself, the spec rows deal in
+	   behind it, then the disc shrinks onto the host node that act two opens on. */
+	.act--chroma {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		gap: clamp(40px, 5vw, 76px);
 	}
-	.crisp__glow {
-		top: 40px;
+	.chroma__glow {
+		top: 0;
 		bottom: 0;
-		left: 420px;
-		right: -80px;
+		left: -80px;
+		right: 420px;
+		opacity: calc(1 - var(--c-fade));
 		background: radial-gradient(
-			ellipse 56% 70% at 78% 50% in oklab,
+			ellipse 56% 66% at 34% 50% in oklab,
 			#ff7a1f2b 0%,
 			#ffb46b10 38%,
 			#00000000 72%
 		);
 	}
-	.crisp__copy {
+	.chroma__art {
+		position: relative;
+		flex-shrink: 0;
+		transform: translate(calc(var(--c-out) * var(--lens-dx, 0px)), calc(var(--c-out) * var(--lens-dy, 0px)))
+			scale(calc(1 - 0.94 * var(--c-out)));
+		opacity: clamp(0, calc((1 - var(--c-out)) * 5), 1);
+	}
+	.chroma__copy {
 		position: relative;
 		display: flex;
 		flex-direction: column;
-		gap: 28px;
+		gap: 26px;
 		flex-shrink: 0;
-		width: 528px;
+		width: 492px;
 		max-width: 100%;
-	}
-	.crisp__head {
-		gap: 16px;
+		opacity: calc(1 - var(--c-fade));
+		transform: translateY(calc(var(--c-fade) * -34px));
 	}
 	.specs {
 		display: flex;
 		flex-direction: column;
-		padding-top: 8px;
+		padding-top: 6px;
 		margin: 0;
 	}
 	.specs__row {
+		--r: clamp(0, calc((var(--c-deal) - var(--i) * 0.15) * 3.4), 1);
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 16px;
 		padding-block: 14px;
 		border-top: 1px solid #f2efea1a;
+		opacity: var(--r);
+		transform: translateY(calc((1 - var(--r)) * 18px));
 	}
 	.specs__row:last-child {
 		border-bottom: 1px solid #f2efea1a;
@@ -347,39 +553,190 @@ const features = [
 		display: none;
 	}
 
-	.lan {
-		gap: 16px;
-		padding: 88px var(--pad) 116px;
+	/* Act two. The LAN arc draws itself, a packet runs it, the client lights up on arrival, and
+	   the Tailscale arc only then appears as the second way home. */
+	.act--net {
+		gap: clamp(32px, 5vh, 56px);
+		opacity: calc(var(--n-on) * (1 - var(--n-out)));
 	}
-	.lan__glow {
-		top: 80px;
-		bottom: 20px;
-		left: 80px;
-		right: 80px;
+	.net__glow {
+		top: 10%;
+		bottom: 6%;
+		left: 60px;
+		right: 60px;
 		background: radial-gradient(
-			ellipse 56% 52% at 50% 60% in oklab,
-			#4cd69b1e 0%,
+			ellipse 56% 52% at 50% 62% in oklab,
+			#4cd69b22 0%,
 			#4cd69b08 42%,
 			#00000000 72%
 		);
 	}
-	.lan__head {
-		gap: 14px;
-		max-width: 640px;
+	.net__head {
+		opacity: var(--n-in);
+		transform: translateY(calc((1 - var(--n-in)) * 26px));
 	}
-	.lan__stage {
+	.net__stage {
 		position: relative;
 		width: 100%;
+		margin: 0;
 	}
-	.lan__wide {
+	.net__foot {
+		opacity: clamp(0, calc(var(--n-land) * 1.4), 1);
+	}
+	.net__wide {
 		width: 100%;
 		height: auto;
 		overflow: visible;
 	}
-	.lan__narrow {
+	.net__narrow {
 		display: none;
 		width: 100%;
 		height: auto;
+	}
+	.net__lan {
+		stroke-dasharray: 1;
+		stroke-dashoffset: calc(1 - var(--n-draw));
+	}
+	.net__relay {
+		opacity: var(--n-relay);
+	}
+	.net__tag {
+		font-family: var(--font-mono);
+		opacity: clamp(0, calc((var(--n-draw) - 0.55) * 3), 1);
+	}
+	.net__host,
+	.net__client {
+		transform-box: fill-box;
+		transform-origin: center;
+	}
+	.net__host {
+		transform: scale(calc(0.72 + 0.28 * var(--n-on)));
+	}
+	.net__client {
+		opacity: clamp(0, calc(var(--n-land) * 1.2), 1);
+		transform: scale(calc(0.72 + 0.28 * var(--n-land)));
+	}
+	.net__pk {
+		transform: translate(calc(var(--px) * 1px), calc(var(--py) * 1px));
+		opacity: calc(clamp(0, var(--n-pk) * 10, 1) * clamp(0, (1 - var(--n-pk)) * 7, 1));
+	}
+
+	/* Act three. A light panel irises out of the client node: the only hard cut in the page,
+	   and the bars draw left to right behind it with their numbers counting up. */
+	.act--silicon {
+		z-index: 4;
+		gap: clamp(28px, 4.5vh, 48px);
+		background: linear-gradient(in oklab 160deg, #f7f5f0 0%, #eeebe3 100%);
+		color: var(--bone-ink);
+	}
+	.is-live .act--silicon {
+		clip-path: circle(calc(var(--panel) * 150%) at var(--iris-x) var(--iris-y));
+	}
+	.silicon__head {
+		max-width: 680px;
+		opacity: var(--s-in);
+		transform: translateY(calc((1 - var(--s-in)) * 24px));
+	}
+	.silicon__lead {
+		max-width: 600px;
+		margin: 0;
+		font-size: clamp(16px, 1.32vw, 19px);
+		line-height: 1.58;
+		color: var(--bone-text);
+	}
+	.vendors {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		margin: 0;
+	}
+	.vendor {
+		display: grid;
+		grid-template-columns: 300px 1fr;
+		align-items: center;
+		gap: 32px;
+		padding-block: 18px;
+		border-top: 1px solid var(--bone-rule);
+	}
+	.vendor:last-child {
+		border-bottom: 1px solid var(--bone-rule);
+	}
+	.vendor__head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 14px;
+	}
+	.vendor__api {
+		font-size: 15px;
+		font-weight: 600;
+		line-height: 20px;
+	}
+	.vendor__part {
+		font-size: 11px;
+		line-height: 16px;
+		color: var(--bone-label);
+	}
+	.vendor__track {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		height: 12px;
+		margin: 0;
+	}
+	.vendor__fill {
+		height: 100%;
+		border-radius: 2px;
+		background: linear-gradient(in oklab 90deg, #ff7a1f 0%, #ff9447 100%);
+		width: calc(var(--w) * var(--g, 1));
+	}
+	.vendor:nth-child(1) .vendor__fill {
+		--g: var(--g1);
+	}
+	.vendor:nth-child(2) .vendor__fill {
+		--g: var(--g2);
+		background: linear-gradient(in oklab 90deg, #e8650c 0%, #ff8c3a 100%);
+	}
+	.vendor:nth-child(3) .vendor__fill {
+		--g: var(--g3);
+		background: linear-gradient(in oklab 90deg, #c4540f 0%, #ea7b2c 100%);
+	}
+	.vendor:nth-child(4) .vendor__fill {
+		--g: var(--g4);
+		background: linear-gradient(in oklab 90deg, #9a4a1b 0%, #c97440 100%);
+	}
+	.vendor__ms {
+		flex-shrink: 0;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--bone-label);
+		font-variant-numeric: tabular-nums;
+		opacity: clamp(0, calc(var(--g, 1) * 6), 1);
+	}
+	.vendor:nth-child(1) .vendor__ms {
+		--g: var(--g1);
+	}
+	.vendor:nth-child(2) .vendor__ms {
+		--g: var(--g2);
+	}
+	.vendor:nth-child(3) .vendor__ms {
+		--g: var(--g3);
+	}
+	.vendor:nth-child(4) .vendor__ms {
+		--g: var(--g4);
+	}
+	.vendor__ms b {
+		font-weight: 600;
+		color: var(--bone-ink);
+	}
+	.silicon__foot {
+		border-top-color: var(--bone-rule);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.02em;
+		line-height: 16px;
+		color: var(--bone-label);
+		opacity: var(--s-foot);
 	}
 
 	.oss {
@@ -429,11 +786,16 @@ const features = [
 	}
 
 	@media (max-width: 1199px) {
-		.crisp {
-			padding-right: var(--pad);
+		.act--chroma {
+			flex-direction: column;
+			align-items: flex-start;
 		}
-		.crisp :global(.lens) {
+		.chroma__art {
 			align-self: center;
+		}
+		.vendor {
+			grid-template-columns: 240px 1fr;
+			gap: 24px;
 		}
 	}
 	@media (max-width: 767px) {
@@ -469,18 +831,23 @@ const features = [
 		.engine__foot {
 			padding-top: 16px;
 		}
-		.crisp {
-			gap: 30px;
-			padding: 72px 24px 64px;
+		.act {
+			padding: 64px 24px 72px;
 		}
-		.crisp__copy {
+		.act--chroma {
+			gap: 30px;
+		}
+		.chroma__copy {
 			display: contents;
 		}
-		.crisp__head {
+		.act--chroma .act__head {
 			order: 0;
 		}
-		.crisp :global(.lens) {
+		.chroma__art {
 			order: 1;
+			align-self: center;
+		}
+		.chroma__art :global(.lens) {
 			width: 342px;
 		}
 		.specs {
@@ -497,15 +864,19 @@ const features = [
 		.specs__short {
 			display: inline;
 		}
-		.lan {
+		.act--net {
 			gap: 18px;
-			padding: 52px 24px 72px;
 		}
-		.lan__wide {
+		.net__wide {
 			display: none;
 		}
-		.lan__narrow {
+		.net__narrow {
 			display: block;
+		}
+		.vendor {
+			grid-template-columns: 1fr;
+			gap: 10px;
+			padding-block: 14px;
 		}
 		.oss {
 			padding: 72px 24px 96px;
@@ -515,3 +886,176 @@ const features = [
 		}
 	}
 </style>
+
+<script>
+	const saga = document.querySelector<HTMLElement>('[data-saga]');
+	const stage = saga?.querySelector<HTMLElement>('[data-stage]');
+
+	if (saga && stage) {
+		const lens = saga.querySelector<HTMLElement>('[data-lens]');
+		const range = lens?.querySelector<HTMLInputElement>('input[type="range"]');
+		const art = saga.querySelector<HTMLElement>('[data-lens-art]');
+		const host = saga.querySelector<SVGGraphicsElement>('[data-host]');
+		const client = saga.querySelector<SVGGraphicsElement>('[data-client]');
+		const scrub = saga.querySelector<HTMLElement>('.scrub');
+		const scrubN = saga.querySelector<HTMLElement>('[data-scrub-n]');
+		const scrubLabel = saga.querySelector<HTMLElement>('[data-scrub-label]');
+		const msEls = [...saga.querySelectorAll<HTMLElement>('[data-ms]')];
+		const slowest = Math.max(...msEls.map((el) => Number(el.dataset.ms)));
+		const acts = ['Chroma', 'Network', 'Silicon'];
+		const wide = matchMedia('(min-width: 1000px) and (min-height: 600px)');
+		const still = matchMedia('(prefers-reduced-motion: reduce)');
+
+		const clamp01 = (n: number) => (n < 0 ? 0 : n > 1 ? 1 : n);
+		const seg = (p: number, a: number, b: number) => clamp01((p - a) / (b - a));
+		const smooth = (t: number) => t * t * (3 - 2 * t);
+
+		let lightAt = 0.7;
+		const written = new Map<string, string>();
+		const set = (name: string, value: number) => {
+			const next = value.toFixed(4);
+			if (written.get(name) === next) return;
+			written.set(name, next);
+			stage.style.setProperty(name, next);
+		};
+
+		/** The disc lands on the host node and the light irises out of the client node, so both
+		    distances are measured off the live layout rather than guessed from the viewBox. */
+		const measure = () => {
+			const box = stage.getBoundingClientRect();
+			if (art && host) {
+				const prev = art.style.transform;
+				art.style.transform = 'none';
+				const a = art.getBoundingClientRect();
+				const h = host.getBoundingClientRect();
+				art.style.transform = prev;
+				stage.style.setProperty('--lens-dx', `${h.left + h.width / 2 - (a.left + a.width / 2)}px`);
+				stage.style.setProperty('--lens-dy', `${h.top + h.height / 2 - (a.top + a.height / 2)}px`);
+			}
+			if (client && scrub) {
+				const c = client.getBoundingClientRect();
+				const x = c.left + c.width / 2 - box.left;
+				const y = c.top + c.height / 2 - box.top;
+				stage.style.setProperty('--iris-x', `${x}px`);
+				stage.style.setProperty('--iris-y', `${y}px`);
+				/* The chapter marker flips to ink the moment the iris reaches it, not before. */
+				const s = scrub.getBoundingClientRect();
+				const far = Math.hypot(
+					Math.max(Math.abs(s.left - box.left - x), Math.abs(s.right - box.left - x)),
+					Math.max(Math.abs(s.top - box.top - y), Math.abs(s.bottom - box.top - y)),
+				);
+				const unit = Math.hypot(box.width, box.height) / Math.SQRT2;
+				lightAt = Math.min(0.99, far / (1.5 * unit));
+			}
+		};
+
+		const splitTo = (value: number) => {
+			if (!range || !lens || lens.dataset.userSplit !== undefined) return;
+			if (Math.abs(Number(range.value) - value) < 0.5) return;
+			range.value = String(Math.round(value));
+			range.dispatchEvent(new Event('input'));
+		};
+
+		const draw = () => {
+			const box = saga.getBoundingClientRect();
+			const span = box.height - window.innerHeight;
+			const p = span > 0 ? clamp01(-box.top / span) : 0;
+
+			set('--p1', seg(p, 0, 0.28));
+			set('--p2', seg(p, 0.28, 0.66));
+			set('--p3', seg(p, 0.66, 0.98));
+
+			/* The spec rows deal in while the stage is still rising into the viewport, so the
+			   first act is already composed by the time it pins. */
+			const rise = clamp01((window.innerHeight - box.top) / (window.innerHeight * 0.8));
+			set('--c-deal', Math.max(rise, seg(p, 0, 0.04)));
+			set('--c-fade', seg(p, 0.18, 0.235));
+			set('--c-out', smooth(seg(p, 0.19, 0.265)));
+			splitTo(86 - 72 * seg(p, 0.02, 0.23));
+
+			const nPk = seg(p, 0.42, 0.57);
+			set('--n-on', seg(p, 0.2, 0.29));
+			set('--n-in', seg(p, 0.21, 0.3));
+			set('--n-draw', smooth(seg(p, 0.3, 0.45)));
+			set('--n-pk', nPk);
+			set('--n-relay', seg(p, 0.47, 0.57));
+			set('--n-land', seg(p, 0.54, 0.6));
+			set('--n-out', smooth(seg(p, 0.6, 0.66)));
+
+			const t = smooth(nPk);
+			const u = 1 - t;
+			set('--px', u * u * 84 + 2 * u * t * 576 + t * t * 1068);
+			set('--py', u * u * 216 + 2 * u * t * 108 + t * t * 216);
+
+			const panel = smooth(seg(p, 0.62, 0.73));
+			set('--panel', panel);
+			set('--s-in', seg(p, 0.63, 0.7));
+			saga.toggleAttribute('data-light', panel > lightAt);
+			set('--s-foot', seg(p, 0.88, 0.93));
+
+			/* One clock for all four bars: every bar advances at the same milliseconds per
+			   scrolled pixel, so the fast silicon lands first and the slow keeps running. */
+			const clock = smooth(seg(p, 0.72, 0.92)) * slowest;
+			for (let i = 0; i < 4; i++) {
+				const el = msEls[i];
+				if (!el) continue;
+				const full = Number(el.dataset.ms);
+				const shown = Math.min(full, clock);
+				set(`--g${i + 1}`, shown / full);
+				const text = shown.toFixed(2);
+				if (el.textContent !== text) el.textContent = text;
+			}
+
+			const act = p < 0.28 ? 0 : p < 0.66 ? 1 : 2;
+			if (saga.dataset.act !== String(act + 1)) {
+				saga.dataset.act = String(act + 1);
+				if (scrubN) scrubN.textContent = `0${act + 1}`;
+				if (scrubLabel) scrubLabel.textContent = acts[act] ?? '';
+			}
+		};
+
+		let frame = 0;
+		const schedule = () => {
+			if (frame || !saga.classList.contains('is-live')) return;
+			frame = requestAnimationFrame(() => {
+				frame = 0;
+				draw();
+			});
+		};
+
+		const settle = () => {
+			written.clear();
+			stage.removeAttribute('style');
+			saga.removeAttribute('data-act');
+			for (const el of msEls) el.textContent = Number(el.dataset.ms).toFixed(2);
+			splitTo(50);
+		};
+
+		const sync = () => {
+			const live = wide.matches && !still.matches;
+			if (live === saga.classList.contains('is-live')) return;
+			saga.classList.toggle('is-live', live);
+			if (live) {
+				measure();
+				draw();
+			} else {
+				settle();
+			}
+		};
+
+		addEventListener('scroll', schedule, { passive: true });
+		addEventListener('resize', () => {
+			if (!saga.classList.contains('is-live')) return;
+			measure();
+			schedule();
+		});
+		wide.addEventListener('change', sync);
+		still.addEventListener('change', sync);
+		for (const kind of ['pointerdown', 'keydown'] as const) {
+			range?.addEventListener(kind, (event) => {
+				if (event.isTrusted && lens) lens.dataset.userSplit = '';
+			});
+		}
+		sync();
+	}
+</script>

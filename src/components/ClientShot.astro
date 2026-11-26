@@ -289,6 +289,7 @@ const frames = Array.from({ length: 38 }, (_, i) => i);
 	}
 	.shot__frame {
 		position: relative;
+		container-type: inline-size;
 		width: 100%;
 		aspect-ratio: 1440 / 900;
 		border: 1px solid #262a33;
@@ -301,33 +302,45 @@ const frames = Array.from({ length: 38 }, (_, i) => i);
 			#00000080 0 8px 24px;
 	}
 
-	/* The client. Every size is a share of the frame, so the whole app scales as one piece. */
+	/* The client. Every size is a share of the frame, so the whole app scales as one piece.
+	   --u is one pixel of the real 1440-wide client, measured against the frame it sits in. */
 	.app {
-		--u: 0.0694cqw; /* 1 px of the real 1440-wide client */
-		container-type: size;
+		--scale: 1;
+		--u: calc(1cqw / 14.4 * var(--scale));
 		position: absolute;
-		inset: 0;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: calc(var(--u) * 1440);
 		display: flex;
 		font-size: calc(var(--u) * 14);
+		/* The page sets a fixed 26px line box; inside a scaled UI it has to be a ratio. */
+		line-height: 1.45;
 		background: #0e0f12;
 	}
+	/* The rail keeps the pane's vertical rhythm: the mark sits on the page title, and the first
+	   button centres on the connect field. */
 	.rail {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: calc(var(--u) * 10);
 		width: calc(var(--u) * 88);
-		padding-block: calc(var(--u) * 22);
+		padding-block: calc(var(--u) * 26) calc(var(--u) * 22);
 		background: #0b0c10;
 		border-right: 1px solid #1b1e25;
 	}
 	.rail__mark {
 		display: flex;
-		margin-bottom: calc(var(--u) * 18);
+		flex: 0 0 auto;
+		align-items: center;
+		justify-content: center;
+		height: calc(var(--u) * 33);
+		margin-bottom: calc(var(--u) * 26);
 	}
 	.rail__mark svg {
-		width: calc(var(--u) * 26);
-		height: auto;
+		width: auto;
+		height: calc(var(--u) * 30);
 	}
 	.rail__btn {
 		position: relative;
@@ -751,8 +764,7 @@ const frames = Array.from({ length: 38 }, (_, i) => i);
 			border-radius: 10px;
 		}
 		.app {
-			right: auto;
-			width: 660px;
+			--scale: 1.85;
 		}
 		.meter {
 			position: static;
