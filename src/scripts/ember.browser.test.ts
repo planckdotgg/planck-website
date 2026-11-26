@@ -1,8 +1,8 @@
 /**
- * Glassline acceptance in a real Chrome against the built site. Opt-in, because it needs a
+ * Ember Beam acceptance in a real Chrome against the built site. Opt-in, because it needs a
  * Chrome binary and a fresh `bun run build`:
  *
- *   bun run build && PLANCK_BROWSER_TEST=1 bun test src/scripts/flux.browser.test.ts
+ *   bun run build && PLANCK_BROWSER_TEST=1 bun test src/scripts/ember.browser.test.ts
  *
  * PLANCK_CHROME overrides the browser path; PLANCK_SHOTS=dir saves screenshots.
  */
@@ -18,9 +18,9 @@ const DIST = join(import.meta.dir, '../../dist');
 const SHOTS = process.env.PLANCK_SHOTS;
 
 // Runs before any page script: counts draws, keeps the drawing buffer readable, stubs WebGL
-// away on ?nogl, and sums layout shifts.
+// away on ?nogl (and only WebGL2 on ?nogl2), and sums layout shifts.
 const PROBE = `(() => {
-	const f = (window.__flux = { draws: 0, cls: 0, gl: null, prog: null });
+	const f = (window.__beam = { draws: 0, cls: 0, gl: null, prog: null, type: '' });
 	for (const P of [window.WebGLRenderingContext, window.WebGL2RenderingContext]) {
 		if (!P) continue;
 		const draw = P.prototype.drawArrays;
@@ -31,7 +31,9 @@ const PROBE = `(() => {
 	const get = HTMLCanvasElement.prototype.getContext;
 	HTMLCanvasElement.prototype.getContext = function (type, attrs) {
 		if (!String(type).startsWith('webgl')) return get.call(this, type, attrs);
-		if (location.search.includes('nogl')) return null;
+		if (location.search.includes('nogl=')) return null;
+		if (location.search.includes('nogl2=') && type === 'webgl2') return null;
+		f.type = type;
 		return get.call(this, type, { ...attrs, preserveDrawingBuffer: true });
 	};
 	new PerformanceObserver((l) => {
@@ -159,7 +161,7 @@ async function open(o: PageOpts) {
 	};
 	for (let i = 0; i < 100; i++) {
 		const state = await evaluate<string>(
-			`(() => { const h = document.querySelector('.hero'); return h && (h.classList.contains('is-flux') || h.classList.contains('hero--flat')) ? 'ready' : document.readyState })()`,
+			`(() => { const h = document.querySelector('.hero'); return h && (h.classList.contains('is-beam') || h.classList.contains('hero--flat')) ? 'ready' : document.readyState })()`,
 		).catch(() => 'loading');
 		if (state === 'ready') break;
 		await sleep(50);
@@ -184,11 +186,11 @@ async function open(o: PageOpts) {
 const frames = (n: number) =>
 	`new Promise((r) => { let i = ${n}; const f = () => (--i <= 0 ? r(0) : requestAnimationFrame(f)); requestAnimationFrame(f); })`;
 
-const draws = `window.__flux.draws`;
+const draws = `window.__beam.draws`;
 
 // Worst added luminance of the canvas inside the .hero__copy rect, decoded from sRGB.
 const COPY_MAX_Y = `(() => {
-	const f = window.__flux, gl = f.gl, cv = document.querySelector('canvas.hero__flux');
+	const f = window.__beam, gl = f.gl, cv = document.querySelector('canvas.hero__beam');
 	const h = cv.closest('.hero').getBoundingClientRect();
 	const c = document.querySelector('.hero__copy').getBoundingClientRect();
 	const sx = cv.width / h.width, sy = cv.height / h.height;
@@ -207,16 +209,39 @@ const COPY_MAX_Y = `(() => {
 
 // The uniforms the shader actually holds, against a fresh DOM measure.
 const GEOMETRY = `(() => {
-	const f = window.__flux, gl = f.gl, p = f.prog, cv = document.querySelector('canvas.hero__flux');
+	const f = window.__beam, gl = f.gl, p = f.prog, cv = document.querySelector('canvas.hero__beam');
 	const u = (n) => gl.getUniform(p, gl.getUniformLocation(p, n));
 	const h = cv.closest('.hero').getBoundingClientRect();
 	const fr = document.querySelector('[data-shot-frame]').getBoundingClientRect();
-	const s = cv.width / h.width;
-	return { glassY: u('uGlassY'), want: (fr.top - h.top) * s, shotL: u('uShot')[0], wantL: (fr.left - h.left) * s,
-		px: u('uPx'), tick: u('uTick'), bufW: cv.width, bufH: cv.height, cssW: h.width, cssH: h.height };
+	const frame = u('uFrame');
+	return { top: frame[1], want: fr.top - h.top, left: frame[0], wantL: fr.left - h.left,
+		right: frame[2], wantR: fr.right - h.left, radius: u('uRadius'), beamX: u('uBeam')[0],
+		wantRadius: Number.parseFloat(getComputedStyle(document.querySelector('[data-shot-frame]')).borderTopRightRadius),
+		px: u('uPx'), bufW: cv.width, bufH: cv.height, cssW: h.width, cssH: h.height,
+		overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth };
 })()`;
 
-describe.skipIf(!RUN)('Glassline in Chrome', () => {
+// Light the canvas adds at points measured in from the frame's top-right corner, in CSS px.
+const SPILL = `(() => {
+	const f = window.__beam, gl = f.gl, cv = document.querySelector('canvas.hero__beam');
+	const h = cv.closest('.hero').getBoundingClientRect();
+	const fr = document.querySelector('[data-shot-frame]').getBoundingClientRect();
+	const s = cv.width / h.width;
+	const at = (x, y) => {
+		const px = new Uint8Array(4);
+		gl.readPixels(Math.round((x - h.left) * s), cv.height - 1 - Math.round((y - h.top) * s), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+		return Math.max(px[0], px[1], px[2]);
+	};
+	const beam = Number.parseFloat(getComputedStyle(cv.closest('.hero')).getPropertyValue('--beam-x')) + h.left;
+	const cx = Math.min(fr.right, innerWidth) - 60;
+	return {
+		bezelTop: at(cx, fr.top), glassTop: at(cx, fr.top + 12), deepTop: at(cx, fr.top + 80),
+		sideOut: at(fr.right + 6, fr.top + 60), glassSide: at(fr.right - 12, fr.top + 60),
+		deepSide: at(fr.right - 80, fr.top + 140), impact: at(beam, fr.top - 2), centre: at(fr.left + fr.width * 0.3, fr.top + fr.height * 0.4),
+	};
+})()`;
+
+describe.skipIf(!RUN)('Ember Beam in Chrome', () => {
 	beforeAll(async () => {
 		server = Bun.serve({
 			port: 0,
@@ -227,7 +252,7 @@ describe.skipIf(!RUN)('Glassline in Chrome', () => {
 				return file.size ? new Response(file) : new Response('not found', { status: 404 });
 			},
 		});
-		profile = mkdtempSync(join(tmpdir(), 'planck-flux-'));
+		profile = mkdtempSync(join(tmpdir(), 'planck-beam-'));
 		chrome = Bun.spawn(
 			[
 				CHROME,
@@ -261,10 +286,10 @@ describe.skipIf(!RUN)('Glassline in Chrome', () => {
 		if (profile) rmSync(profile, { recursive: true, force: true });
 	});
 
-	test('desktop: copy stays under the luminance ceiling, with and without the CTA drive', async () => {
+	test('desktop: copy stays under the luminance ceiling, with and without pointer lean', async () => {
 		const p = await open({ width: 1440, height: 900, dpr: 2 });
 		expect(
-			await p.evaluate<boolean>(`document.querySelector('.hero').classList.contains('is-flux')`),
+			await p.evaluate<boolean>(`document.querySelector('.hero').classList.contains('is-beam')`),
 		).toBe(true);
 		let worst = 0;
 		for (let i = 0; i < 14; i++) {
@@ -280,16 +305,63 @@ describe.skipIf(!RUN)('Glassline in Chrome', () => {
 			await sleep(170);
 			worst = Math.max(worst, await p.evaluate<number>(COPY_MAX_Y));
 		}
-		await p.shot('desktop-1440-cta');
+		await p.shot('desktop-1440-lean');
 		console.log(`worst added Y inside .hero__copy: ${worst.toFixed(5)}`);
 		expect(worst).toBeGreaterThan(0);
 		expect(worst).toBeLessThanOrEqual(0.0075);
-		expect(await p.evaluate<number>('window.__flux.cls')).toBe(0);
+		expect(await p.evaluate<number>('window.__beam.cls')).toBe(0);
 		expect(p.errors).toEqual([]);
 		await p.close();
 	}, 30000);
 
-	test('desktop: the baseline sits on the frame top and re-derives on resize', async () => {
+	test('desktop: the spill lights the bezel, bleeds a band into the glass, and no further', async () => {
+		const p = await open({ width: 1440, height: 900, dpr: 2 });
+		await sleep(2400);
+		const v = await p.evaluate<Record<string, number>>(SPILL);
+		console.log('spill', JSON.stringify(v));
+		expect(v.impact).toBeGreaterThan(200);
+		expect(v.bezelTop).toBeGreaterThan(120);
+		expect(v.sideOut).toBeGreaterThan(60);
+		expect(v.glassTop).toBeGreaterThan(25);
+		expect(v.glassSide).toBeGreaterThan(25);
+		expect(v.deepTop).toBe(0);
+		expect(v.deepSide).toBe(0);
+		expect(v.centre).toBe(0);
+		await p.shot('bezel');
+		expect(p.errors).toEqual([]);
+		await p.close();
+	}, 30000);
+
+	test('?beamt freezes the load sequence on one frame per moment', async () => {
+		for (const t of ['0.3', '0.7', '1.15']) {
+			const p = await open({ width: 1440, height: 900, dpr: 1, query: `?beamt=${t}` });
+			await sleep(700);
+			const v = await p.evaluate<Record<string, number>>(SPILL);
+			expect(await p.evaluate<number>(draws)).toBe(1);
+			if (t === '0.3') expect(v.impact).toBeLessThan(40);
+			else expect(v.impact).toBeGreaterThan(200);
+			if (t === '1.15') expect(v.sideOut).toBeGreaterThan(40);
+			await p.shot(`pour-${t}`);
+			expect(p.errors).toEqual([]);
+			await p.close();
+		}
+	}, 30000);
+
+	test('WebGL1 renders the same beam when WebGL2 is missing', async () => {
+		const p = await open({ width: 1440, height: 900, dpr: 1, query: '?nogl2=1' });
+		await sleep(2400);
+		expect(await p.evaluate<string>('window.__beam.type')).toBe('webgl');
+		expect(
+			await p.evaluate<boolean>(`document.querySelector('.hero').classList.contains('is-beam')`),
+		).toBe(true);
+		const v = await p.evaluate<Record<string, number>>(SPILL);
+		expect(v.impact).toBeGreaterThan(200);
+		expect(v.bezelTop).toBeGreaterThan(120);
+		expect(p.errors).toEqual([]);
+		await p.close();
+	}, 30000);
+
+	test('the frame geometry re-derives on resize, with no horizontal overflow', async () => {
 		const p = await open({ width: 1440, height: 900, dpr: 2 });
 		for (const [w, h, mobile] of [
 			[1440, 900, false],
@@ -306,11 +378,14 @@ describe.skipIf(!RUN)('Glassline in Chrome', () => {
 			await p.evaluate(frames(1));
 			const g = await p.evaluate<Record<string, number>>(GEOMETRY);
 			console.log(`${w}x${h}`, JSON.stringify(g));
-			expect(Math.abs((g.glassY as number) - (g.want as number))).toBeLessThan(1);
-			expect(Math.abs((g.shotL as number) - (g.wantL as number))).toBeLessThan(1);
-			expect(g.px).toBeLessThanOrEqual(2);
+			expect(Math.abs((g.top as number) - (g.want as number))).toBeLessThan(0.5);
+			expect(Math.abs((g.left as number) - (g.wantL as number))).toBeLessThan(0.5);
+			expect(Math.abs((g.right as number) - (g.wantR as number))).toBeLessThan(0.5);
+			expect(g.radius).toBe(g.wantRadius as number);
+			expect(g.beamX).toBeLessThan(Math.min(g.right as number, w) - 14);
+			expect(g.px).toBeLessThan(1.76);
 			expect((g.bufW as number) * (g.bufH as number)).toBeLessThanOrEqual(3.2e6 * 1.01);
-			expect(g.tick).toBe(w <= 767 ? 34 : w >= 1200 ? 58 : 48);
+			expect(g.overflow).toBe(0);
 		}
 		expect(p.errors).toEqual([]);
 		await p.close();
@@ -354,8 +429,11 @@ describe.skipIf(!RUN)('Glassline in Chrome', () => {
 		await p.shot('reduced-motion');
 		expect(await p.evaluate<number>(draws)).toBe(1);
 		expect(
-			await p.evaluate<boolean>(`document.querySelector('.hero').classList.contains('is-flux')`),
+			await p.evaluate<boolean>(`document.querySelector('.hero').classList.contains('is-beam')`),
 		).toBe(true);
+		const v = await p.evaluate<Record<string, number>>(SPILL);
+		expect(v.impact).toBeGreaterThan(200);
+		expect(v.sideOut).toBeGreaterThan(60);
 		expect(p.errors).toEqual([]);
 		await p.close();
 	}, 30000);
@@ -366,15 +444,15 @@ describe.skipIf(!RUN)('Glassline in Chrome', () => {
 			await sleep(800);
 			const r = await p.evaluate<Record<string, unknown>>(`(() => {
 				const h = document.querySelector('.hero');
-				const flat = h.querySelector('.hero__flux-flat');
-				return { flat: h.classList.contains('hero--flat'), flux: h.classList.contains('is-flux'),
-					canvas: !!h.querySelector('canvas.hero__flux'), shown: getComputedStyle(flat).display,
+				const flat = h.querySelector('.hero__beam-flat');
+				return { flat: h.classList.contains('hero--flat'), beam: h.classList.contains('is-beam'),
+					canvas: !!h.querySelector('canvas.hero__beam'), shown: getComputedStyle(flat).display,
 					glass: h.style.getPropertyValue('--glass-y'),
 					frameTop: document.querySelector('[data-shot-frame]').getBoundingClientRect().top - h.getBoundingClientRect().top,
-					cls: window.__flux.cls };
+					cls: window.__beam.cls };
 			})()`);
 			await p.shot(`flat${query.replace(/\W/g, '-')}`);
-			expect(r).toMatchObject({ flat: true, flux: false, canvas: false, shown: 'block', cls: 0 });
+			expect(r).toMatchObject({ flat: true, beam: false, canvas: false, shown: 'block', cls: 0 });
 			expect(Math.abs(Number.parseFloat(String(r.glass)) - (r.frameTop as number))).toBeLessThan(1);
 			expect(p.errors).toEqual([]);
 			await p.close();
@@ -385,11 +463,11 @@ describe.skipIf(!RUN)('Glassline in Chrome', () => {
 		const p = await open({ width: 1440, height: 900, dpr: 1 });
 		await sleep(300);
 		await p.evaluate(
-			`window.__lose = window.__flux.gl.getExtension('WEBGL_lose_context'); window.__lose.loseContext()`,
+			`window.__lose = window.__beam.gl.getExtension('WEBGL_lose_context'); window.__lose.loseContext()`,
 		);
 		await sleep(300);
 		const lost = await p.evaluate<Record<string, unknown>>(
-			`({ flat: document.querySelector('.hero').classList.contains('hero--flat'), shown: getComputedStyle(document.querySelector('.hero__flux')).display, draws: window.__flux.draws })`,
+			`({ flat: document.querySelector('.hero').classList.contains('hero--flat'), shown: getComputedStyle(document.querySelector('.hero__beam')).display, draws: window.__beam.draws })`,
 		);
 		expect(lost).toMatchObject({ flat: true, shown: 'none' });
 		await sleep(400);
@@ -397,9 +475,9 @@ describe.skipIf(!RUN)('Glassline in Chrome', () => {
 		await p.evaluate(`window.__lose.restoreContext()`);
 		await sleep(1200);
 		const back = await p.evaluate<Record<string, unknown>>(
-			`({ flat: document.querySelector('.hero').classList.contains('hero--flat'), flux: document.querySelector('.hero').classList.contains('is-flux'), draws: window.__flux.draws })`,
+			`({ flat: document.querySelector('.hero').classList.contains('hero--flat'), beam: document.querySelector('.hero').classList.contains('is-beam'), draws: window.__beam.draws })`,
 		);
-		expect(back).toMatchObject({ flat: false, flux: true });
+		expect(back).toMatchObject({ flat: false, beam: true });
 		expect(back.draws as number).toBeGreaterThan(lost.draws as number);
 		expect(p.errors).toEqual([]);
 		await p.close();
@@ -410,9 +488,9 @@ describe.skipIf(!RUN)('Glassline in Chrome', () => {
 		await sleep(1500);
 		const g = await p.evaluate<Record<string, number>>(GEOMETRY);
 		console.log('390x844@3', JSON.stringify(g));
-		expect(Math.abs((g.glassY as number) - (g.want as number))).toBeLessThan(1);
-		expect(g.px).toBeLessThanOrEqual(2);
-		expect(g.tick).toBe(34);
+		expect(Math.abs((g.top as number) - (g.want as number))).toBeLessThan(0.5);
+		expect(g.px).toBeLessThan(1.76);
+		expect(g.overflow).toBe(0);
 		let worst = 0;
 		for (let i = 0; i < 10; i++) {
 			await sleep(200);
@@ -421,7 +499,7 @@ describe.skipIf(!RUN)('Glassline in Chrome', () => {
 		console.log(`phone worst added Y inside .hero__copy: ${worst.toFixed(5)}`);
 		expect(worst).toBeLessThanOrEqual(0.0075);
 		await p.shot('phone-390');
-		expect(await p.evaluate<number>('window.__flux.cls')).toBe(0);
+		expect(await p.evaluate<number>('window.__beam.cls')).toBe(0);
 		expect(p.errors).toEqual([]);
 		await p.close();
 	}, 30000);

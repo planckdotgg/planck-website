@@ -2,7 +2,7 @@
  * Keeps the session meter alive: a frame-time bar graph and a glass-to-glass figure that drift
  * the way a real 120 Hz session does, around the measured 8.4 ms p50.
  */
-import type { Telemetry } from './flux-sim';
+import type { Telemetry } from './ember-sim';
 
 const BASE = 8.4;
 

@@ -1,7 +1,7 @@
 ---
 import ChromaLens from '../components/ChromaLens.astro';
 import ClientShot from '../components/ClientShot.astro';
-import HeroFlux from '../components/HeroFlux.astro';
+import HeroBeam from '../components/HeroBeam.astro';
 import Base from '../layouts/Base.astro';
 import { organization, softwareApplication, website } from '../lib/seo';
 import { REPO } from '../lib/site';
@@ -34,7 +34,7 @@ const site = Astro.site ?? new URL('https://planck.gg');
 	jsonLd={[organization(site), website(site), softwareApplication(site, description)]}
 >
 	<section class="hero" aria-labelledby="hero-title">
-		<HeroFlux />
+		<HeroBeam />
 		<div class="hero__head">
 			<div class="wash hero__zenith" aria-hidden="true"></div>
 			<div class="wash hero__aura" aria-hidden="true"></div>
@@ -271,8 +271,8 @@ const site = Astro.site ?? new URL('https://planck.gg');
 			#00000000 74%
 		);
 	}
-	.hero.is-flux .hero__aura {
-		opacity: 0.7;
+	.hero.is-beam .hero__aura {
+		opacity: 0.35;
 	}
 	.hero__copy {
 		position: relative;

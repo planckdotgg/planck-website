@@ -1,20 +1,19 @@
-import { FRAGMENT, UNIFORMS, type Uniform, VERTEX } from './flux-shader';
+import { FRAGMENT, UNIFORMS, type Uniform, VERTEX } from './ember-shader';
 import {
 	bufferScale,
-	CAP,
-	FluxSim,
+	Coupling,
+	frozenTime,
 	type Layout,
 	measure,
-	type Profile,
-	profileFor,
+	POUR,
+	type Pour,
+	pour,
 	Quality,
 	STILL_TIER,
 	sameLayout,
 	spring,
 	type Telemetry,
-	TelemetryClock,
-	TIERS,
-} from './flux-sim';
+} from './ember-sim';
 
 type GL = WebGLRenderingContext | WebGL2RenderingContext;
 
@@ -31,17 +30,17 @@ const ATTRS: WebGLContextAttributes = {
 	stencil: false,
 };
 const COMPLETION_STATUS_KHR = 0x91b1;
+const LEAN = 26;
 
 const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
 
 async function build(gl: GL): Promise<Renderer | null> {
 	const prog = gl.createProgram();
-	const shaders = [
+	if (!prog) return null;
+	for (const [type, src] of [
 		[gl.VERTEX_SHADER, VERTEX],
 		[gl.FRAGMENT_SHADER, FRAGMENT],
-	] as const;
-	if (!prog) return null;
-	for (const [type, src] of shaders) {
+	] as const) {
 		const sh = gl.createShader(type);
 		if (!sh) return null;
 		gl.shaderSource(sh, src);
@@ -71,162 +70,130 @@ async function build(gl: GL): Promise<Renderer | null> {
 function mount(canvas: HTMLCanvasElement) {
 	const hero = canvas.closest<HTMLElement>('.hero');
 	const frame = hero?.querySelector<HTMLElement>('[data-shot-frame]');
-	const meter = hero?.querySelector<HTMLElement>('[data-shot-meter]') ?? null;
 	const copy = hero?.querySelector<HTMLElement>('.hero__copy');
 	if (!hero || !frame || !copy) return;
 
 	const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-	const hover = matchMedia('(hover: hover)');
+	const hover = matchMedia('(hover: hover) and (min-width: 768px)');
 	const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
 	const quality = new Quality(!!nav.connection?.saveData || matchMedia('(update: slow)').matches);
-	const sim = new FluxSim();
-	const clock = new TelemetryClock(() => sim.rnd());
+	const coupling = new Coupling();
+	const frozen = frozenTime(location.search);
 
 	let gl: GL | null = null;
 	let renderer: Renderer | null = null;
 	let layout: Layout | null = null;
-	let profile: Profile = profileFor(innerWidth);
-	let heroPage = { x: 0, y: 0 };
+	let px = 1;
 	let glassCss = '';
+	let beamCss = '';
 	let impactCss = '';
 
 	let raf = 0;
 	let visible = false;
 	let last = 0;
-	let simT = 0;
-	const t0 = performance.now();
-	let lastInput = t0;
-	let skip = false;
+	// The load sequence starts at the first drawn frame, not at script start.
+	let introT = frozen ?? -1;
+	let time = frozen ?? 0;
+	let lean = 0;
+	let leanT = 0;
+	let stillDrawn = false;
 
-	// Pointer state is in CSS px relative to the hero; it is scaled at upload.
-	let lx = Number.NaN;
-	let ptrX = 0;
-	let ptrY = 0;
-	let ptrTX = 0;
-	let ptrTY = 0;
-	let ptrIn = 0;
-	let ptrInT = 0;
-	let onShot = 0;
-	let onShotT = 0;
-	let drive = 0;
-	let driveT = 0;
-	let aimX = 0;
-	let aimUntil = 0;
-
-	const still = () => reduce.matches || quality.tier >= STILL_TIER;
-	const pointerOn = () => profile.pointer && hover.matches;
+	const still = () => frozen !== null || reduce.matches || quality.tier >= STILL_TIER;
 
 	const setFlat = (on: boolean) => {
 		hero.classList.toggle('hero--flat', on);
-		hero.classList.toggle('is-flux', !on && !!renderer);
+		hero.classList.toggle('is-beam', !on && !!renderer);
 	};
 
-	const draw = (lean: number) => {
+	const draw = (state: Pour) => {
 		const r = renderer;
 		const L = layout;
 		if (!r || !L) return;
 		const { gl, loc } = r;
-		const px = L.px;
-		gl.uniform2f(loc.uRes, L.w, L.h);
+		gl.uniform2f(loc.uRes, canvas.width, canvas.height);
 		gl.uniform1f(loc.uPx, px);
-		gl.uniform1f(loc.uTime, (performance.now() - t0) / 1000);
-		gl.uniform4f(loc.uShot, ...L.shot);
-		gl.uniform1f(loc.uShotR, 14 * px);
-		gl.uniform4f(loc.uMeter, ...L.meter);
-		gl.uniform1f(loc.uMeterR, 12 * px);
-		gl.uniform2f(loc.uBand, L.band[0], L.band[1]);
-		gl.uniform1f(loc.uGlassY, L.glassY);
-		gl.uniform1f(loc.uLandX, lean);
-		gl.uniform1f(loc.uTickX, L.landX);
-		gl.uniform1f(loc.uTick, profile.tick);
-		gl.uniform2f(loc.uPtr, ptrX * px, ptrY * px);
-		gl.uniform1f(loc.uOnShot, onShot);
-		gl.uniform1f(loc.uImpact, sim.impact);
-		gl.uniform1f(loc.uSplit, sim.split);
-		gl.uniform1f(loc.uFlare, sim.flare);
-		gl.uniform1f(loc.uWaveR, sim.waveR);
-		gl.uniform1f(loc.uWaveE, sim.waveE);
-		gl.uniform1f(loc.uRunY, sim.runY);
-		gl.uniform1f(loc.uRunE, sim.runE);
-		gl.uniform1f(loc.uGain, profile.gain * (1 + 0.3 * drive));
-		gl.uniform1f(loc.uCap, CAP);
-		gl.uniform1f(loc.uDither, (TIERS[quality.tier] ?? TIERS[0])?.dither ? 1 : 0);
-		gl.uniform4fv(loc.uSeg, sim.segA);
-		gl.uniform4fv(loc.uSegB, sim.segB);
+		gl.uniform1f(loc.uTime, time);
+		gl.uniform4f(loc.uFrame, ...L.frame);
+		gl.uniform1f(loc.uRadius, L.radius);
+		gl.uniform4f(loc.uCopy, ...L.copy);
+		gl.uniform3f(loc.uBeam, L.beamX, lean, L.source);
+		gl.uniform1f(loc.uFront, Math.min(state.front, L.frame[1]));
+		gl.uniform2f(loc.uRun, state.runR, state.runL);
+		gl.uniform3f(loc.uGlow, state.flash, state.bloom, coupling.energy);
+		gl.uniform2f(loc.uRipple, Math.max(0, coupling.ripple), coupling.ripple >= 0 ? 1 : 0);
+		gl.uniform1f(loc.uDither, quality.tier < 2 ? 1 : 0);
 		gl.clear(gl.COLOR_BUFFER_BIT);
 		gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-		const impact = (Math.round(Math.min(1, sim.impact) * 50) / 50).toString();
-		if (impact !== impactCss) {
-			impactCss = impact;
-			frame.style.setProperty('--flux-impact', impact);
+		const landed = state.front >= L.frame[1] - 1;
+		const impact = landed ? Math.min(1, 0.55 + 0.45 * state.flash) * state.bloom : 0;
+		const css = (Math.round(impact * 50) / 50).toString();
+		if (css !== impactCss) {
+			impactCss = css;
+			frame.style.setProperty('--beam-impact', css);
 		}
 	};
 
-	const renderLive = () => {
-		if (!layout) return;
-		sim.step(simT, layout, lx * layout.px);
-		draw(lx * layout.px);
+	const state = (): Pour | null => {
+		if (!layout) return null;
+		if (still() && frozen === null) return pour(POUR.settled, layout);
+		return pour(Math.max(0, introT), layout);
 	};
 
-	let stillDrawn = false;
+	const render = () => {
+		const s = state();
+		if (s) draw(s);
+	};
+
 	const renderStill = () => {
-		if (!layout) return;
 		stillDrawn = true;
-		lx = layout.landX / layout.px;
-		sim.still(layout, layout.landX);
-		draw(layout.landX);
+		render();
 	};
 
 	const sync = (force = false) => {
 		const h = hero.getBoundingClientRect();
 		const f = frame.getBoundingClientRect();
-		const glass = `${(f.top - h.top).toFixed(1)}px`;
+		const radius = Number.parseFloat(getComputedStyle(frame).borderTopRightRadius) || 0;
+		const next = measure(h, f, copy.getBoundingClientRect(), radius);
+		const glass = `${next.frame[1].toFixed(1)}px`;
 		if (glass !== glassCss) {
 			glassCss = glass;
 			hero.style.setProperty('--glass-y', glass);
 		}
-		if (!renderer || !gl) return;
-		const vw = innerWidth;
-		profile = profileFor(vw);
-		sim.configure(profile, quality.tier);
-		const px = bufferScale({
-			dpr: devicePixelRatio,
-			cssW: h.width,
-			cssH: h.height,
-			tier: quality.tier,
-			narrow: profile.narrow,
-			cores: navigator.hardwareConcurrency || 8,
-		});
-		const next = measure(
-			h,
-			f,
-			meter?.getBoundingClientRect() ?? null,
-			copy.getBoundingClientRect(),
-			px,
-		);
-		heroPage = { x: h.left + scrollX, y: h.top + scrollY };
-		const resized = !layout || layout.w !== next.w || layout.h !== next.h;
-		if (resized) {
-			canvas.width = next.w;
-			canvas.height = next.h;
-			gl.viewport(0, 0, next.w, next.h);
+		const beam = `${next.beamX.toFixed(1)}px`;
+		if (beam !== beamCss) {
+			beamCss = beam;
+			hero.style.setProperty('--beam-x', beam);
 		}
+		if (!renderer || !gl) return;
+		const nextPx = bufferScale({
+			dpr: devicePixelRatio,
+			cssW: next.w,
+			cssH: next.h,
+			tier: quality.tier,
+		});
+		const bw = Math.max(1, Math.round(next.w * nextPx));
+		const bh = Math.max(1, Math.round(next.h * nextPx));
+		const resized = canvas.width !== bw || canvas.height !== bh;
+		if (resized) {
+			canvas.width = bw;
+			canvas.height = bh;
+			gl.viewport(0, 0, bw, bh);
+		}
+		px = bw / next.w;
 		const changed = !sameLayout(layout, next);
-		if (layout && !Number.isNaN(lx)) lx += next.landX / next.px - layout.landX / layout.px;
-		else lx = next.landX / next.px;
 		layout = next;
 		// Resizing the buffer clears it, so redraw now rather than show one blank or stale frame.
 		if (!(changed || resized || force)) return;
 		if (still()) renderStill();
-		else if (raf || resized || force) renderLive();
+		else if (raf || resized || force) render();
 	};
 
-	const loop = (t: number) => {
+	const loop = (now: number) => {
 		raf = requestAnimationFrame(loop);
 		// The first callback's timestamp can precede the performance.now() taken in start().
-		const ms = Math.max(0, t - last);
-		last = t;
+		const ms = Math.max(0, now - last);
+		last = now;
 		if (document.hasFocus() && quality.sample(ms)) {
 			sync(true);
 			if (still()) {
@@ -235,27 +202,12 @@ function mount(canvas: HTMLCanvasElement) {
 			}
 		}
 		const dt = Math.min(0.05, ms / 1000);
-		simT += dt * 1000;
-		ptrX = spring(ptrX, ptrTX, dt, 0.16);
-		ptrY = spring(ptrY, ptrTY, dt, 0.16);
-		ptrIn = spring(ptrIn, ptrInT, dt, 0.22);
-		onShot = spring(onShot, onShotT, dt, 0.28);
-		drive = spring(drive, driveT, dt, 0.12);
-		if (layout) {
-			const land = layout.landX / layout.px;
-			const target =
-				simT < aimUntil
-					? Math.min(layout.shot[2], Math.max(layout.shot[0], aimX * layout.px)) / layout.px
-					: land + (ptrX - land) * 0.1 * ptrIn;
-			lx = spring(lx, target, dt, 0.16);
-		}
-		clock.due(simT, (at, tel) => sim.telemetry(at, tel));
-		// The motion is slow enough that 30 fps after 20 s without input is invisible.
-		if (t - lastInput > 20000) {
-			skip = !skip;
-			if (skip) return;
-		}
-		renderLive();
+		if (introT < 0) introT = 0;
+		else introT += dt;
+		time += dt;
+		lean = spring(lean, leanT, dt, 0.5);
+		coupling.step(dt);
+		render();
 	};
 
 	const start = () => {
@@ -287,39 +239,20 @@ function mount(canvas: HTMLCanvasElement) {
 	const onTelemetry = (e: Event) => {
 		if (!raf) return;
 		const d = (e as CustomEvent<Partial<Telemetry>>).detail;
-		clock.external(simT);
-		sim.telemetry(simT, { g2g: d?.g2g ?? 8.4, spike: !!d?.spike, seq: d?.seq });
-	};
-	const onTelemetryState = (e: Event) => {
-		if (!(e as CustomEvent<{ running?: boolean }>).detail?.running) clock.stopped();
+		coupling.telemetry(time, {
+			g2g: d?.g2g ?? 8.4,
+			sample: d?.sample,
+			spike: !!d?.spike,
+		});
 	};
 
-	const local = (e: PointerEvent) => ({ x: e.pageX - heroPage.x, y: e.pageY - heroPage.y });
-	const inShot = (x: number, y: number) => {
-		if (!layout) return false;
-		const [l, t, r, b] = layout.shot;
-		const px = layout.px;
-		return x * px > l && x * px < r && y * px > t && y * px < b;
-	};
 	const onMove = (e: PointerEvent) => {
-		if (e.pointerType === 'touch' || !pointerOn()) return;
-		const p = local(e);
-		ptrTX = p.x;
-		ptrTY = p.y;
-		ptrInT = 1;
-		onShotT = inShot(p.x, p.y) ? 1 : 0;
-		lastInput = performance.now();
+		if (e.pointerType !== 'mouse' || !hover.matches || !layout) return;
+		const x = e.clientX - hero.getBoundingClientRect().left;
+		leanT = Math.max(-1, Math.min(1, (x - layout.beamX) / 420)) * LEAN;
 	};
 	const onLeave = () => {
-		ptrInT = 0;
-		onShotT = 0;
-	};
-	const onDown = (e: PointerEvent) => {
-		lastInput = performance.now();
-		if (!raf || e.pointerType === 'mouse') return;
-		aimX = local(e).x;
-		aimUntil = simT + sim.flightMs + 400;
-		sim.beat(simT);
+		leanT = 0;
 	};
 
 	const io = new IntersectionObserver(
@@ -368,6 +301,7 @@ function mount(canvas: HTMLCanvasElement) {
 	ro.observe(hero);
 	ro.observe(frame);
 	addEventListener('resize', () => sync(), { passive: true });
+	addEventListener('scroll', () => sync(), { passive: true });
 	visualViewport?.addEventListener('resize', () => sync(), { passive: true });
 	document.fonts.ready.then(() => sync());
 	if (!gl) return;
@@ -376,28 +310,11 @@ function mount(canvas: HTMLCanvasElement) {
 	document.addEventListener('visibilitychange', update);
 	reduce.addEventListener('change', update);
 	document.addEventListener('planck:telemetry', onTelemetry);
-	document.addEventListener('planck:telemetry-state', onTelemetryState);
 	hero.addEventListener('pointermove', onMove, { passive: true });
 	hero.addEventListener('pointerleave', onLeave, { passive: true });
-	hero.addEventListener('pointerdown', onDown, { passive: true });
-	for (const btn of hero.querySelectorAll<HTMLElement>('.hero__ctas .btn')) {
-		const primary = btn.classList.contains('btn--primary');
-		const on = () => {
-			driveT = primary ? 1 : 0.4;
-			lastInput = performance.now();
-			if (primary && raf) sim.fire(simT);
-		};
-		const off = () => {
-			driveT = 0;
-		};
-		btn.addEventListener('pointerenter', on);
-		btn.addEventListener('focus', on);
-		btn.addEventListener('pointerleave', off);
-		btn.addEventListener('blur', off);
-	}
 	if (PerformanceObserver.supportedEntryTypes.includes('longtask')) {
 		new PerformanceObserver((list) => {
-			if (!raf || simT < 2000) return;
+			if (!raf || introT < 2) return;
 			const n = list.getEntries().length;
 			for (let i = 0; i < n; i++) {
 				if (quality.longTask()) {
@@ -414,5 +331,5 @@ function mount(canvas: HTMLCanvasElement) {
 	else setTimeout(() => void attach(), 200);
 }
 
-for (const canvas of document.querySelectorAll<HTMLCanvasElement>('canvas.hero__flux'))
+for (const canvas of document.querySelectorAll<HTMLCanvasElement>('canvas.hero__beam'))
 	mount(canvas);
