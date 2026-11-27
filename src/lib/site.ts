@@ -16,7 +16,7 @@ export const BLOB = (path: string) => `${REPO}/blob/main/${path}`;
 
 /** The release the docs describe. Every number on a docs page was checked against this commit. */
 export const VERSION = '0.2.0';
-export const COMMIT = '28dfa58';
+export const COMMIT = '6749346';
 
 /** Historical benchmark provenance: the figures in the docs were measured at this release. */
 export const BENCHMARK_VERSION = '0.1.0';
