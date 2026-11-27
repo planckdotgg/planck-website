@@ -116,9 +116,9 @@ function bars(): string {
 /** A key and value ladder, one value in ember. */
 function ladder(): string {
 	const rows = [
-		['discoveryPort', '47700'],
-		['controlPort', '47701'],
-		['mediaPort', '47702'],
+		['discoveryPort', '41000'],
+		['controlPort', '41001'],
+		['mediaPort', '41002'],
 		['codec', 'hevc'],
 		['fps', '120'],
 		['maxBitrateKbps', '100000'],
@@ -162,7 +162,7 @@ function ledger(): string {
 /** Three UDP port chips; the last one blocked. */
 function ports(): string {
 	let out = '';
-	['47700', '47701', '47702'].forEach((port, i) => {
+	['41000', '41001', '41002'].forEach((port, i) => {
 		const y = 40 + i * 92;
 		const blocked = i === 2;
 		out += `<path d="M0 ${y + 28} H112" stroke="${blocked ? '#FF5A5A' : '#6E7480'}" stroke-width="1.5" stroke-dasharray="${blocked ? '4 4' : '0'}"/>`;
@@ -182,7 +182,7 @@ function platforms(): string {
 	const list = [
 		{ name: 'macOS', sub: '14.0+ · DMG', tone: '#C9D9FF' },
 		{ name: 'Windows', sub: '10 · 11 · x64', tone: '#FF8912' },
-		{ name: 'Linux', sub: 'CLI preview', tone: '#4CD69B' },
+		{ name: 'Linux', sub: 'Beta · desktop + host', tone: '#4CD69B' },
 	];
 	let out = '';
 	list.forEach((p, i) => {

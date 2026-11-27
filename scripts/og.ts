@@ -277,7 +277,7 @@ const DOWNLOAD: DocCard = {
 	eyebrow: 'PLANCK / DOWNLOAD',
 	title: ['Download Planck'],
 	summary: 'Client and host for macOS, Windows, and Linux.',
-	telemetry: 'macOS · WINDOWS · LINUX CLI · TWO BINARIES · NO ACCOUNT',
+	telemetry: 'macOS · WINDOWS · LINUX BETA · TWO BINARIES · NO ACCOUNT',
 };
 
 checkFonts();

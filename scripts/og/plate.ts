@@ -18,7 +18,7 @@ export const W = 1200;
 export const H = 630;
 export const SAFE = 56;
 export const GROUND = '#0E0F12';
-export const VERSION_LABEL = 'v0.1.0';
+export const VERSION_LABEL = 'v0.2.0';
 
 /** Martian Mono's advance in em at weight 400, width 100: the setting the site renders. Checked
     against the loaded font on every run, so a wrong or missing font fails loudly. */

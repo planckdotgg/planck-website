@@ -121,6 +121,11 @@ const clientFlags = [
 	['-vdd-gpu', '', 'Host GPU that renders the virtual display and encodes'],
 	['-nvenc-split', 'auto', 'NVENC two-engine split: auto, on, off'],
 	['-direct-display', 'auto', 'macOS full-screen direct-to-display: auto, on, off'],
+	[
+		'-phase-lock',
+		'auto (on)',
+		'Host times frames to reach this display just before it refreshes: auto, on, off',
+	],
 	['-vsync', 'auto', 'Present in step with the display: auto (off), on, off'],
 	['-display', '', 'Host display ID to stream'],
 	['-hdr10', 'auto', 'auto (where both ends and the host desktop have HDR) or off'],

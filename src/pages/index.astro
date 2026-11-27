@@ -23,7 +23,7 @@ const vendors = [
 const slowest = Math.max(...vendors.map((v) => v.ms));
 
 const description =
-	'Open-source game streaming in pure Go for Windows and macOS: zero-copy capture, 4:4:4 chroma, 10-bit HDR10, and native Tailscale.';
+	'Open-source game streaming in pure Go for Windows, macOS and Linux (beta): zero-copy capture, 4:4:4 chroma, 10-bit HDR10, and native Tailscale.';
 const site = Astro.site ?? new URL('https://planck.gg');
 ---
 
@@ -40,13 +40,13 @@ const site = Astro.site ?? new URL('https://planck.gg');
 			<div class="wash hero__aura" aria-hidden="true"></div>
 			<div class="hero__copy">
 				<h1 id="hero-title" class="display h-hero">Play like it’s local</h1>
-				<p class="hero__lead">Open-source game streaming in pure Go for Windows and macOS.</p>
+				<p class="hero__lead">Open-source game streaming in pure Go for Windows, macOS and Linux (beta).</p>
 				<div class="hero__ctas">
 					<a class="btn btn--primary" href="/download">Download</a>
 					<a class="btn btn--ghost" href={REPO}>GitHub</a>
 				</div>
 				<p class="hero__proof spec-line">
-					Windows · macOS · Apache-2.0 · no account, no subscription
+					Windows · macOS · Linux (beta) · Apache-2.0 · no account, no subscription
 				</p>
 			</div>
 		</div>
