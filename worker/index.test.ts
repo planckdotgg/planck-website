@@ -218,19 +218,19 @@ describe('/api/download when the API is rate limited', () => {
 	});
 });
 
-describe('/api/download with the v0.1.0 assets', () => {
-	const V1 = 'https://github.com/planckdotgg/planck/releases/download/v0.1.0';
+describe('/api/download with the v0.2.0 assets', () => {
+	const V1 = 'https://github.com/planckdotgg/planck/releases/download/v0.2.0';
 	const NAMES = [
-		'planck-0.1.0-macos-arm64.dmg',
-		'planck-0.1.0-macos-amd64.dmg',
-		'planck-0.1.0-windows-x64-setup.exe',
-		'planck-0.1.0-windows-x64-portable.zip',
-		'planck-0.1.0-linux-amd64.tar.gz',
-		'planck-0.1.0-linux-arm64.tar.gz',
+		'planck-0.2.0-macos-arm64.dmg',
+		'planck-0.2.0-macos-amd64.dmg',
+		'planck-0.2.0-windows-x64-setup.exe',
+		'planck-0.2.0-windows-x64.zip',
+		'planck-0.2.0-linux-x86_64.tar.gz',
+		'planck-0.2.0-linux-aarch64.tar.gz',
 		'SHA256SUMS.txt',
 	];
 	const v1 = () => ({
-		tag_name: 'v0.1.0',
+		tag_name: 'v0.2.0',
 		assets: NAMES.map((name) => ({ name, browser_download_url: `${V1}/${name}` })),
 	});
 	const to = async (query: string, userAgent?: string) => {
@@ -241,20 +241,20 @@ describe('/api/download with the v0.1.0 assets', () => {
 	};
 
 	const cases: [string, string][] = [
-		['?platform=macos&arch=arm64', 'planck-0.1.0-macos-arm64.dmg'],
-		['?platform=macos&arch=aarch64', 'planck-0.1.0-macos-arm64.dmg'],
-		['?platform=macos&arch=amd64', 'planck-0.1.0-macos-amd64.dmg'],
-		['?platform=macos&arch=x64', 'planck-0.1.0-macos-amd64.dmg'],
-		['?platform=macos', 'planck-0.1.0-macos-arm64.dmg'],
-		['?platform=windows&format=installer', 'planck-0.1.0-windows-x64-setup.exe'],
-		['?platform=windows&format=portable', 'planck-0.1.0-windows-x64-portable.zip'],
-		['?platform=windows', 'planck-0.1.0-windows-x64-setup.exe'],
-		['?platform=windows&arch=x64&format=portable', 'planck-0.1.0-windows-x64-portable.zip'],
-		['?platform=linux&arch=amd64', 'planck-0.1.0-linux-amd64.tar.gz'],
-		['?platform=linux&arch=x64', 'planck-0.1.0-linux-amd64.tar.gz'],
-		['?platform=linux&arch=x86_64', 'planck-0.1.0-linux-amd64.tar.gz'],
-		['?platform=linux&arch=arm64', 'planck-0.1.0-linux-arm64.tar.gz'],
-		['?platform=linux', 'planck-0.1.0-linux-amd64.tar.gz'],
+		['?platform=macos&arch=arm64', 'planck-0.2.0-macos-arm64.dmg'],
+		['?platform=macos&arch=aarch64', 'planck-0.2.0-macos-arm64.dmg'],
+		['?platform=macos&arch=amd64', 'planck-0.2.0-macos-amd64.dmg'],
+		['?platform=macos&arch=x64', 'planck-0.2.0-macos-amd64.dmg'],
+		['?platform=macos', 'planck-0.2.0-macos-arm64.dmg'],
+		['?platform=windows&format=installer', 'planck-0.2.0-windows-x64-setup.exe'],
+		['?platform=windows&format=portable', 'planck-0.2.0-windows-x64.zip'],
+		['?platform=windows', 'planck-0.2.0-windows-x64-setup.exe'],
+		['?platform=windows&arch=x64&format=portable', 'planck-0.2.0-windows-x64.zip'],
+		['?platform=linux&arch=amd64', 'planck-0.2.0-linux-x86_64.tar.gz'],
+		['?platform=linux&arch=x64', 'planck-0.2.0-linux-x86_64.tar.gz'],
+		['?platform=linux&arch=x86_64', 'planck-0.2.0-linux-x86_64.tar.gz'],
+		['?platform=linux&arch=arm64', 'planck-0.2.0-linux-aarch64.tar.gz'],
+		['?platform=linux', 'planck-0.2.0-linux-x86_64.tar.gz'],
 		['?asset=SHA256SUMS.txt', 'SHA256SUMS.txt'],
 		['?asset=sha256sums.txt', 'SHA256SUMS.txt'],
 		['?asset=checksums', 'SHA256SUMS.txt'],
@@ -272,11 +272,11 @@ describe('/api/download with the v0.1.0 assets', () => {
 	});
 
 	test('User-Agent detection picks Linux, but never for Android or ChromeOS', async () => {
-		expect(await to('', LINUX_UA)).toBe(`${V1}/planck-0.1.0-linux-amd64.tar.gz`);
+		expect(await to('', LINUX_UA)).toBe(`${V1}/planck-0.2.0-linux-x86_64.tar.gz`);
 		expect(await to('', ANDROID_UA)).toBe(RELEASES);
 		expect(await to('', CHROMEOS_UA)).toBe(RELEASES);
-		expect(await to('', MAC_UA)).toBe(`${V1}/planck-0.1.0-macos-arm64.dmg`);
-		expect(await to('', WIN_UA)).toBe(`${V1}/planck-0.1.0-windows-x64-setup.exe`);
+		expect(await to('', MAC_UA)).toBe(`${V1}/planck-0.2.0-macos-arm64.dmg`);
+		expect(await to('', WIN_UA)).toBe(`${V1}/planck-0.2.0-windows-x64-setup.exe`);
 	});
 
 	test('a missing arch or format falls back instead of serving another one', async () => {
@@ -284,20 +284,20 @@ describe('/api/download with the v0.1.0 assets', () => {
 		expect(await to('?platform=macos&arch=riscv')).toBe(RELEASES);
 		expect(await to('?platform=windows&format=msix')).toBe(RELEASES);
 		expect(await to('?platform=linux&format=installer')).toBe(
-			`${V1}/planck-0.1.0-linux-amd64.tar.gz`,
+			`${V1}/planck-0.2.0-linux-x86_64.tar.gz`,
 		);
 	});
 
 	test('with only the zip, format=installer never serves it', async () => {
-		const gh = github(() => Response.json(release('planck-0.1.0-windows-x64-portable.zip')));
+		const gh = github(() => Response.json(release('planck-0.2.0-windows-x64.zip')));
 		const installer = await handle(get('?platform=windows&format=installer'), env, gh.send);
 		expect(installer.headers.get('Location')).toBe(RELEASES);
 		const portable = await handle(get('?platform=windows&format=portable'), env, gh.send);
-		expect(portable.headers.get('Location')).toBe(`${ASSET}/planck-0.1.0-windows-x64-portable.zip`);
+		expect(portable.headers.get('Location')).toBe(`${ASSET}/planck-0.2.0-windows-x64.zip`);
 	});
 
 	test('a release without the requested arch or checksums falls back', async () => {
-		const gh = github(() => Response.json(release('planck-0.1.0-macos-arm64.dmg')));
+		const gh = github(() => Response.json(release('planck-0.2.0-macos-arm64.dmg')));
 		const intel = await handle(get('?platform=macos&arch=amd64'), env, gh.send);
 		expect(intel.headers.get('Location')).toBe(RELEASES);
 		const sums = await handle(get('?checksums=1'), env, gh.send);
@@ -305,9 +305,9 @@ describe('/api/download with the v0.1.0 assets', () => {
 	});
 
 	test('a universal Mac build serves both architectures', async () => {
-		const gh = github(() => Response.json(release('planck-0.1.0-macos-universal.dmg')));
+		const gh = github(() => Response.json(release('planck-0.2.0-macos-universal.dmg')));
 		const intel = await handle(get('?platform=macos&arch=amd64'), env, gh.send);
-		expect(intel.headers.get('Location')).toBe(`${ASSET}/planck-0.1.0-macos-universal.dmg`);
+		expect(intel.headers.get('Location')).toBe(`${ASSET}/planck-0.2.0-macos-universal.dmg`);
 	});
 
 	test('a GitHub failure still falls back for the new queries', async () => {
@@ -321,14 +321,14 @@ describe('/api/download with the v0.1.0 assets', () => {
 
 describe('/api/download page fallback for the new queries', () => {
 	const LATEST = 'https://github.com/planckdotgg/planck/releases/latest';
-	const PAGE = 'https://github.com/planckdotgg/planck/releases/expanded_assets/v0.1.0';
-	const D = '/planckdotgg/planck/releases/download/v0.1.0';
+	const PAGE = 'https://github.com/planckdotgg/planck/releases/expanded_assets/v0.2.0';
+	const D = '/planckdotgg/planck/releases/download/v0.2.0';
 	const names = [
-		'planck-0.1.0-macos-arm64.dmg',
-		'planck-0.1.0-windows-x64-setup.exe',
-		'planck-0.1.0-windows-x64-portable.zip',
-		'planck-0.1.0-linux-amd64.tar.gz',
-		'planck-0.1.0-linux-arm64.tar.gz',
+		'planck-0.2.0-macos-arm64.dmg',
+		'planck-0.2.0-windows-x64-setup.exe',
+		'planck-0.2.0-windows-x64.zip',
+		'planck-0.2.0-linux-x86_64.tar.gz',
+		'planck-0.2.0-linux-aarch64.tar.gz',
 		'SHA256SUMS.txt',
 	];
 	const html = names.map((n) => `<a href="${D}/${n}">${n}</a>`).join('\n');
@@ -338,7 +338,7 @@ describe('/api/download page fallback for the new queries', () => {
 		if (url === LATEST) {
 			return new Response(null, {
 				status: 302,
-				headers: { Location: 'https://github.com/planckdotgg/planck/releases/tag/v0.1.0' },
+				headers: { Location: 'https://github.com/planckdotgg/planck/releases/tag/v0.2.0' },
 			});
 		}
 		if (url === PAGE) return new Response(html);
@@ -346,10 +346,10 @@ describe('/api/download page fallback for the new queries', () => {
 	}) as typeof fetch;
 
 	const cases: [string, string][] = [
-		['?platform=linux&arch=arm64', 'planck-0.1.0-linux-arm64.tar.gz'],
-		['?platform=linux&arch=x64', 'planck-0.1.0-linux-amd64.tar.gz'],
-		['?platform=windows&format=portable', 'planck-0.1.0-windows-x64-portable.zip'],
-		['?platform=windows&format=installer', 'planck-0.1.0-windows-x64-setup.exe'],
+		['?platform=linux&arch=arm64', 'planck-0.2.0-linux-aarch64.tar.gz'],
+		['?platform=linux&arch=x64', 'planck-0.2.0-linux-x86_64.tar.gz'],
+		['?platform=windows&format=portable', 'planck-0.2.0-windows-x64.zip'],
+		['?platform=windows&format=installer', 'planck-0.2.0-windows-x64-setup.exe'],
 		['?asset=SHA256SUMS.txt', 'SHA256SUMS.txt'],
 		['?checksums=1', 'SHA256SUMS.txt'],
 	];
@@ -366,12 +366,12 @@ describe('/api/download page fallback for the new queries', () => {
 	});
 });
 
-describe('/api/download with the published v0.1.0 assets', () => {
+describe('/api/download with the published v0.2.0 assets', () => {
 	const V010 = [
-		'planck-0.1.0-windows-x64.zip',
-		'planck-0.1.0-linux-x86_64.tar.gz',
-		'planck-0.1.0-linux-aarch64.tar.gz',
-		'planck-0.1.0-macos-universal.dmg',
+		'planck-0.2.0-windows-x64.zip',
+		'planck-0.2.0-linux-x86_64.tar.gz',
+		'planck-0.2.0-linux-aarch64.tar.gz',
+		'planck-0.2.0-macos-universal.dmg',
 		'SHA256SUMS.txt',
 	];
 	const LINUX_ARM_UA = 'Mozilla/5.0 (X11; Linux aarch64)';
@@ -382,19 +382,19 @@ describe('/api/download with the published v0.1.0 assets', () => {
 	};
 
 	test('a Linux aarch64 User-Agent without arch gets the aarch64 tarball', async () => {
-		expect(await to('', LINUX_ARM_UA)).toBe(`${ASSET}/planck-0.1.0-linux-aarch64.tar.gz`);
+		expect(await to('', LINUX_ARM_UA)).toBe(`${ASSET}/planck-0.2.0-linux-aarch64.tar.gz`);
 	});
 
 	test('a Linux x86_64 User-Agent without arch gets the x86_64 tarball', async () => {
-		expect(await to('', LINUX_UA)).toBe(`${ASSET}/planck-0.1.0-linux-x86_64.tar.gz`);
+		expect(await to('', LINUX_UA)).toBe(`${ASSET}/planck-0.2.0-linux-x86_64.tar.gz`);
 	});
 
 	test('an explicit arch beats the Linux User-Agent', async () => {
-		expect(await to('?arch=amd64', LINUX_ARM_UA)).toBe(`${ASSET}/planck-0.1.0-linux-x86_64.tar.gz`);
+		expect(await to('?arch=amd64', LINUX_ARM_UA)).toBe(`${ASSET}/planck-0.2.0-linux-x86_64.tar.gz`);
 	});
 
 	test('Windows and macOS keep their defaults', async () => {
-		expect(await to('', WIN_UA)).toBe(`${ASSET}/planck-0.1.0-windows-x64.zip`);
-		expect(await to('', MAC_UA)).toBe(`${ASSET}/planck-0.1.0-macos-universal.dmg`);
+		expect(await to('', WIN_UA)).toBe(`${ASSET}/planck-0.2.0-windows-x64.zip`);
+		expect(await to('', MAC_UA)).toBe(`${ASSET}/planck-0.2.0-macos-universal.dmg`);
 	});
 });

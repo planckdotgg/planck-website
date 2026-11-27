@@ -7,9 +7,9 @@ import Docs from '../../layouts/Docs.astro';
 const hostKeys = [
 	['hostID', 'random 16 bytes, hex', 'Stable identity of this host'],
 	['name', 'machine name', 'What clients list the host as'],
-	['controlPort', '47701', 'QUIC control; must differ from mediaPort'],
-	['mediaPort', '47702', 'UDP media'],
-	['discoveryPort', '47700', '0 turns discovery off'],
+	['controlPort', '41001', 'QUIC control; must differ from mediaPort'],
+	['mediaPort', '41002', 'UDP media'],
+	['discoveryPort', '41000', '0 turns discovery off'],
 	['display', 'primary display', 'Display ID to capture'],
 	['adapter', 'the display’s GPU', 'Encoding GPU, by name or vendor'],
 	['vddPrimary', 'false', 'Make the virtual display primary'],
@@ -63,9 +63,9 @@ const clientKeys = [
 ] as const;
 
 const hostFlags = [
-	['-listen', ':47701', 'QUIC control address'],
-	['-media-port', '47702', 'UDP media port; 0 picks any free port'],
-	['-discovery-port', '47700', 'LAN discovery; 0 turns it off'],
+	['-listen', ':41001', 'QUIC control address'],
+	['-media-port', '41002', 'UDP media port; 0 picks any free port'],
+	['-discovery-port', '41000', 'LAN discovery; 0 turns it off'],
 	['-codec', 'hevc', 'auto, pyrowave, hevc, av1, h264'],
 	['-chroma', 'nv12', 'auto, nv12, p010, yuv444, yuv444p10 (or 420, 444)'],
 	['-bit-depth', 'auto', 'auto, 8, 10'],
@@ -124,7 +124,7 @@ const clientFlags = [
 	['-vsync', 'auto', 'Present in step with the display: auto (off), on, off'],
 	['-display', '', 'Host display ID to stream'],
 	['-hdr10', 'auto', 'auto (where both ends and the host desktop have HDR) or off'],
-	['-discovery-port', '47700', 'Discovery port to listen on and probe'],
+	['-discovery-port', '41000', 'Discovery port to listen on and probe'],
 	['-version', '', 'Print the version and exit'],
 ] as const;
 
@@ -163,9 +163,9 @@ const hotkeys = [
 ] as const;
 
 const hostJson = `{
-  "controlPort": 47701,
-  "mediaPort": 47702,
-  "discoveryPort": 47700,
+  "controlPort": 41001,
+  "mediaPort": 41002,
+  "discoveryPort": 41000,
   "codec": "hevc",
   "chroma": "nv12",
   "fps": 120,
@@ -276,7 +276,7 @@ const hostJson = `{
 	</Table>
 	<CodeBlock
 		code={`planck-client -headless -discover my-host -pin 123456 -duration 10s -json
-planck-client -headless -connect 192.0.2.10:47701 -path-mode lan -silent-audio`}
+planck-client -headless -connect 192.0.2.10:41001 -path-mode lan -silent-audio`}
 		lang="sh"
 		caption="headless examples"
 		what="headless client examples"

@@ -20,12 +20,12 @@ const faq: (Faq & { id: string })[] = [
 	{
 		id: 'faq-ports',
 		q: 'Which ports does Planck use?',
-		a: 'UDP 47700 for discovery, UDP 47701 for the QUIC control connection, and UDP 47702 for media, all on the host.',
+		a: 'UDP 41000 for discovery, UDP 41001 for the QUIC control connection, and UDP 41002 for media, all on the host.',
 	},
 	{
 		id: 'faq-linux',
 		q: 'Can I host or stream on Linux?',
-		a: 'Not yet. Linux builds run planck-host and planck-client -headless from the command line, but there is no capture backend, encoder or desktop window, so a Linux machine can neither host nor show a stream.',
+		a: 'Yes, as a beta. The Linux desktop app and planck-host capture with X11 (MIT-SHM) or Wayland (ScreenCast and PipeWire) and encode HEVC on NVENC or VA-API. It is tested in CI but not yet on bare metal, so reports from real hardware are welcome.',
 	},
 	{
 		id: 'faq-h264',
@@ -54,11 +54,11 @@ const faq: (Faq & { id: string })[] = [
 	},
 ];
 
-const firewall = `New-NetFirewallRule -DisplayName "Planck host" -Direction Inbound -Protocol UDP -LocalPort 47700-47702 -Action Allow`;
+const firewall = `New-NetFirewallRule -DisplayName "Planck host" -Direction Inbound -Protocol UDP -LocalPort 41000-41002 -Action Allow`;
 const excluded = `netsh int ipv4 show excludedportrange protocol=udp`;
-const moved = `planck-host -listen :41000 -media-port 41001 -discovery-port 41002
+const moved = `planck-host -listen :51001 -media-port 51002 -discovery-port 51000
 # on the client, connect to the moved control port
-planck-client -headless -connect host:41000 -pin 123456`;
+planck-client -headless -connect host:51001 -pin 123456`;
 ---
 
 <Docs slug="troubleshooting" faq={faq.map(({ q, a }) => ({ q, a }))}>
@@ -71,9 +71,9 @@ planck-client -headless -connect host:41000 -pin 123456`;
 		<table>
 			<thead><tr><th scope="col">Port</th><th scope="col">Carries</th><th scope="col">Change with</th></tr></thead>
 			<tbody>
-				<tr><td class="num">UDP 47700</td><td>Discovery</td><td><code>-discovery-port</code>, <code>discoveryPort</code></td></tr>
-				<tr><td class="num">UDP 47701</td><td>QUIC control</td><td><code>-listen</code>, <code>controlPort</code></td></tr>
-				<tr><td class="num">UDP 47702</td><td>Media</td><td><code>-media-port</code>, <code>mediaPort</code></td></tr>
+				<tr><td class="num">UDP 41000</td><td>Discovery</td><td><code>-discovery-port</code>, <code>discoveryPort</code></td></tr>
+				<tr><td class="num">UDP 41001</td><td>QUIC control</td><td><code>-listen</code>, <code>controlPort</code></td></tr>
+				<tr><td class="num">UDP 41002</td><td>Media</td><td><code>-media-port</code>, <code>mediaPort</code></td></tr>
 			</tbody>
 		</table>
 	</Table>
@@ -91,13 +91,13 @@ planck-client -headless -connect host:41000 -pin 123456`;
 	</p>
 	<CodeBlock code={excluded} lang="powershell" caption="Windows" what="excluded port range command" />
 	<p>
-		If 47700 to 47702 fall inside a range, move all three of the host's ports out of it, and point the
+		If 41000 to 41002 fall inside a range, move all three of the host's ports out of it, and point the
 		client at the new control port. <code>-discovery-port 0</code> turns discovery off instead.
 	</p>
 	<CodeBlock code={moved} lang="sh" caption="ports outside the reserved block" what="moved port commands" />
 	<p>
-		The standalone <code>planck-host</code> ignores the ports in <code>host.json</code>: it uses 47701,
-		47702 and 47700 unless you pass the flags, so keep the flags in whatever starts it. Hosting from the
+		The standalone <code>planck-host</code> ignores the ports in <code>host.json</code>: it uses 41001,
+		41002 and 41000 unless you pass the flags, so keep the flags in whatever starts it. Hosting from the
 		desktop app reads <code>controlPort</code>, <code>mediaPort</code> and <code>discoveryPort</code>
 		from <code>host.json</code>, so set them there to make the move permanent for the app.
 	</p>
@@ -132,7 +132,7 @@ planck-client -headless -connect host:41000 -pin 123456`;
 		the release page if you want to be sure:
 	</p>
 	<CodeBlock
-		code="Get-FileHash .\planck-0.1.0-windows-x64-setup.exe -Algorithm SHA256"
+		code="Get-FileHash .\planck-0.2.0-windows-x64-setup.exe -Algorithm SHA256"
 		lang="powershell"
 		caption="Windows"
 		what="file hash command"
@@ -184,7 +184,7 @@ planck-client -headless -connect host:41000 -pin 123456`;
 		<li>PIN pairing has no PAKE, so a recorded exchange could be brute-forced offline.</li>
 		<li>Direct-to-display presentation on macOS is not finished; windowed present adds 8 to 10 ms.</li>
 		<li>Virtual audio and virtual display drivers are experimental and not part of any release.</li>
-		<li>Linux has no capture, encode or desktop window.</li>
+		<li>Linux is a beta: tested in CI, not yet verified on bare metal.</li>
 	</ul>
 
 	<h2 id="faq">FAQ</h2>

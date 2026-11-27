@@ -25,9 +25,9 @@ const platforms = [
 	},
 	{
 		id: 'linux',
-		label: 'LINUX · CLI PREVIEW',
+		label: 'LINUX · BETA',
 		name: 'Linux',
-		note: 'Command-line preview only. There is no desktop app on Linux yet.',
+		note: 'New and in beta: X11 and Wayland capture, NVENC and VA-API. Tested in CI, not yet on bare metal, so hardware reports are welcome.',
 		primary: { href: '/api/download?platform=linux&arch=amd64', label: 'x86_64' },
 		secondary: { href: '/api/download?platform=linux&arch=arm64', label: 'arm64' },
 		color: '#4CD69B',
@@ -67,11 +67,11 @@ const vendors = [
 	description="Download Planck for macOS, Windows, and Linux, or build planck-host and planck-client from source. Pure Go, CGO_ENABLED=0, four GPU vendors."
 	active="download"
 	og="download.png"
-	ogAlt="Planck download card: Download Planck. macOS, Windows and a Linux command-line build, no account."
+	ogAlt="Planck download card: Download Planck. macOS, Windows and a Linux beta, no account."
 >
 	<PageHero
 		title="Download Planck."
-		lead="Ready-to-run builds of the client and host for macOS, Windows, and Linux, straight from GitHub Releases. Prefer to compile it yourself? Build from source below."
+		lead="One download runs both client and host, for macOS, Windows, and Linux (beta), straight from GitHub Releases. Prefer to compile it yourself? Build from source below."
 		cta={{ href: '#downloads', label: 'Download latest release', arrow: true }}
 		secondary={{ href: `${REPO}/releases/latest`, label: 'GitHub Releases' }}
 		zenith="radial-gradient(ellipse 58% 64% at 22% 0% in oklab, #C9D9FF16 0%, #789BFF06 46%, #00000000 76%)"

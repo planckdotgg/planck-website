@@ -21,13 +21,13 @@ test('breadcrumbs number from 1 with absolute URLs', () => {
 
 test('FAQ answers are passed through verbatim', () => {
 	const ld = faqPage(new URL('https://planck.gg'), '/docs/troubleshooting', [
-		{ q: 'Which ports?', a: 'UDP 47700.' },
+		{ q: 'Which ports?', a: 'UDP 41000.' },
 	]);
 	expect(ld.mainEntity).toEqual([
 		{
 			'@type': 'Question',
 			name: 'Which ports?',
-			acceptedAnswer: { '@type': 'Answer', text: 'UDP 47700.' },
+			acceptedAnswer: { '@type': 'Answer', text: 'UDP 41000.' },
 		},
 	]);
 });

@@ -48,20 +48,20 @@ export const DOC_PAGES: DocPage[] = [
 		group: 'Getting started',
 		h1: 'Planck, documented',
 		lead: 'Install it, pair a device, stream. Then read exactly how it does that, with every number traced to a file in the repo.',
-		strip: ['v0.1.0', 'PURE GO', 'CGO_ENABLED=0', 'APACHE-2.0'],
+		strip: ['v0.2.0', 'PURE GO', 'CGO_ENABLED=0', 'APACHE-2.0'],
 		title: 'Docs · Planck',
 		description:
-			'Install Planck on macOS 14+ or Windows 10/11, build it from source with CGO_ENABLED=0, pair over LAN or Tailscale, and start streaming.',
+			'Install Planck on macOS 14+, Windows 10/11 or Linux, build it from source with CGO_ENABLED=0, pair over LAN or Tailscale, and start streaming.',
 		og: 'docs.png',
 		ogAlt:
-			'Planck docs card: Planck, documented. Pure Go, CGO_ENABLED=0, Apache-2.0, version 0.1.0.',
+			'Planck docs card: Planck, documented. Pure Go, CGO_ENABLED=0, Apache-2.0, version 0.2.0.',
 		source: 'README.md',
 		tocDepth: 2,
 		card: {
 			eyebrow: 'DOCS / OVERVIEW',
 			title: ['Planck, documented'],
 			summary: 'Install, pair, stream, and every measured number behind it.',
-			telemetry: 'PURE GO · CGO_ENABLED=0 · APACHE-2.0 · v0.1.0',
+			telemetry: 'PURE GO · CGO_ENABLED=0 · APACHE-2.0 · v0.2.0',
 		},
 	},
 	{
@@ -140,20 +140,20 @@ export const DOC_PAGES: DocPage[] = [
 		group: 'Reference',
 		h1: 'Configuration',
 		lead: '`host.json`, `client.json`, every CLI flag on both binaries, and the in-stream hotkeys, with the defaults the code actually uses.',
-		strip: ['47700 DISCOVERY', '47701 CONTROL', '47702 MEDIA', 'UDP'],
+		strip: ['41000 DISCOVERY', '41001 CONTROL', '41002 MEDIA', 'UDP'],
 		title: 'Configuration · Planck · Docs',
 		description:
 			'Planck config files and defaults: host.json, client.json, planck-host and planck-client flags, headless mode, hotkeys, and the codec capability matrix.',
 		og: 'docs-configuration.png',
 		ogAlt:
-			'Planck docs card: Every flag, every default. UDP ports 47700 discovery, 47701 control, 47702 media.',
+			'Planck docs card: Every flag, every default. UDP ports 41000 discovery, 41001 control, 41002 media.',
 		source: 'pkg/config/config.go',
 		tocDepth: 3,
 		card: {
 			eyebrow: 'DOCS / CONFIGURATION',
 			title: ['Every flag,', 'every default'],
 			summary: 'host.json, client.json, the CLI, and the in-stream hotkeys.',
-			telemetry: '47700 DISCOVERY · 47701 CONTROL · 47702 MEDIA · UDP',
+			telemetry: '41000 DISCOVERY · 41001 CONTROL · 41002 MEDIA · UDP',
 		},
 	},
 	{
@@ -186,20 +186,20 @@ export const DOC_PAGES: DocPage[] = [
 		group: 'Reference',
 		h1: 'Troubleshooting & FAQ',
 		lead: 'Ports, permissions, GPU power policy, and the rough edges the repo already knows about.',
-		strip: ['UDP 47700–47702', 'SCREEN RECORDING', 'ACCESSIBILITY'],
+		strip: ['UDP 41000–41002', 'SCREEN RECORDING', 'ACCESSIBILITY'],
 		title: 'Troubleshooting & FAQ · Planck · Docs',
 		description:
-			'Fix Planck connections: UDP 47700 to 47702, Windows excluded port ranges, macOS Screen Recording and Accessibility, SmartScreen, Tailscale DERP, GPU power.',
+			'Fix Planck connections: UDP 41000 to 41002, Windows excluded port ranges, macOS Screen Recording and Accessibility, SmartScreen, Tailscale DERP, GPU power.',
 		og: 'docs-troubleshooting.png',
 		ogAlt:
-			'Planck docs card: When it does not connect. UDP 47700 to 47702, Screen Recording, Accessibility.',
+			'Planck docs card: When it does not connect. UDP 41000 to 41002, Screen Recording, Accessibility.',
 		source: 'docs/releasing.md',
 		tocDepth: 3,
 		card: {
 			eyebrow: 'DOCS / TROUBLESHOOTING',
 			title: ['When it does', 'not connect'],
 			summary: 'Ports, permissions, GPU power, and the known rough edges.',
-			telemetry: 'UDP 47700–47702 · SCREEN RECORDING · ACCESSIBILITY',
+			telemetry: 'UDP 41000–41002 · SCREEN RECORDING · ACCESSIBILITY',
 		},
 	},
 ];

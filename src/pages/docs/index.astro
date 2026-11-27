@@ -50,9 +50,9 @@ CGO_ENABLED=0 go test ./cmd/... ./internal/... ./pkg/...`;
 
 	<h2 id="install">Install</h2>
 	<p>
-		Planck ships two binaries: <code>planck-client</code>, the desktop app, and <code>planck-host</code>,
-		a command-line host for headless machines. Any client can also host from its <strong>Hosting</strong>
-		switch. Every file is on the <a href={RELEASES}>GitHub Releases</a> page, next to
+		One download runs both. <code>planck-client</code> is the desktop app and hosts from its
+		<strong>Hosting</strong> switch; every package also holds <code>planck-host</code> for headless and
+		background use. Every file is on the <a href={RELEASES}>GitHub Releases</a> page, next to
 		<code>SHA256SUMS.txt</code>.
 	</p>
 	<Table label="Release files by platform">
@@ -74,7 +74,7 @@ CGO_ENABLED=0 go test ./cmd/... ./internal/... ./pkg/...`;
 				<tr>
 					<td>Linux</td>
 					<td>x86_64 or aarch64</td>
-					<td><code>planck-&lt;v&gt;-linux-&lt;arch&gt;.tar.gz</code> (command-line preview)</td>
+					<td><code>planck-&lt;v&gt;-linux-&lt;arch&gt;.tar.gz</code> (beta)</td>
 				</tr>
 			</tbody>
 		</table>
@@ -102,9 +102,10 @@ CGO_ENABLED=0 go test ./cmd/... ./internal/... ./pkg/...`;
 
 	<h3 id="install-linux">Linux</h3>
 	<p>
-		The Linux tarball holds <code>bin/planck-client</code>, <code>bin/planck-host</code> and a desktop entry
-		with icons. It is a command-line build: there is no desktop window, no capture and no streaming on
-		Linux yet. <code>planck-client -headless</code> and <code>planck-host</code> build and run.
+		New in 0.2.0, and a beta: tested in CI, not yet on bare metal, so hardware reports are welcome. The
+		tarball holds <code>bin/planck-client</code>, <code>bin/planck-host</code>, a <code>.desktop</code> entry
+		with icons, <code>planck-host.service</code> and <code>install.sh</code>. Capture is X11 (MIT-SHM) or Wayland
+		(ScreenCast, PipeWire); encode is HEVC on NVENC or VA-API.
 	</p>
 
 	<h2 id="build-from-source">Build from source</h2>
@@ -132,7 +133,7 @@ CGO_ENABLED=0 go test ./cmd/... ./internal/... ./pkg/...`;
 
 	<h3 id="pairing-lan">On the LAN</h3>
 	<p>
-		Hosts answer discovery probes and broadcast beacons on UDP <code>47700</code>, so clients on the same
+		Hosts answer discovery probes and broadcast beacons on UDP <code>41000</code>, so clients on the same
 		network list them without typing an address. <code>requirePINForLAN</code> is on by default: a LAN
 		client always pairs with the PIN, even when both devices share a Tailscale user.
 	</p>
@@ -160,7 +161,7 @@ CGO_ENABLED=0 go test ./cmd/... ./internal/... ./pkg/...`;
 		To measure a link without a window, use the headless client:
 	</p>
 	<CodeBlock
-		code="planck-client -headless -connect host:47701 -pin 123456 -duration 10s -json"
+		code="planck-client -headless -connect host:41001 -pin 123456 -duration 10s -json"
 		lang="sh"
 		caption="headless benchmark"
 		what="headless client command"

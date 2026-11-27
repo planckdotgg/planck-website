@@ -227,7 +227,7 @@ const label =
 		<code>pkg/input</code>, <code>pkg/gamepad</code>, <code>pkg/clipboard</code> · <b>Deps</b>
 		<code>quic-go</code> (control), <code>klauspost/reedsolomon</code> (FEC), <code>thesyncim/gopus</code>
 		(Opus), <code>ebitengine/oto</code> (playback), <code>ebitengine/purego</code>, vendored
-		<code>egoist/mygo</code> · <b>Linux</b> build and headless only: no capture, no encode, no window ·
+		<code>egoist/mygo</code> · <b>Linux</b> beta: X11 and Wayland capture, NVENC and VA-API encode, CI-tested only ·
 		<b>Not shipped</b> multi-GPU offload (D3D11 cross-adapter shared handles fail with
 		<code>E_INVALIDARG</code>; staging costs 2–15 ms per frame) · <b>H.264 encodes on NVENC but has no
 		decoder on either platform</b> · <b>Commit</b> <code>v0.1.0</code> (<code>8a3c732</code>).

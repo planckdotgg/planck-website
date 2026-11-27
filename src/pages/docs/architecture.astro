@@ -78,9 +78,13 @@ import Docs from '../../layouts/Docs.astro';
 	</ul>
 	<h3 id="linux">Linux</h3>
 	<p>
-		Linux builds and runs headless only. There is no capture backend, no encoder and no desktop window,
-		so a Linux machine can neither host nor show a stream yet.
+		New in 0.2.0, and a beta: tested in CI, not yet verified on bare metal.
 	</p>
+	<ul>
+		<li><strong>Capture:</strong> X11 with MIT-SHM, or Wayland ScreenCast through PipeWire.</li>
+		<li><strong>Encode:</strong> HEVC on NVENC or VA-API.</li>
+		<li><strong>Client and host:</strong> the same desktop app and <code>planck-host</code>, with audio and input. The tarball ships a <code>.desktop</code> entry, <code>planck-host.service</code> and <code>install.sh</code>.</li>
+	</ul>
 
 	<h2 id="host-and-client">Host and client</h2>
 	<p>
